@@ -1,4 +1,5 @@
-import { valueTokenManager, operatorTokenManager, TokenType, tokenTypes, RawToken, ValueTokenType, OperatorTokenType, variableTokenManager, VariableTokenType } from "./token.ts";
+import type { VariablesMap } from "../code.ts";
+import { valueTokenManager, operatorTokenManager, TokenType, tokenTypes, RawToken, ValueTokenType, OperatorTokenType, variableTokenManager, VariableTokenType, identifier } from "./token.ts";
 
 /**
  * The parsed data of a token, that stores its type and typemanager. Used to actually compute things
@@ -12,6 +13,7 @@ export class ParsedToken {
     parsedContent: string;
     tokenType: TokenType;
     type: string;
+    subtype?: string;
     typeManager: typeof valueTokenManager | typeof operatorTokenManager | typeof variableTokenManager;
 
     constructor (rawContent: string, parsedContent: string, tokenType: TokenType, type: string) {
@@ -20,6 +22,14 @@ export class ParsedToken {
         this.tokenType = tokenType;
         this.type = type;
         this.typeManager = tokenTypes[tokenType];
+
+        // Handle variable typing
+        if (tokenType === TokenType.VARIABLE) {
+            this.subtype = identifier[this.rawContent.charAt(2)];
+            if (!this.subtype) {
+                throw new Error(`Variable not given valid identifier: '${this.rawContent.charAt(2)}'`);
+            }
+        }
     }
 
     static fromRawToken(token: RawToken): ParsedToken {
@@ -88,5 +98,59 @@ export class ParsedToken {
 
     toString(): string {
         return `(${this.getTypeName()}):${this.rawContent}`;
+    }
+
+    toJavaDefinitionString(): string {
+        if (this.tokenType !== TokenType.VARIABLE) {
+            throw new Error(`Can not make a java definition string from ${this.getTypeName()}`);
+        }
+
+        const valueType: ValueTokenType = this.subtype as ValueTokenType;
+        if (valueType === ValueTokenType.BOOLEAN) {
+            return `boolean ${this.parsedContent}`;
+        } else if (valueType === ValueTokenType.NUMBER) {
+            const isDecimal = this.parsedContent.includes(".");
+            if (isDecimal) {
+                return `double ${this.parsedContent}`;
+            } else {
+                return `int ${this.parsedContent}`;
+            }
+        } else if (valueType === ValueTokenType.STRING) {
+            return `String ${this.parsedContent}`;
+        } else {
+            return `Object ${this.parsedContent}`;
+        }
+    }
+    
+    toJavaString(): string {
+        if (this.tokenType === TokenType.OPERATOR) {
+            return {
+                "ADD": "+",
+                "SUB": "-",
+                "MUL": "*",
+                "DIV": "/",
+                "MOD": "%",
+                "AND": "&&",
+                "OR": "||",
+                "GT": ">",
+                "LT": "<",
+                "GTE": ">=",
+                "LTE": ">=",
+                "EQ": "==",
+                "NEQ": "!=",
+            }[this.rawContent]!;
+        } else if (this.tokenType === TokenType.VALUE) {
+            if (this.type === ValueTokenType.BOOLEAN) {
+                return this.rawContent;
+            } else if (this.type === ValueTokenType.NUMBER) {
+                return this.parsedContent;
+            } else if (this.type === ValueTokenType.STRING) {
+                if (this.parsedContent === "~s") return "\" \"";
+                return `"${this.parsedContent}"`;
+            }
+        } else if (this.tokenType === TokenType.VARIABLE) {
+            return this.parsedContent;
+        }
+        return "";
     }
 }

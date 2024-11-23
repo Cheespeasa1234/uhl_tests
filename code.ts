@@ -2,6 +2,7 @@ import { ParsedToken } from "./typing/parsedToken.ts";
 import { OperatorTokenType, RawToken, TokenType, VariableTokenType } from "./typing/token.ts";
 import { operate as useOperator } from "./typing/operation.ts";
 
+
 export type LineOfCode = {
   action: string;
   values: RawToken[];
@@ -52,23 +53,26 @@ export class CodeEnvironment {
 
   print(values: ParsedToken[]) {
     const parsedValues = values.map(v => this.getVariableValue(v).parsedContent);
+    const output = parsedValues.join("").replaceAll("~s", " ");
     if (this.variableExistsByName("_SYS_ENABLEOUT") && this.getVariableValueByName("_SYS_ENABLEOUT").asBoolean()) {
-      console.log(parsedValues.join("").replaceAll("~s", " "));
+      console.log(output);
     }
-    this.output = this.output.concat(parsedValues);
+    this.output = this.output.concat(output);
   }
 
   set(values: ParsedToken[]) {
     const [variableReference, value, ..._] = [...values];
     this.setVariableValue(variableReference, value);
-    if (variableReference.rawContent.startsWith("$*_SYS")) {
+    variableReference.subtype = value.type;
+    if (variableReference.rawContent.startsWith("$*?_SYS")) {
       console.log(`WARNING: SYSTEM VARIABLE ${variableReference.rawContent} SET TO ${value.toString()}`);
     }
   }
-
+  
   opeq(values: ParsedToken[]) {
     const [variableReference, operator, valueUnsafe, ..._] = [...values];
     const value = this.getVariableValue(valueUnsafe);
+    variableReference.subtype = value.type;
     const res = operate(this.getVariableValue(variableReference), value, operator);
     this.setVariableValue(variableReference, res);
   }
@@ -184,28 +188,6 @@ export class CodeEnvironment {
   clear() {
     this.output = [];
     this.variables = {};
-  }
-}
-
-export function stringify(line: LineOfCode, nestLevel: number = 0): string {
-  const tabs = "  ".repeat(nestLevel);
-  const tabsPlusOne = "  ".repeat(nestLevel + 1);
-  if (!line.nest_1) {
-    return `${tabs}${line.action} ${line.values}`;
-  } else {
-    let out = `${tabs}${line.action}(${line.values}):\n`;
-    for (const subLine of line.nest_1) {
-      out += tabsPlusOne + stringify(subLine, nestLevel + 1) + "\n";
-    }
-    
-    if (line.nest_2) {
-      out += `${tabsPlusOne}else\n`;
-      for (const subLine of line.nest_2) {
-        out += tabsPlusOne + stringify(subLine, nestLevel + 1) + "\n";
-      }  
-    }
-
-    return out;
   }
 }
 

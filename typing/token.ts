@@ -4,10 +4,17 @@ export enum TokenType {
     VARIABLE = "VARIABLE",
 }
 
+
 export enum ValueTokenType {
     NUMBER = "NUMBER",
     STRING = "STRING",
     BOOLEAN = "BOOLEAN",
+}
+
+export const identifier: Record<string, ValueTokenType> = {
+    "?": ValueTokenType.BOOLEAN,
+    "#": ValueTokenType.NUMBER,
+    "'": ValueTokenType.STRING,
 }
 
 export enum OperatorTokenType {
@@ -91,7 +98,7 @@ export const variableTokenManager: TokenTypeManager<VariableTokenType> = {
     parseAsSubType(token: RawToken, subtype: string): string {
         if (!this.rawTokenIsThisType(token)) throw new Error(`token ${JSON.stringify(token)} is not of type ${JSON.stringify(this)}`);
 
-        return token.content.substring(2);
+        return token.content.substring(3);
     },
 
     types: VariableTokenType

@@ -83,6 +83,24 @@ const Operations: Record<ValueTokenType, Record<OperatorTokenType, OperationFunc
     }
 }
 
+export function stringify(operator: string): string {
+    return {
+        "ADD": "+",
+        "SUB": "-",
+        "MUL": "*",
+        "DIV": "/",
+        "MOD": "%",
+        "AND": "&&",
+        "OR": "||",
+        "GT": ">",
+        "LT": "<",
+        "GTE": ">=",
+        "LTE": ">=",
+        "EQ": "==",
+        "NEQ": "!=",
+    }[operator]!;
+}
+
 export function operate(token1: ParsedToken, token2: ParsedToken, operation: ParsedToken): ParsedToken {
 
     if (token1.tokenType !== TokenType.VALUE) {
