@@ -1,0 +1,50 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take test</title>
+</head>
+<body>
+
+    <dialog id="cookie-popup">
+        <h2>Warning</h2>
+        <p>This website uses cookies to track, identify, and verify users and their responses. If you deny, you will not be permitted to access the page.</p>
+        <p>To refuse, simply close this page.</p>
+        <button id="cookie-accept">Accept tracking</button>
+    </dialog>
+    
+    <div>
+        <label for="name">Email username (first initial + last name + grad year 2 digits):</label><input id="name" type="text">
+        <button id="take-test">Request Quiz</button>
+    </div>
+
+    <div id="test"></div>
+    <button id="submitanswers">SUBMIT ANSWERS</button>
+
+    <dialog id="submission-popup">
+        <p>Your responses have been submitted. Please copy your answer code.</p>
+        <h3>Your answer code:</h3>
+        <h2 id="answer-code-popup"></h2>
+        
+        <button id="copy-and-close-popup">Copy & Close</button>
+    </dialog>
+
+</body>
+<script defer src="./script.js"></script>
+<style>
+    body {
+        padding: 25px;
+    }
+    
+    .question-box {
+        border: 0.5px solid #343434;
+        border-radius: 5px;
+        width: fit-content;
+        font-size: large;
+        padding: 10px;
+    }
+    pre {
+        margin: 0;
+    }
+</style>
+</html>

@@ -1,4 +1,0 @@
-{
-    "deno.enable": true,
-    "deno.codeLens.referencesAllFunctions": true
-}
