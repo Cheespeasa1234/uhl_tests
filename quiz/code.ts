@@ -1,6 +1,6 @@
-import { ParsedToken } from "./typing/parsedToken.ts";
-import { OperatorTokenType, RawToken, TokenType, VariableTokenType } from "./typing/token.ts";
-import { operate as useOperator } from "./typing/operation.ts";
+import { ParsedToken } from "../typing/parsedToken.ts";
+import { RawToken, TokenType, VariableTokenType } from "../typing/token.ts";
+import { operate as useOperator } from "../typing/operation.ts";
 
 
 export type LineOfCode = {

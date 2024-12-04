@@ -1,5 +1,5 @@
 import { $, CodeEnvironment, type LineOfCode } from "./code.ts";
-import { ParsedToken } from "./typing/parsedToken.ts";
+import { ParsedToken } from "../typing/parsedToken.ts";
 
 export function generateForLoop(varname: string): LineOfCode[] {
     
@@ -9,17 +9,21 @@ export function generateForLoop(varname: string): LineOfCode[] {
     const increment = Math.round(Math.random() * 3 + 1);
     let code: LineOfCode;
     if (direction) {
-        code = $("for", `$*${varname} #0 $*${varname} LT #${length * increment} $*${varname} ADD #${increment}`,);
+        code = $("for", `$*#${varname} #0 $*#${varname} LT #${length * increment} $*#${varname} ADD #${increment}`,);
     } else {
-        code = $("for", `$*${varname} #${length * increment} $*${varname} GT #0 $*${varname} SUB #${increment}`,);
+        code = $("for", `$*#${varname} #${length * increment} $*#${varname} GT #0 $*#${varname} SUB #${increment}`,);
     }
 
     // Set the opeq
     code.nest_1 = [
-        $("print", `$*${varname}`),
+        $("print", `$*#${varname}`),
     ]
     return [code];
 
+}
+
+export function outputToJava(output: string[]): string {
+    return output.join("\n");
 }
 
 export function codeToJava(code: LineOfCode[], depth=0): string {
@@ -28,6 +32,7 @@ export function codeToJava(code: LineOfCode[], depth=0): string {
     for (let i = 0; i < depth; i++) pref += "  ";
 
     for (const line of code) {
+        console.log("CONVERTING " + JSON.stringify(line.values));
         const p: ParsedToken[] = line.values.map((v) => ParsedToken.fromRawToken(v));
         if (line.action === "for") {
             const s = `for (${p[0].toJavaDefinitionString()} = ${p[1].toJavaString()}; ${p[2].toJavaString()} ${(p[3].toJavaString())} ${p[4].toJavaString()}; ${p[5].toJavaString()} ${p[6].toJavaString()}= ${p[7].toJavaString()}) {`

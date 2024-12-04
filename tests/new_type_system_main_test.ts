@@ -1,6 +1,6 @@
 import { expect } from "jsr:@std/expect";
-import { $, CodeEnvironment, LineOfCode } from "../code.ts";
-import { generateForLoop, codeToJava } from "../codegen.ts";
+import { $, CodeEnvironment, LineOfCode } from "../quiz/code.ts";
+import { generateForLoop, codeToJava } from "../quiz/codegen.ts";
 import { RawToken } from "../typing/token.ts";
 import { ParsedToken } from "../typing/parsedToken.ts";
 

@@ -1,4 +1,4 @@
-import type { VariablesMap } from "../code.ts";
+import type { VariablesMap } from "../quiz/code.ts";
 import { valueTokenManager, operatorTokenManager, TokenType, tokenTypes, RawToken, ValueTokenType, OperatorTokenType, variableTokenManager, VariableTokenType, identifier } from "./token.ts";
 
 /**
@@ -27,7 +27,7 @@ export class ParsedToken {
         if (tokenType === TokenType.VARIABLE) {
             this.subtype = identifier[this.rawContent.charAt(2)];
             if (!this.subtype) {
-                throw new Error(`Variable not given valid identifier: '${this.rawContent.charAt(2)}'`);
+                throw new Error(`Variable not given valid identifier: '${this.rawContent}'`);
             }
         }
     }
