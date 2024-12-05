@@ -1,12 +1,12 @@
 import { $, CodeEnvironment, type LineOfCode } from "./code.ts";
 import { ParsedToken } from "../typing/parsedToken.ts";
 
-export function generateForLoop(varname: string): LineOfCode[] {
+export function generateForLoop(varname: string, nest: LineOfCode[], smaller = false): LineOfCode[] {
     
     // Create the top of the for loop
     const direction = Math.random() > 0.5;
-    const length = Math.round(Math.random() * 5 + 3);
-    const increment = Math.round(Math.random() * 3 + 1);
+    const length = Math.round(Math.random() * (smaller ? 3 : 5) + 3);
+    const increment = Math.ceil(Math.random() * (smaller ? 2 : 3) + 0);
     let code: LineOfCode;
     if (direction) {
         code = $("for", `$*#${varname} #0 $*#${varname} LT #${length * increment} $*#${varname} ADD #${increment}`,);
@@ -15,11 +15,20 @@ export function generateForLoop(varname: string): LineOfCode[] {
     }
 
     // Set the opeq
-    code.nest_1 = [
-        $("print", `$*#${varname}`),
-    ]
+    code.nest_1 = []
+
+    if (nest) {
+        nest.forEach(line => code.nest_1!.push(line));
+    }
     return [code];
 
+}
+
+export function generateDoubleForLoop(): LineOfCode[] {
+    const inner = generateForLoop("y", [$("print", `$*#y`)]);
+    const outer = generateForLoop("x", [...inner]);
+
+    return outer;
 }
 
 export function outputToJava(output: string[]): string {
@@ -62,5 +71,3 @@ export function codeToJava(code: LineOfCode[], depth=0): string {
     }
     return ans;
 }
-
-console.log(codeToJava(generateForLoop("i")))

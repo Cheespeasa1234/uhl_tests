@@ -4,17 +4,21 @@ import express, { Request, Response, NextFunction } from "npm:express";
 import bodyParser from "npm:body-parser";
 // @deno-types="npm:@types/cookie-parser"
 import cookieParser from "npm:cookie-parser";
-
 import crypto from "node:crypto";
 
 import { Quiz, QuizQuestion, Student } from "../uhl_tests/quiz/quiz.ts";
-import { generateForLoop } from "../uhl_tests/quiz/codegen.ts";
+import { generateDoubleForLoop, generateForLoop } from "../uhl_tests/quiz/codegen.ts";
+import { $ } from "../uhl_tests/quiz/code.ts";
 
 const PORT = 5173;
 const app = express();
 
+// Parse request body & cookies
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded());
 app.use(cookieParser());
+
+// Identify and track users by an ID
 app.use((req: Request, res: Response, next: NextFunction) => {
     // Add an identifier cookie
     console.log("IDing user");
@@ -33,7 +37,7 @@ type Session = {
     quiz: Quiz,
 };
 
-const activeSessions: Map<string, Session> = new Map<string, Session>;
+const activeSessions: {[id:string]: (Session | undefined)} = {};
 
 /**
  * IN: { name: string }
@@ -53,15 +57,17 @@ app.post("/new-test", (req: Request, res: Response) => {
     }
 
     const questions = new Array<QuizQuestion>(5);
-    for (let i = 0; i < questions.length; i++) {
-        questions[i] = new QuizQuestion(generateForLoop("i"));
+    for (let i = 0; i < questions.length - 2; i++) {
+        questions[i] = new QuizQuestion(generateForLoop("i", [$("print", "$*#i")]));
     }
+    questions[questions.length - 2] = new QuizQuestion(generateDoubleForLoop());
+    questions[questions.length - 1] = new QuizQuestion(generateDoubleForLoop());
 
     const quiz = new Quiz(questions);
     const student = new Student(name);
     
     const session: Session = { student, quiz };
-    activeSessions.set(student.name, session);
+    activeSessions[student.name] = session;
 
     res.json({
         success: true,
@@ -94,7 +100,7 @@ app.post("/submit-test", (req: Request, res: Response) => {
     }
 
     // make sure they are who they say they are
-    const session = activeSessions.get(name);
+    const session = activeSessions[name];
     if (!session) {
         res.json({ success: false, message: `Session for ${name} not found` });
         return;
@@ -111,7 +117,7 @@ app.post("/submit-test", (req: Request, res: Response) => {
     }
 
     // remove them from the sessions
-    activeSessions.delete(name);
+    activeSessions[name] = undefined;
 
     const answerCode = crypto.randomBytes(8).toString("hex");
     res.json({ success: true, message: "Test (totally) submitted. TEMPORARY!", answerCode});

@@ -16,10 +16,13 @@ export class Student {
 export class QuizQuestion {
     questionCode: LineOfCode[];
     questionString: string;
+    answer: string;
 
     constructor(questionCode: LineOfCode[]) {
+        console.log("CONSTRUCTOR CALLED");
         this.questionCode = questionCode;
         this.questionString = codeToJava(questionCode);
+        this.answer = this.getAnswer();
     }
 
     getAnswer(): string {

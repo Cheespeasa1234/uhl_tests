@@ -28,11 +28,14 @@ function createTestQuestionElement(testQuestionJSON) {
     const questionContentDiv = document.createElement("div");
     const pre = document.createElement("pre");
     pre.innerHTML = questionString;
+    pre.classList.add(["code-box"]);
+    pre.classList.add(["box"]);
     questionContentDiv.appendChild(pre);
     questionContentDiv.classList.add(["question-box"]);
 
     const answerDiv = document.createElement("textarea");
     answerDiv.classList.add(["answer-textarea"]);
+    answerDiv.classList.add(["box"]);
     
     questionDiv.appendChild(questionContentDiv);
     questionDiv.appendChild(answerDiv);

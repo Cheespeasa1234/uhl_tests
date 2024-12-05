@@ -1,8 +1,18 @@
 import { expect } from "jsr:@std/expect";
 import { $, CodeEnvironment, LineOfCode } from "../quiz/code.ts";
-import { generateForLoop, codeToJava } from "../quiz/codegen.ts";
-import { RawToken } from "../typing/token.ts";
 import { ParsedToken } from "../typing/parsedToken.ts";
+
+Deno.test("victor loop", () => {
+  const environment: CodeEnvironment = new CodeEnvironment();
+  const code: LineOfCode[] = [
+    $("for", "$*#i #12 $*#i GTE #0 $*#i SUB #2", [
+      $("print", "$*#i")
+    ])
+  ];
+
+  environment.execute(code);
+  console.log(environment.output);
+});
 
 Deno.test("checks equality", () => {
   const environment: CodeEnvironment = new CodeEnvironment();
