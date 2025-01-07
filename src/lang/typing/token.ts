@@ -2,8 +2,8 @@ export enum TokenType {
     VALUE = "VALUE",
     OPERATOR = "OPERATOR",
     VARIABLE = "VARIABLE",
+    FUNCTION = "FUNCTION",
 }
-
 
 export enum ValueTokenType {
     NUMBER = "NUMBER",
@@ -11,6 +11,9 @@ export enum ValueTokenType {
     BOOLEAN = "BOOLEAN",
 }
 
+/**
+ * A map of the characters preceding a Value token, which identify its type
+ */
 export const identifier: Record<string, ValueTokenType> = {
     "?": ValueTokenType.BOOLEAN,
     "#": ValueTokenType.NUMBER,
@@ -36,6 +39,13 @@ export enum OperatorTokenType {
 export enum VariableTokenType {
     VALUE = "VALUE",
     REFERENCE = "REFERENCE",
+}
+
+export enum FunctionTokenType {
+    substring = "substring",
+    charAt = "charAt",
+    length = "length",
+    indexOf = "indexOf",
 }
 
 export const valueTokenManager: TokenTypeManager<ValueTokenType> = {
@@ -104,10 +114,30 @@ export const variableTokenManager: TokenTypeManager<VariableTokenType> = {
     types: VariableTokenType
 }
 
-export const tokenTypes: Record<TokenType, TokenTypeManager<ValueTokenType> | TokenTypeManager<OperatorTokenType> | TokenTypeManager<VariableTokenType>> = {
+export const functionTokenManager: TokenTypeManager<FunctionTokenType> = {
+    rawTokenIsThisType(token: RawToken): boolean {
+        return token.content.startsWith(".");
+    },
+
+    rawTokenSubType(token: RawToken): FunctionTokenType | undefined {
+        for (const key in this.types) {
+            if (token.content === (key as string)) return key as FunctionTokenType;
+        }
+        return undefined;
+    },
+
+    parseAsSubType(token: RawToken, subtype: string): string {
+        return token.content.substring(1);
+    },
+
+    types: FunctionTokenType
+};
+
+export const tokenTypes: Record<TokenType, TokenTypeManager<ValueTokenType> | TokenTypeManager<OperatorTokenType> | TokenTypeManager<VariableTokenType> | TokenTypeManager<FunctionTokenType>> = {
     [TokenType.VALUE]: valueTokenManager,
     [TokenType.OPERATOR]: operatorTokenManager,
     [TokenType.VARIABLE]: variableTokenManager,
+    [TokenType.FUNCTION]: functionTokenManager
 };
 
 /**

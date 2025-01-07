@@ -1,3 +1,5 @@
+const DEBUG = false;
+
 // @deno-types="npm:@types/express"
 import express, { Request, Response, NextFunction } from "npm:express";
 // @deno-types="npm:@types/body-parser"
@@ -6,9 +8,8 @@ import bodyParser from "npm:body-parser";
 import cookieParser from "npm:cookie-parser";
 import crypto from "node:crypto";
 
-import { Quiz, QuizQuestion, Student } from "../uhl_tests/quiz/quiz.ts";
-import { generateDoubleForLoop, generateForLoop } from "../uhl_tests/quiz/codegen.ts";
-import { $ } from "../uhl_tests/quiz/code.ts";
+import { Quiz, Student } from "./lang/quiz/quiz.ts";
+import { makeTest } from "./lang/quiz/codegen.ts";
 
 const PORT = 5173;
 const app = express();
@@ -56,14 +57,7 @@ app.post("/new-test", (req: Request, res: Response) => {
         return;
     }
 
-    const questions = new Array<QuizQuestion>(5);
-    for (let i = 0; i < questions.length - 2; i++) {
-        questions[i] = new QuizQuestion(generateForLoop("i", [$("print", "$*#i")]));
-    }
-    questions[questions.length - 2] = new QuizQuestion(generateDoubleForLoop());
-    questions[questions.length - 1] = new QuizQuestion(generateDoubleForLoop());
-
-    const quiz = new Quiz(questions);
+    const quiz: Quiz = makeTest();
     const student = new Student(name);
     
     const session: Session = { student, quiz };
@@ -72,7 +66,7 @@ app.post("/new-test", (req: Request, res: Response) => {
     res.json({
         success: true,
         message: "",
-        questions,
+        questions: quiz.questions,
         student,
     });
 });
@@ -120,15 +114,19 @@ app.post("/submit-test", (req: Request, res: Response) => {
     activeSessions[name] = undefined;
 
     const answerCode = crypto.randomBytes(8).toString("hex");
-    res.json({ success: true, message: "Test (totally) submitted. TEMPORARY!", answerCode});
+    res.json({ success: true, message: "Test submitted.", answerCode});
 
     const responseBlob = {
         answers: answers,
         quiz: session.quiz,
     };
 
+    console.log(responseBlob);
+    console.log(JSON.stringify(responseBlob));
+    console.log(sanitizeForCSV(JSON.stringify(responseBlob)));
+
     function sanitizeForCSV(text: string) {
-        return text.replaceAll(",", "~").replaceAll("\n", "");
+        return text.replaceAll(",", "~c").replaceAll("\"", "~q").replaceAll("\n", "");
     }
 
     // Log the answers to the user's identity
@@ -136,13 +134,15 @@ app.post("/submit-test", (req: Request, res: Response) => {
 
 });
 
-app.get("/uhl_see_csv", (req: Request, res: Response) => {
-    res.send("<h3>All tildes (~) are actually commas. They are just replaced to stop CSV injection.</h3><pre>" + Deno.readTextFileSync("responses.csv").toString() + "</pre>");
-});
-
-app.get("/uhl_see_sessions", (req: Request, res: Response) => {
-    res.json(activeSessions);
-});
+if (DEBUG) {
+    app.get("/uhl_see_csv", (_req: Request, res: Response) => {
+        res.send("<h3>All tildes (~) are actually commas. They are just replaced to stop CSV injection.</h3><pre>" + Deno.readTextFileSync("responses.csv").toString() + "</pre>");
+    });
+    
+    app.get("/uhl_see_sessions", (_req: Request, res: Response) => {
+        res.json(activeSessions);
+    });
+}
 
 app.get("/*", express.static("public"));
 

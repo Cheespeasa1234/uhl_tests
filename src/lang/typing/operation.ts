@@ -104,15 +104,15 @@ export function stringify(operator: string): string {
 export function operate(token1: ParsedToken, token2: ParsedToken, operation: ParsedToken): ParsedToken {
 
     if (token1.tokenType !== TokenType.VALUE) {
-        throw new Error(`${token1.toString()} must be a value, was type ${token1.getTypeName()}`);
+        throw new Error(`${token1.toString()} must be a VALUE.*, was type ${token1.getTypeName()}`);
     }
     
     if (token2.tokenType !== TokenType.VALUE) {
-        throw new Error(`${token2.toString()} must be a value, was type ${token2.getTypeName()}`);
+        throw new Error(`${token2.toString()} must be a VALUE.*, was type ${token2.getTypeName()}`);
     }
 
     if (operation.tokenType !== TokenType.OPERATOR) {
-        throw new Error(`${operation.toString()} must be an operator, was type ${operation.getTypeName()}`);
+        throw new Error(`${operation.toString()} must be an OPERATOR.*, was type ${operation.getTypeName()}`);
     }
 
     if (token1.type !== token2.type) {

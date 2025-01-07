@@ -17,12 +17,14 @@ export class QuizQuestion {
     questionCode: LineOfCode[];
     questionString: string;
     answer: string;
+    descriptor: string;
 
-    constructor(questionCode: LineOfCode[]) {
+    constructor(questionCode: LineOfCode[], descriptor?: string) {
         console.log("CONSTRUCTOR CALLED");
         this.questionCode = questionCode;
         this.questionString = codeToJava(questionCode);
         this.answer = this.getAnswer();
+        this.descriptor = descriptor || "unnamed question";
     }
 
     getAnswer(): string {

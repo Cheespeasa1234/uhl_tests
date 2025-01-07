@@ -1,7 +1,7 @@
 :root {
     --code-block-side-size: 10px;
     --code-block-side-color: #ff6f22;
-    --answer-block-side-color: #3ddbff;
+    --answer-block-side-color: #128a52;
 }
 
 body {
@@ -10,7 +10,10 @@ body {
 
 .question-container {
     width: 25vw;
-    margin: auto;
+    padding: 5px;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
 }
 
 .question-box {
@@ -30,7 +33,16 @@ body {
     background: linear-gradient(90deg, var(--code-block-side-color) var(--code-block-side-size), transparent var(--code-block-side-size));
 }
 
-.answer-textarea {
-    padding-left: calc(10px + var(--code-block-side-size));
-    background: linear-gradient(90deg, var(--answer-block-side-color) var(--code-block-side-size), transparent var(--code-block-side-size));
+dialog[open] {
+    animation: fadein 0.5s ease-in forwards;
+}
+
+@keyframes fadein {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
