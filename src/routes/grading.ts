@@ -8,13 +8,16 @@ import crypto from "node:crypto";
 import { CSVEntry_GoogleForm, CSVEntry_TestProgram, getGoogleFormResponses, getTestProgramResponses, gradeStudentByFormInput, GradeResult, QuestionResult, getGoogleFormRaw, getTestProgramRaw, gradeStudent } from "../analyze_responses.ts";
 import { getActiveSessions, presetManager } from "./testing.ts";
 import { PresetManager } from "../config.ts";
+import { load } from "jsr:@std/dotenv";
 
 export const router = express.Router();
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded());
 router.use(cookieParser());
 
-const secret: string = "seper_sucret_casspode";
+const env = await load({ envPath: "../secrets/.env" });
+const secret: string = env.ADMIN_PASSWORD;
+console.log("SECRET: " + secret);
 
 let sessionId: string | undefined;
 let sessionIdClearTimeout: number | undefined;
