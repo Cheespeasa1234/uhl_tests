@@ -38,10 +38,14 @@ const answerCodeText = document.querySelector("#answer-code-popup");
 let studentSelf;
 
 function createTestQuestionElement(testQuestionJSON) {
-    const { questionString } = testQuestionJSON;
+    const { questionString, descriptor } = testQuestionJSON;
 
     const questionDiv = document.createElement("div");
     questionDiv.classList.add(["question-container"]);
+
+    const questionDescriptorDiv = document.createElement("div");
+    questionDescriptorDiv.classList.add(["question-descriptor"]);
+    questionDescriptorDiv.innerHTML = descriptor;
 
     const questionContentDiv = document.createElement("div");
     const pre = document.createElement("pre");
@@ -55,6 +59,7 @@ function createTestQuestionElement(testQuestionJSON) {
     answerDiv.classList.add(["answer-textarea"]);
     answerDiv.classList.add(["box"]);
 
+    questionDiv.appendChild(questionDescriptorDiv);
     questionDiv.appendChild(questionContentDiv);
     questionDiv.appendChild(answerDiv);
     questionDiv.appendChild(document.createElement("hr"));
@@ -102,6 +107,7 @@ takeTestButton.onclick = () => {
             return;
         }
 
+        submissionPopupOpen.disabled = false;
         testArea.innerHTML = "";
         for (const question of questions) {
             const element = createTestQuestionElement(question);

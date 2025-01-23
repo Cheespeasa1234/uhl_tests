@@ -45,53 +45,57 @@ export function generateDoubleForLoop(): LineOfCode[] {
 }
 
 export function generateStringQuestion(): LineOfCode[] {
-    return new CodeEnvironment().compile((()=>{
-    const options = [
-        "Nate Levison GOAT",
-        "Java is Awesome",
-        "Hello World",
-        "Goodbye World",
-    ];
-    const originalString = options[Math.floor(Math.random() * options.length)];
-    const version = Math.floor(Math.random() * 3);
-    if (version == 0) {
-        const start = Math.floor(Math.random() * (originalString.length / 2));
-        const end = start +
-            Math.floor(Math.random() * (originalString.length / 2));
-        return [
-            {
-                action: "print",
-                values: [
-                    ParsedToken.fromRawTokenString(".substring"),
-                    ParsedToken.fromString(originalString),
-                    ParsedToken.fromNumber(start),
-                    ParsedToken.fromNumber(end),
-                ],
-            },
+    return new CodeEnvironment().compile((() => {
+        const options = [
+            "Nate Levison GOAT",
+            "Java is Awesome",
+            "Hello World",
+            "Goodbye World",
         ];
-    } else if (version == 1) {
-        const start = Math.floor(Math.random() * (originalString.length));
-        return [
-            {
-                action: "print",
-                values: [
-                    ParsedToken.fromRawTokenString(".charAt"),
-                    ParsedToken.fromString(originalString),
-                    ParsedToken.fromNumber(start),
-                ],
-            },
-        ];
-    } else if (version == 2) {
-        return [
-            {
-                action: "print",
-                values: [
-                    ParsedToken.fromRawTokenString(".length"),
-                    ParsedToken.fromString(originalString),
-                ],
-            },
-        ];
-    } else return [];})())
+        const originalString =
+            options[Math.floor(Math.random() * options.length)];
+        const version = Math.floor(Math.random() * 3);
+        if (version == 0) {
+            const start = Math.floor(
+                Math.random() * (originalString.length / 2),
+            );
+            const end = start +
+                Math.floor(Math.random() * (originalString.length / 2));
+            return [
+                {
+                    action: "print",
+                    values: [
+                        ParsedToken.fromRawTokenString(".substring"),
+                        ParsedToken.fromString(originalString),
+                        ParsedToken.fromNumber(start),
+                        ParsedToken.fromNumber(end),
+                    ],
+                },
+            ];
+        } else if (version == 1) {
+            const start = Math.floor(Math.random() * (originalString.length));
+            return [
+                {
+                    action: "print",
+                    values: [
+                        ParsedToken.fromRawTokenString(".charAt"),
+                        ParsedToken.fromString(originalString),
+                        ParsedToken.fromNumber(start),
+                    ],
+                },
+            ];
+        } else if (version == 2) {
+            return [
+                {
+                    action: "print",
+                    values: [
+                        ParsedToken.fromRawTokenString(".length"),
+                        ParsedToken.fromString(originalString),
+                    ],
+                },
+            ];
+        } else return [];
+    })());
 }
 
 export function outputToJava(output: string[]): string {
@@ -158,23 +162,35 @@ export function codeToJava(code: LineOfCode[], depth = 0): string {
     return ans;
 }
 
-
-export function makeTest(loopCount: number = 2, doubleLoopCount: number = 1, stringCount: number = 3): Quiz {
+export function makeTest(testLoopCount: number, testDoubleLoopCount: number, testStringCount: number): Quiz {
     const questions: QuizQuestion[] = [];
 
     // Create for loop questions
-    for (let i = 0; i < loopCount; i++) {
-        questions.push(new QuizQuestion(generateForLoop("i", [$("print", "$*#i")])));
+    for (let i = 0; i < testLoopCount; i++) {
+        questions.push(
+            new QuizQuestion(
+                generateForLoop("i", [$("print", "$*#i")]),
+                "What will the console look like after this for loop runs? (loops)",
+            ),
+        );
     }
 
     // Create double loop question
-    for (let i = 0; i < doubleLoopCount; i++) {
-        questions.push(new QuizQuestion(generateDoubleForLoop()));
+    for (let i = 0; i < testDoubleLoopCount; i++) {
+        questions.push(
+            new QuizQuestion(
+                generateDoubleForLoop(),
+                "What will the console look like after this for loop runs? (loops^2)",
+            ),
+        );
     }
-    
+
     // Create string question
-    for (let i = 0; i < stringCount; i++) {
-        questions.push(new QuizQuestion(generateStringQuestion()));
+    for (let i = 0; i < testStringCount; i++) {
+        questions.push(new QuizQuestion(
+            generateStringQuestion(),
+            "What will the output of this code be? (strings)"
+        ));
     }
 
     const quiz = new Quiz(questions);

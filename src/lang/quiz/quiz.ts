@@ -63,6 +63,12 @@ export class Quiz {
     constructor(questions: QuizQuestion[]) {
         this.questions = questions;
     }
+    
+    getCensoredQuestions(): any[] {
+        return this.questions.map(question => {
+            return { questionString: question.questionString, descriptor: question.descriptor }
+        })
+    }
 
     getSolutionKey(student: Student): string {
         let solutionKey = student.name;

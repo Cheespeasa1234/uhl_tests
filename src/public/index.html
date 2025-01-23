@@ -14,13 +14,19 @@
         <button id="cookie-popup-close">Accept tracking</button>
     </dialog>
     
-    <div>
-        <label for="name">Email username (first initial + last name + grad year 2 digits):</label><input id="name" type="text">
-        <button id="take-test">Request Quiz</button>
-    </div>
+    <fieldset>
+        <legend>Request Quiz</legend>
+        <label for="name">Email</label><input id="name" type="email" placeholder="johndoe@example.com">
+        <button id="take-test">Submit</button>
+    </fieldset>
 
-    <div id="test"></div>
-    <button id="submission-popup-open">SUBMIT ANSWERS</button>
+    <fieldset>
+        <legend>Quiz</legend>
+        <div style="margin-bottom: 10px;" id="test">
+            <em style="font-size: 1em;">Please request a quiz first.</em>
+        </div>
+        <button id="submission-popup-open" disabled>Submit</button>
+    </fieldset>
 
     <dialog id="submission-popup">
         <p>Your responses have been submitted. Please copy your answer code.</p>
