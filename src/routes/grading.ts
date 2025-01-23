@@ -78,14 +78,13 @@ router.get("/sessions", checkSidMiddleware, (req: Request, res: Response) => {
 
 router.get("/google-form", checkSidMiddleware, async (req: Request, res: Response) => {
     const data = await getGoogleFormRaw();
-    const header = data[0];
-    const rows = data.slice(1);
 
     return res.json({
         success: true,
         message: "it also worked yippee",
         data: {
-            header, rows
+            header: ["Timestamp", "Email Address", "Answer Code", "How difficult was it?"], 
+            rows: data
         }
     });
 })

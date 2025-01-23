@@ -1,41 +1,7 @@
-const modalElement = document.getElementById("modal");
-const modal = new bootstrap.Modal(modalElement);
+'use strict';
+// MODULE
 
-const selectPresetOnlyPreDialog = document.getElementById("selectPresetOnlyPreModalDialog");
-const selectPresetDialog = document.getElementById("selectPresetModalDialog");
-const confirmationDialog = document.getElementById("confirmationModalDialog");
-const oopsDialog = document.getElementById("oopsModalDialog");
 
-const selectPresetModalPreExistInput = document.getElementById("selectPresetModalPreExistInput");
-const selectPresetModalNameInput = document.getElementById("selectPresetModalNameInput");
-const selectPresetTabsList = document.getElementById("selectPresetTabsList");
-
-modalElement.addEventListener("hidden.bs.modal", () => {
-    oopsDialog.classList.add("d-none");
-    confirmationDialog.classList.add("d-none");
-    selectPresetDialog.classList.add("d-none");
-    selectPresetOnlyPreDialog.classList.add("d-none");
-});
-
-const oopsOkayBtn = document.getElementById("oopsOkayBtn");
-oopsOkayBtn.addEventListener("click", () => {
-    modal.hide();
-});
-
-const confirmationOkayBtn = document.getElementById("confirmationOkayBtn");
-confirmationOkayBtn.addEventListener("click", () => {
-    modal.hide();
-});
-
-const selectPresetOkayBtn = document.getElementById("selectPresetOkayBtn");
-selectPresetOkayBtn.addEventListener("click", () => {
-    modal.hide();
-});
-
-const selectPresetCancelBtn = document.getElementById("selectPresetCancelBtn");
-selectPresetCancelBtn.addEventListener("click", () => {
-    modal.hide();
-});
 
 /**
  * Display an oops modal with a given error message, and runs a callback when it is closed, either by the user or by some other code.
@@ -43,7 +9,7 @@ selectPresetCancelBtn.addEventListener("click", () => {
  * @param {() => void} dismissedCallback The callback that will run when the oops message is hidden
  * @returns void
  */
-function showOopsMessage(message, dismissedCallback) {
+export function showOopsMessage(message, dismissedCallback) {
     modal.show();
     oopsDialog.classList.remove("d-none");
     document.getElementById("oopsModalBody").innerHTML = `<p>${message}</p>`;
@@ -63,7 +29,7 @@ function showOopsMessage(message, dismissedCallback) {
  * @param {(success: boolean, message: string, category: string|null, value: string|null) => void} callback 
  * @returns void
  */
-function showSelectPresetModal(callback) {
+export function showSelectPresetModal(callback) {
     // Show the modal
     modal.show();
     selectPresetDialog.classList.toggle("d-none");
@@ -88,17 +54,44 @@ function showSelectPresetModal(callback) {
     })
 }
 
-function getActiveButton(tabsList) {
+export function getActiveButton(tabsList) {
     return tabsList.querySelector(".nav-link.active");
 }
 
-showOopsMessage("this is a modal. <b>html works in it.</b>", () => {
-    showSelectPresetModal((success, message, category, value) => {
-        if (success) {
-            // TODO
-            console.log(`Please read in ${category} preset: ${value}`);
-        } else {
-            showOopsMessage(`Something went wrong: <pre>${message}</pre>`, () => {});
+export function createTable(header, rows) {
+    const table = document.createElement("table");
+    
+    table.classList.add("nowrap", "stripe", "hover", "compact", "row-border", "border", "rounded");
+    table.style.tableLayout = "fixed";
+    const thead = document.createElement("thead");
+
+    const trHead = document.createElement("tr");
+    header.forEach((col) => {
+        const th = document.createElement("th");
+        th.innerText = col;
+        trHead.appendChild(th);
+    });
+    thead.appendChild(trHead);
+
+    const tbody = document.createElement("tbody");
+    rows.forEach((row) => {
+        const tr = document.createElement("tr");
+        for (let i = 0; i < row.length; i++) {
+            if (i === 0) {
+                const th = document.createElement("th");
+                th.scope = "row";
+                th.innerText = row[i];
+                tr.appendChild(th);
+            } else {
+                const td = document.createElement("td");
+                td.innerText = row[i];
+                tr.appendChild(td);
+            }
         }
-    })
-});
+        tbody.appendChild(tr);
+    });
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    return table;
+}
