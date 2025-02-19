@@ -6,8 +6,8 @@ import cookieParser from "npm:cookie-parser";
 import crypto from "node:crypto";
 
 import { CSVEntry_GoogleForm, CSVEntry_TestProgram, getGoogleFormResponses, getTestProgramResponses, gradeStudentByFormInput, GradeResult, QuestionResult, getGoogleFormRaw, getTestProgramRaw, gradeStudent } from "../analyze_responses.ts";
-import { getActiveSessions, presetManager } from "./testing.ts";
-import { PresetManager } from "../config.ts";
+import { getActiveSessions, manualConfigs, presetManager } from "./testing.ts";
+import { PresetManager, type Preset } from "../config.ts";
 import { load } from "jsr:@std/dotenv";
 
 export const router = express.Router();
@@ -27,7 +27,7 @@ const checkSidMiddleware = (req: Request, res: Response, next: NextFunction) => 
     if (!sessionId || sessionIdClaim !== sessionId) {
         res.json({
             success: false,
-            message: "Invalid sessionId"
+            message: "Invalid sessionId (either it expired, or it is invalid)"
         })
     } else {
         next();
@@ -56,7 +56,7 @@ router.post("/get_session_id", (req: Request, res: Response) => {
         res.cookie("HCS_ADMIN_SID", sessionId, { maxAge: 1000 * 60 * 60, secure: true, domain: "natelevison.com" });
         return res.json({
             success: true,
-            message: "",
+            message: "Successfully set SID",
             data: {
                 sessionId
             }
@@ -72,7 +72,7 @@ router.post("/get_session_id", (req: Request, res: Response) => {
 router.get("/sessions", checkSidMiddleware, (req: Request, res: Response) => {
     return res.json({
         success: true,
-        message: "",
+        message: "Successfully fetched sessions",
         data: {
             sessions: getActiveSessions()
         }
@@ -84,10 +84,10 @@ router.get("/google-form", checkSidMiddleware, async (req: Request, res: Respons
 
     return res.json({
         success: true,
-        message: "it also worked yippee",
+        message: "Successfully fetched google form",
         data: {
-            header: ["Timestamp", "Email Address", "Answer Code", "How difficult was it?"], 
-            rows: data
+            header: data[0],
+            rows: data.slice(1)
         }
     });
 })
@@ -99,7 +99,7 @@ router.get("/test-program", checkSidMiddleware, (req: Request, res: Response) =>
 
     return res.json({
         success: true,
-        message: "it worked yippee",
+        message: "Successfully fetched test program",
         data: {
             header, rows
         }
@@ -123,14 +123,14 @@ router.get("/grade/:studentEmail", checkSidMiddleware, async (req: Request, res:
     if (testProgramResponses.length === 0) {
         return res.json({
             success: false,
-            message: "No test program responses found"
+            message: "No test program responses found where that email exists"
         })
     }
 
     if (googleFormResponses.length === 0) {
         return res.json({
             success: false,
-            message: "No google form responses found"
+            message: "No google form responses found where that email exists"
         })
     }
 
@@ -150,7 +150,7 @@ router.get("/grade/:studentEmail", checkSidMiddleware, async (req: Request, res:
         if (result.answerCode === mostRecentGoogleFormResponse.answerCode) {
             return res.json({
                 success: true,
-                message: "",
+                message: "Successfully graded student",
                 data: {
                     grade:gradeStudent(result)
                 }
@@ -164,29 +164,170 @@ router.get("/grade/:studentEmail", checkSidMiddleware, async (req: Request, res:
     })
 });
 
-router.post("/configure/swapto", checkSidMiddleware, (req: Request, res: Response) => {
-    const presetName = req.body['presetName'];
-    const p = presetManager.getPreset(presetName)
-    if (p) {
-        presetManager.currentPreset = p;
-        return res.json({
+/**
+ * Get the value of the given preset. If the presetName is "default", the default preset is obtained.
+ */
+router.get("/config/get_preset/:presetName", checkSidMiddleware, (req: Request, res: Response) => {
+    const presetName = req.params['presetName'];
+    const preset = presetManager.getPreset(presetName);
+    if (preset) {
+        res.json({
             success: true,
-            data: p
+            message: "Successfully retrieved preset",
+            data: {
+                preset: preset
+            }
         })
     } else {
-        return res.json({
+        res.json({
             success: false,
-            message: `No preset called ${presetName} found.`
+            message: "That preset name doesn't exist.",
         })
     }
+});
+
+/**
+ * Gets the default preset.
+ */
+router.get("/config/get_preset_default", checkSidMiddleware, (req: Request, res: Response) => {
+    res.json({
+        success: true,
+        message: "Got the default preset",
+        data: {
+            preset: PresetManager.defaultPreset
+        }
+    })
 })
 
-router.post("/configure/swaptodefault", checkSidMiddleware, (req: Request, res: Response) => {
-    presetManager.currentPreset = PresetManager.defaultPreset;
-})
+/**
+ * Set the value of a preset to a given value.
+ */
+router.post("/config/set_preset", checkSidMiddleware, (req: Request, res: Response) => {
+    const presetName = req.body['presetName'];
+    const preset: Preset = req.body['preset'] as Preset;
+    presetManager.setPreset(presetName, preset);
 
-router.post("/configure/set/:preset/:value")
+    res.json({
+        success: true,
+        message: "Successfully set " + presetName + " to the given value."
+    });
+});
 
-router.post("/configure/del/:preset")
+/**
+ * Set the current configuration in use.
+ */
+router.post("/config/set_config", checkSidMiddleware, (req: Request, res: Response) => {
+    const preset = req.body['preset'];
+    console.log("Setting currentPreset to " + preset);
+    presetManager.currentPreset = preset;
 
-router.post("/configure/new/:preset")
+    res.json({
+        success: true,
+        message: "Successfully set the current configuration"
+    })
+});
+
+/**
+ * Get the current configuration in use.
+ */
+router.get("/config/get_config", checkSidMiddleware, (req: Request, res: Response) => {
+    console.log(presetManager.currentPreset);
+    res.json({
+        success: true,
+        message: "Successfully got the current configuration",
+        data: {
+            preset: presetManager.currentPreset
+        }
+    })
+});
+
+router.get("/config/list_of_presets", checkSidMiddleware, (req: Request, res: Response) => {
+    const presets = presetManager.listOfPresets();
+    res.json({
+        success: true,
+        message: "Successfully got list of presets",
+        data: {
+            presets: presets
+        }
+    });
+});
+
+// Extra configs (manually made)
+router.get("/manualConfig/:key", checkSidMiddleware, (req: Request, res: Response) => {
+    const key = req.params["key"];
+    if (manualConfigs.has(key)) {
+        res.json({
+            success: true,
+            message: `Successfully retrieved value of ${key}`,
+            data: {
+                value: manualConfigs.get(key),
+            }
+        })
+    } else {
+        res.json({
+            success: false,
+            message: `Key ${key} not found.`,
+        });
+    }
+});
+
+router.post("/manualConfig", checkSidMiddleware, (req: Request, res: Response) => {
+    const { type, key, value } = req.body;
+    if (!type) {
+        return res.json({
+            success: false,
+            message: "type parameter not provided",
+        });
+    }
+    if (!key) {
+        return res.json({
+            success: false,
+            message: "key parameter not provided",
+        });
+    }
+    if (!value) {
+        return res.json({
+            success: false,
+            message: "value parameter not provided",
+        });
+    }
+
+    if (!manualConfigs.has(key)) {
+        return res.json({
+            success: false,
+            message: `Key ${key} not found`,
+        });
+    }
+
+    // SPAGHETTI!!!!!1
+    if (type == 'number') {
+        const num: number = Number(value);
+        if (Number.isFinite(num)) {
+            manualConfigs.set(key, num);
+            return res.json({
+                success: true,
+                message: `Successfully set ${key} to ${value}`,
+            });
+        } else {
+            return res.json({
+                success: false,
+                message: `Failed to set ${key} to ${value}: ${value} is not a finite number`,
+            });
+        }
+    } else if (type == 'boolean') {
+        const v = value != "false";
+        console.log("STRING!", value);
+        console.log("BOOLEAN!", v);
+        manualConfigs.set(key, v);
+        return res.json({
+            success: true,
+            message: `Successfully set ${key} to ${value}`
+        });
+    } else {
+        const types = ['number', 'boolean'];
+        return res.json({
+            success: false,
+            message: `Type ${type} is not ${types.join(" or ")}`,
+        });
+    }
+});

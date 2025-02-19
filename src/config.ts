@@ -55,6 +55,10 @@ export class ConfigValue {
 }
 
 export class PresetManager {
+
+    /**
+     * The value of the default preset.
+     */
     static readonly defaultPreset: Readonly<Preset> = {
         [ConfigKey.FOR_LOOP_COUNT]: new ConfigValue(
             ConfigValueType.NUMBER,
@@ -80,41 +84,60 @@ export class PresetManager {
         this.currentPreset = PresetManager.defaultPreset;
     }
 
+    /**
+     * Get the value of a key of the currently opened preset.
+     */
     getConfig(key: ConfigKey): ConfigValue {
+        console.log("Current preset: " + JSON.stringify(this.currentPreset[key]));
         return this.currentPreset[key];
     }
     
+    /**
+     * Read in the presets from the preset JSON file.
+     * @returns The presets
+     */
     downloadPresets(): Record<string, Preset> {
         const text: string = Deno.readTextFileSync(PRESETS_JSON_FILE);
         const json: Record<string, Preset> = JSON.parse(text) as Record<string, Preset>;
         return json;
     }
     
+    /**
+     * Saves the changes made to a file.
+     */
     savePresets() {
         const text: string = JSON.stringify(this.presets, null, 1);
         Deno.writeTextFile(PRESETS_JSON_FILE, text);
     }
     
+    /**
+     * Download the presets again.
+     */
     loadPresets(): void {
         this.presets = this.downloadPresets();
     }
     
+    /**
+     * Gets the value of a given preset.
+     * @param presetName The name of the preset
+     * @returns The preset
+     */
     getPreset(presetName: string): Preset | undefined {
         return this.presets[presetName];
     }
     
+    /**
+     * Sets the value of a preset.
+     * @param presetName The name of the preset to set
+     * @param presetValue The new value of the preset
+     */
     setPreset(presetName: string, presetValue: Preset) {
         this.presets[presetName] = presetValue;
+        this.savePresets();
+    }
+
+    listOfPresets(): string[] {
+        return Object.keys(this.presets);
     }
 
 }
-
-(()=>{
-
-    const pm: PresetManager = new PresetManager();
-    pm.currentPreset = pm.getPreset("myPreset")!;
-    console.log(pm.getConfig(ConfigKey.FOR_LOOP_COUNT));
-    console.log(pm.getConfig(ConfigKey.NESTED_FOR_LOOP_COUNT));
-    console.log(pm.getConfig(ConfigKey.STRING_COUNT));
-
-})()

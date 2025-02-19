@@ -1,5 +1,3 @@
-const DEBUG = false;
-
 import express, { Request, Response, NextFunction } from "npm:express";
 // @deno-types="npm:@types/body-parser"
 import bodyParser from "npm:body-parser";
@@ -10,6 +8,7 @@ import crypto from "node:crypto";
 import { Quiz, Student } from "../lang/quiz/quiz.ts";
 import { makeTest } from "../lang/quiz/codegen.ts";
 import { ConfigKey, PresetManager } from "../config.ts";
+import { appendTestProgramCSV } from "../analyze_responses.ts";
 
 export const router = express.Router();
 
@@ -34,6 +33,8 @@ router.use((req: Request, res: Response, next: NextFunction) => {
 type Session = {
     student: Student,
     quiz: Quiz,
+    timeStarted: Date,
+    timeToEnd: Date | null,
 };
 
 const activeSessions: {[id:string]: (Session | undefined)} = {};
@@ -42,6 +43,11 @@ export function getActiveSessions(): typeof activeSessions {
 }
 
 export const presetManager: PresetManager = new PresetManager();
+export const manualConfigs: Map<string, boolean | number> = new Map();
+manualConfigs.set("enableStudentTesting", false);
+manualConfigs.set("enableTimeLimit", true);
+manualConfigs.set("timeLimit", 40);
+manualConfigs.set("debugMode", false);
 
 /**
  * IN: { name: string }
@@ -51,6 +57,14 @@ export const presetManager: PresetManager = new PresetManager();
  */
 router.post("/new-test", (req: Request, res: Response) => {
     
+    if (!manualConfigs.get("enableStudentTesting")) {
+        res.json({
+            success: false,
+            message: "Testing disabled."
+        });
+        return;
+    }
+
     const name = req.body['name'];
     if (!name) {
         res.json({
@@ -60,21 +74,36 @@ router.post("/new-test", (req: Request, res: Response) => {
         return;
     }
 
+    console.log("FLC: " + presetManager.getConfig(ConfigKey.FOR_LOOP_COUNT));
+    
+    const timeStarted = new Date();
+    let timeToEnd: Date | null = null;
+    if (manualConfigs.get("enableTimeLimit")) {
+        const timeLimitMillis = (manualConfigs.get("timeLimit") as number) * 60 * 1000;
+        const newTime = timeStarted.getTime() + timeLimitMillis;
+        timeToEnd = new Date(newTime);
+    }
     const quiz: Quiz = makeTest(
-        presetManager.getConfig(ConfigKey.FOR_LOOP_COUNT).getNumberValue(),
-        presetManager.getConfig(ConfigKey.NESTED_FOR_LOOP_COUNT).getNumberValue(),
-        presetManager.getConfig(ConfigKey.STRING_COUNT).getNumberValue(),
+        timeStarted,
+        timeToEnd,
+        Number(presetManager.getConfig(ConfigKey.FOR_LOOP_COUNT).value),
+        Number(presetManager.getConfig(ConfigKey.NESTED_FOR_LOOP_COUNT).value),
+        Number(presetManager.getConfig(ConfigKey.STRING_COUNT).value),
     );
     const student = new Student(name);
     
-    const session: Session = { student, quiz };
+    const session: Session = { student, quiz, timeStarted, timeToEnd };
     activeSessions[student.name] = session;
 
     res.json({
         success: true,
-        message: "",
-        questions: quiz.getCensoredQuestions(),
-        student,
+        message: "Successfully created test",
+        data: {
+            questions: quiz.getCensoredQuestions(),
+            student,
+            timeStarted,
+            timeToEnd
+        }
     });
 });
 
@@ -137,16 +166,8 @@ router.post("/submit-test", (req: Request, res: Response) => {
     }
 
     // Log the answers to the user's identity
-    Deno.writeTextFileSync("responses.csv", `\n${sanitizeForCSV(name)},${Date.now()},${sanitizeForCSV(req.cookies["HCS_ID"])},${answerCode},${sanitizeForCSV(JSON.stringify(responseBlob))}`, { append: true });
+    const epochTime = Date.now();
+    const due = (responseBlob.quiz.timeToEnd || new Date()).getTime();
+    appendTestProgramCSV(`\n${sanitizeForCSV(name)},${epochTime},${due},${sanitizeForCSV(req.cookies["HCS_ID"])},${answerCode},${sanitizeForCSV(JSON.stringify(responseBlob))}`);
 
 });
-
-if (DEBUG) {
-    router.get("/uhl_see_csv", (_req: Request, res: Response) => {
-        res.send("<h3>All tildes (~) are actually commas. They are just replaced to stop CSV injection.</h3><pre>" + Deno.readTextFileSync("responses.csv").toString() + "</pre>");
-    });
-    
-    router.get("/uhl_see_sessions", (_req: Request, res: Response) => {
-        res.json(activeSessions);
-    });
-}

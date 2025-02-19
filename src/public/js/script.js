@@ -1,5 +1,7 @@
 "use strict";
 
+import { showNotifToast } from "./popupManager.js";
+
 const cookiePopup = document.getElementById("cookie-popup");
 const cookiePopupClose = document.getElementById("cookie-popup-close");
 const submissionPopup = document.getElementById("submission-popup");
@@ -89,8 +91,9 @@ function clearDocument() {
 }
 
 takeTestButton.onclick = () => {
-    console.log("taketest");
-    fetch("./new-test", {
+    showNotifToast({success: true, message: "Fetching a new test" });
+
+    fetch("./api/testing/new-test", {
         method: "POST",
         headers: new Headers({ "content-type": "application/json" }),
         body: JSON.stringify({
@@ -100,13 +103,19 @@ takeTestButton.onclick = () => {
         console.log(r);
         return r.json();
     }).then((json) => {
-        const { success, message, questions, student } = json;
-        studentSelf = student;
+        const { success, message, data } = json;
+        showNotifToast(json);
+        
+        
         if (!success) {
             console.error("Not success: " + message);
             return;
         }
-
+        
+        const { questions, student, timeStarted, timeToEnd } = data;
+        showNotifToast({ success: true, message: `Test started: ${timeStarted}<br>Time ends: ${timeToEnd}` })
+        studentSelf = student;
+        
         submissionPopupOpen.disabled = false;
         testArea.innerHTML = "";
         for (const question of questions) {
@@ -127,7 +136,7 @@ submissionPopupOpen.addEventListener("click", () => {
     }
     console.log(answers);
 
-    fetch("./submit-test", {
+    fetch("./api/testing/submit-test", {
         method: "POST",
         headers: new Headers({ "content-type": "application/json" }),
         body: JSON.stringify({
@@ -135,6 +144,7 @@ submissionPopupOpen.addEventListener("click", () => {
             studentSelf,
         }),
     }).then((r) => r.json()).then((json) => {
+        showNotifToast(json);
         displaySubmissionPopup(json);
         clearDocument();
     });

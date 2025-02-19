@@ -22,6 +22,7 @@ export async function getValues(
         const result = await service.spreadsheets.values.get({
             spreadsheetId,
             range,
+            majorDimension: 'ROWS'
         });
         return result;
     } catch (err) {

@@ -162,7 +162,7 @@ export function codeToJava(code: LineOfCode[], depth = 0): string {
     return ans;
 }
 
-export function makeTest(testLoopCount: number, testDoubleLoopCount: number, testStringCount: number): Quiz {
+export function makeTest(timeStarted: Date, timeToEnd: Date | null, testLoopCount: number, testDoubleLoopCount: number, testStringCount: number): Quiz {
     const questions: QuizQuestion[] = [];
 
     // Create for loop questions
@@ -193,6 +193,6 @@ export function makeTest(testLoopCount: number, testDoubleLoopCount: number, tes
         ));
     }
 
-    const quiz = new Quiz(questions);
+    const quiz = new Quiz(questions, timeStarted, timeToEnd);
     return quiz;
 }

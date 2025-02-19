@@ -59,9 +59,23 @@ export class QuizResponse extends QuizQuestion {
 
 export class Quiz {
     questions: QuizQuestion[];
+    timeStarted: Date;
+    timeToEnd: Date | null;
 
-    constructor(questions: QuizQuestion[]) {
+    constructor(questions: QuizQuestion[], timeStarted: Date, timeToEnd: Date | null) {
         this.questions = questions;
+        this.timeStarted = timeStarted;
+        this.timeToEnd = timeToEnd;
+    }
+
+    canBeSubmittedNow(): boolean {
+        const now = new Date();
+        if (this.timeToEnd == null)
+            return true;
+
+        if (this.timeToEnd.getTime() < now.getTime())
+            return false;
+        return true;
     }
     
     getCensoredQuestions(): any[] {

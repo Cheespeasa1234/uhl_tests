@@ -21,8 +21,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     next();
 });
 
-app.use("/grading", gradingRouter);
-app.use(testingRouter);
+app.use("/api/grading", gradingRouter);
+app.use("/api/testing", testingRouter);
 
 app.get("/*", express.static("./public"));
 

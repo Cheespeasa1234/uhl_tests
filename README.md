@@ -8,3 +8,9 @@ The primary goals of this program are:
 2. have it be secure, and not possible to cheat with inspect element or network inspectors
 3. dynamically and randomly generate code questions, and solve them as well
 4. provide a secure and useful admin interface
+
+## To Do
+1. Create grading panel UI
+2. Connect admin page to admin API
+3. Restyle testing page
+4. Sort by class

@@ -13,6 +13,7 @@ export type ResponseBlob = {
 export class CSVEntry_TestProgram {
     name: string;
     epochTime: Date;
+    due: Date;
     idCookie: string;
     answerCode: string;
     responseBlob: ResponseBlob;
@@ -20,6 +21,7 @@ export class CSVEntry_TestProgram {
     constructor(entry: any) {
         this.name = entry.name;
         this.epochTime = new Date(Number(entry.epochTime));
+        this.due = new Date(Number(entry.due));
         this.idCookie = entry.idCookie;
         this.answerCode = entry.answerCode;
 
@@ -38,10 +40,10 @@ export class CSVEntry_GoogleForm {
     rating: number;
 
     constructor(entry: any) {
-        this.timestamp = new Date(entry.timestamp);
-        this.email = entry.email;
-        this.answerCode = entry.answerCode;
-        this.rating = Number(entry.rating);
+        this.timestamp = new Date(entry[0]);
+        this.email = entry[1];
+        this.answerCode = entry[2];
+        this.rating = Number(entry[3]);
     }
 }
 
@@ -71,12 +73,17 @@ export function getTestProgramRaw(): any[][] {
     return data;
 }
 
+export function appendTestProgramCSV(line: string): void {
+    Deno.writeTextFileSync(TEST_PROGRAM_RESPONSES_CSV_LOC, line, { append: true });
+}
+
 /**
  * Opens the google form sheet and gets the results from it
  */
 export async function getGoogleFormResponses(): Promise<CSVEntry_GoogleForm[]> {
     
     const data = await getGoogleFormRaw();
+    console.log(data);
     return data.map((line) => new CSVEntry_GoogleForm(line));
 
 }
@@ -85,7 +92,7 @@ import { load } from "jsr:@std/dotenv";
 export async function getGoogleFormRaw(): Promise<any[][]> {
     
     const env = await load({ envPath: "../secrets/.env" });
-    const response = await getValues(env.SPREADSHEET_ID, "'Form Responses 1'!A2:D7");
+    const response = await getValues(env.SPREADSHEET_ID, "Form Responses 1");
     const values = response.data.values || [];
     return values;
 
