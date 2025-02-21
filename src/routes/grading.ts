@@ -1,7 +1,5 @@
 import express, { Request, Response, Router, NextFunction } from "npm:express";
-// @deno-types="npm:@types/body-parser"
 import bodyParser from "npm:body-parser";
-// @deno-types="npm:@types/cookie-parser"
 import cookieParser from "npm:cookie-parser";
 import crypto from "node:crypto";
 

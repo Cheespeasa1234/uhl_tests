@@ -1,6 +1,7 @@
 {
   "version": "4",
   "specifiers": {
+    "jsr:@std/assert@1": "1.0.6",
     "jsr:@std/assert@^1.0.6": "1.0.6",
     "jsr:@std/bytes@^1.0.3": "1.0.4",
     "jsr:@std/csv@*": "1.0.4",
@@ -46,7 +47,7 @@
     "@std/expect@1.0.5": {
       "integrity": "8c7ac797e2ffe57becc6399c0f2fd06230cb9ef124d45229c6e592c563824af1",
       "dependencies": [
-        "jsr:@std/assert",
+        "jsr:@std/assert@^1.0.6",
         "jsr:@std/internal"
       ]
     },
