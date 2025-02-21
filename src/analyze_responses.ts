@@ -115,16 +115,20 @@ export class QuestionResult {
 export class GradeResult {
     name: string;
     epochTime: Date;
+    due: Date;
     questions: QuestionResult[];
+    numberCorrect: { correct: number, incorrect: number } | undefined;
 
-    constructor(name: string, epochTime: Date) {
+    constructor(name: string, epochTime: Date, due: Date) {
         this.name = name;
         this.epochTime = epochTime;
+        this.due = due;
         this.questions = [];
     }
 
     addQuestionResult(qr: QuestionResult) {
         this.questions.push(qr);
+        this.numberCorrect = this.getNumberCorrect();
     }
 
     getNumberCorrect(): { correct: number, incorrect: number } {
@@ -146,7 +150,7 @@ export class GradeResult {
  */
 export function gradeStudent(csvEntry: CSVEntry_TestProgram): GradeResult {
     
-    const grade = new GradeResult(csvEntry.name, csvEntry.epochTime);
+    const grade = new GradeResult(csvEntry.name, csvEntry.epochTime, csvEntry.due);
     for (let i = 0; i < csvEntry.responseBlob.quiz.questions.length; i++) {
         const questionResult: QuestionResult = new QuestionResult(csvEntry.responseBlob.quiz.questions[i], csvEntry.responseBlob.answers[i])
         grade.addQuestionResult(questionResult);

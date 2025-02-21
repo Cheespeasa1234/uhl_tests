@@ -1,6 +1,6 @@
 // MODULE
 
-import { createTable, createListOfOptions, createConfigInputs } from "./components.js";
+import { createTable, createListOfOptions, createConfigInputs, displayGradeResults } from "./components.js";
 import { showNotifToast } from "./popupManager.js";
 
 const modalElement = document.getElementById("modal");
@@ -251,7 +251,8 @@ function gradeStudent() {
         const { success, message, data } = json;
         showNotifToast(json);
         if (success) {
-            gradeStudentResults.innerHTML = JSON.stringify(data);
+            gradeStudentResults.innerHTML = "";
+            gradeStudentResults.appendChild(displayGradeResults(data.grade));
         }
         gradeStudentButton.disabled = false;
     });

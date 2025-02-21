@@ -1,6 +1,7 @@
 "use strict";
 
 import { showNotifToast } from "./popupManager.js";
+import { createTestQuestionElement } from "./components.js";
 
 const cookiePopup = document.getElementById("cookie-popup");
 const cookiePopupClose = document.getElementById("cookie-popup-close");
@@ -38,36 +39,6 @@ const submissionPopupDialog = document.querySelector("#submission-popup");
 const answerCodeText = document.querySelector("#answer-code-popup");
 
 let studentSelf;
-
-function createTestQuestionElement(testQuestionJSON) {
-    const { questionString, descriptor } = testQuestionJSON;
-
-    const questionDiv = document.createElement("div");
-    questionDiv.classList.add(["question-container"]);
-
-    const questionDescriptorDiv = document.createElement("div");
-    questionDescriptorDiv.classList.add(["question-descriptor"]);
-    questionDescriptorDiv.innerHTML = descriptor;
-
-    const questionContentDiv = document.createElement("div");
-    const pre = document.createElement("pre");
-    pre.innerHTML = questionString;
-    pre.classList.add(["code-box"]);
-    pre.classList.add(["box"]);
-    questionContentDiv.appendChild(pre);
-    questionContentDiv.classList.add(["question-box"]);
-
-    const answerDiv = document.createElement("textarea");
-    answerDiv.classList.add(["answer-textarea"]);
-    answerDiv.classList.add(["box"]);
-
-    questionDiv.appendChild(questionDescriptorDiv);
-    questionDiv.appendChild(questionContentDiv);
-    questionDiv.appendChild(answerDiv);
-    questionDiv.appendChild(document.createElement("hr"));
-
-    return questionDiv;
-}
 
 function displaySubmissionPopup(response) {
     const { success, message, answerCode } = response;

@@ -152,7 +152,7 @@ router.get("/grade/:studentEmail", checkSidMiddleware, async (req: Request, res:
                 success: true,
                 message: "Successfully graded student",
                 data: {
-                    grade:gradeStudent(result)
+                    grade: gradeStudent(result)
                 }
             });
         }

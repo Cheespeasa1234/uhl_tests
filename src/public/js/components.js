@@ -85,3 +85,80 @@ export function createConfigInputs(presetObject) {
 
     return configArea;
 }
+
+export function displayGradeResults(grade) {
+    const { name, epochTime, due, questions, numberCorrect } = grade;
+
+    const container = document.createElement("div");
+    const h3 = document.createElement("h3");
+    const h4 = document.createElement("h4");
+
+    h3.innerText = name;
+    h4.innerText = `Submitted: ${epochTime}, Due: ${due}, ${questions.length} questions, ${numberCorrect.correct} correct, ${numberCorrect.incorrect} incorrect`;
+    container.appendChild(h3);
+    container.appendChild(h4);
+
+    // TODO: Make sure no XSS vulnerability
+    const questionsContainer = document.createElement("div");
+    for (let i = 0; i < questions.length; i++) {
+        const _question = questions[i];
+        const { question, userAnswer, correctAnswer, correct } = _question;
+        const { descriptor, questionString } = question;
+
+        const questionContainer = document.createElement("div");
+
+        questionContainer.appendChild(createTestQuestionElement(question));
+
+        const answerDiv = document.createElement("div");
+        const userAnswerDiv = document.createElement("p");
+        const correctAnswerDiv = document.createElement("p");
+        userAnswerDiv.innerText = `Usr: ${userAnswer}`;
+        correctAnswerDiv.innerText = `Key: ${correctAnswer}`;
+        answerDiv.appendChild(userAnswerDiv);
+        answerDiv.appendChild(correctAnswerDiv);
+        const p = document.createElement("p");
+        if (correct) {
+            p.innerText = "Correct!";
+        } else {
+            p.innerText = "Incorrect.";
+        }
+        answerDiv.appendChild(p);
+        questionContainer.appendChild(answerDiv);
+
+        questionsContainer.appendChild(questionContainer);
+    }
+
+    container.appendChild(questionsContainer);
+
+    return container;
+}
+
+export function createTestQuestionElement(testQuestionJSON) {
+    const { questionString, descriptor } = testQuestionJSON;
+
+    const questionDiv = document.createElement("div");
+    questionDiv.classList.add(["question-container"]);
+
+    const questionDescriptorDiv = document.createElement("div");
+    questionDescriptorDiv.classList.add(["question-descriptor"]);
+    questionDescriptorDiv.innerHTML = descriptor;
+
+    const questionContentDiv = document.createElement("div");
+    const pre = document.createElement("pre");
+    pre.innerHTML = questionString;
+    pre.classList.add(["code-box"]);
+    pre.classList.add(["box"]);
+    questionContentDiv.appendChild(pre);
+    questionContentDiv.classList.add(["question-box"]);
+
+    const answerDiv = document.createElement("textarea");
+    answerDiv.classList.add(["answer-textarea"]);
+    answerDiv.classList.add(["box"]);
+
+    questionDiv.appendChild(questionDescriptorDiv);
+    questionDiv.appendChild(questionContentDiv);
+    questionDiv.appendChild(answerDiv);
+    questionDiv.appendChild(document.createElement("hr"));
+
+    return questionDiv;
+}
