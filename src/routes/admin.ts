@@ -1,3 +1,4 @@
+// @deno-types="npm:@types/express@4.17.15"
 import express, { Request, Response, Router, NextFunction } from "npm:express";
 import bodyParser from "npm:body-parser";
 import cookieParser from "npm:cookie-parser";
@@ -51,7 +52,7 @@ router.post("/get_session_id", (req: Request, res: Response) => {
             sessionId = undefined;
         }, 1000 * 60 * 60);
         
-        res.cookie("HCS_ADMIN_SID", sessionId, { maxAge: 1000 * 60 * 60, secure: true, domain: "natelevison.com" });
+        res.cookie("HCS_ADMIN_SID", sessionId, { maxAge: 1000 * 60 * 60, secure: true, path: "/" });
         return res.json({
             success: true,
             message: "Successfully set SID",

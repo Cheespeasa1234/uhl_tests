@@ -94,6 +94,7 @@ export async function getGoogleFormRaw(): Promise<any[][]> {
     const env = await load({ envPath: "../secrets/.env" });
     const response = await getValues(env.SPREADSHEET_ID, "Form Responses 1");
     const values = response.data.values || [];
+    console.log("Values", values);
     return values;
 
 }

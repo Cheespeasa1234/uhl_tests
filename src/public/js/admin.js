@@ -32,6 +32,7 @@ async function getPresetList() {
 async function getManualConfig(key) {
     const san = key.replaceAll(".", "");
     const response = await fetch("./api/grading/manualConfig/" + san).then(data => data.json());
+    console.log("response", response);
     const value = response.data.value;
     return value;
 }
@@ -116,6 +117,11 @@ function onSignIn() {
     testProgramRefreshButton.click();
     googleFormRefreshButton.click();
     undoPresetButton.click();
+    (async () => {
+        enableTestingInput.checked = Boolean(await getManualConfig("enableStudentTesting"));
+        enableTimeLimitInput.checked = Boolean(await getManualConfig("enableTimeLimit"));
+        timeLimitInput.value = Number(await getManualConfig("timeLimit"));
+    })();
 }
 
 function getActiveButton(tabsList) {
@@ -194,6 +200,7 @@ function setGoogleFormElement() {
             const { header, rows } = data;
             const table = createTable(header, rows);
             table.id = "google-form-created-table";
+            console.log(table);
             googleFormElement.innerHTML = "";
             googleFormElement.appendChild(table);
             
@@ -395,12 +402,6 @@ undoPresetButton.addEventListener("click", () => {
 const enableTestingInput = document.getElementById("enable-testing");
 const enableTimeLimitInput = document.getElementById("enable-time-lim");
 const timeLimitInput = document.getElementById("time-lim");
-
-(async () => {
-    enableTestingInput.checked = Boolean(await getManualConfig("enableTesting"));
-    enableTimeLimitInput.checked = Boolean(await getManualConfig("enableTimeLimit"));
-    timeLimitInput.value = Number(await getManualConfig("timeLimit"));
-})();
 
 enableTestingInput.addEventListener("input", () => {
     setManualConfig("enableStudentTesting", enableTestingInput.checked || "false", "boolean");

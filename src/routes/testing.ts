@@ -25,7 +25,7 @@ router.use((req: Request, res: Response, next: NextFunction) => {
         next();
     } else {
         const id = crypto.randomBytes(32).toString("hex");
-        res.cookie("HCS_ID", id, { maxAge: 1000 * 60 * 60, secure: true, domain: "natelevison.com" });
+        res.cookie("HCS_ID", id, { maxAge: 1000 * 60 * 60, secure: true, path: "/" });
         next();
     }
 });

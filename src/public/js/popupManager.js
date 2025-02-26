@@ -36,7 +36,6 @@ export function loadPopups() {
  */
 export function showNotifToast(json) {
     const { success, message, data } = json;
-    console.trace(json);
     const DEBUG = false;
     if (DEBUG) {
         if (success) {
@@ -46,8 +45,10 @@ export function showNotifToast(json) {
         }
     } else {
         if (success) {
+            console.log(json);
             toastr.success(message);
         } else {
+            console.trace(json);
             toastr.error(message);
         }
     }

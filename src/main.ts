@@ -1,7 +1,7 @@
 // Main program
 import express, { Request, Response, NextFunction } from "npm:express";
 
-import { router as gradingRouter } from "./routes/grading.ts";
+import { router as gradingRouter } from "./routes/admin.ts";
 import { router as testingRouter } from "./routes/testing.ts";
 
 const PORT = 5173;

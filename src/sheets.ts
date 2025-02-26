@@ -28,6 +28,7 @@ export async function getValues(
             range,
             majorDimension: 'ROWS'
         });
+        console.log("Google sheets", result);
         return result;
     } catch (err) {
         // TODO (developer) - Handle exception
