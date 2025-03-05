@@ -1,6 +1,6 @@
 // MODULE
 
-import { createTable, createListOfOptions, createConfigInputs, displayGradeResults } from "./components.js";
+import { createTable, createListOfOptions, createConfigInputs, displayGradeResults, displayGradeResultsBootstrap } from "./components.js";
 import { showNotifToast } from "./popupManager.js";
 
 const modalElement = document.getElementById("modal");
@@ -117,6 +117,9 @@ function onSignIn() {
     testProgramRefreshButton.click();
     googleFormRefreshButton.click();
     undoPresetButton.click();
+
+    // gradeStudentEmailInput.value = "nlevison25@pascack.org";
+    // gradeStudentButton.click();
     (async () => {
         enableTestingInput.checked = Boolean(await getManualConfig("enableStudentTesting"));
         enableTimeLimitInput.checked = Boolean(await getManualConfig("enableTimeLimit"));
@@ -259,7 +262,9 @@ function gradeStudent() {
         showNotifToast(json);
         if (success) {
             gradeStudentResults.innerHTML = "";
-            gradeStudentResults.appendChild(displayGradeResults(data.grade));
+            const { resultsContainer, carousel } = displayGradeResultsBootstrap(data.grade);
+            gradeStudentResults.appendChild(resultsContainer);
+            const carouselBs = new bootstrap.Carousel(carousel);
         }
         gradeStudentButton.disabled = false;
     });

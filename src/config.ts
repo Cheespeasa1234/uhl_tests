@@ -1,4 +1,4 @@
-export const PRESETS_JSON_FILE = "../files/presets.json";
+export const PRESETS_JSON_FILE = "./files/presets.json";
 
 export type Preset = Record<ConfigKey, ConfigValue>;
 

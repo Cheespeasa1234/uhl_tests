@@ -14,7 +14,7 @@ router.use(bodyParser.json());
 router.use(bodyParser.urlencoded());
 router.use(cookieParser());
 
-const env = await load({ envPath: "../secrets/.env" });
+const env = await load({ envPath: "./secrets/.env" });
 const secret: string = env.ADMIN_PASSWORD;
 console.log("SECRET: " + secret);
 

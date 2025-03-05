@@ -1,9 +1,12 @@
 import { parse } from "jsr:@std/csv";
 import { Quiz, QuizQuestion } from "./lang/quiz/quiz.ts";
 import { getValues } from "./sheets.ts";
+import { load } from "jsr:@std/dotenv";
 
-export const TEST_PROGRAM_RESPONSES_CSV_LOC = "../files/test_program_responses.csv";
-export const GOOGLE_FORM_RESPONSES_CSV_LOC = "../files/google_form_responses.csv";
+export const TEST_PROGRAM_RESPONSES_CSV_LOC = "./files/test_program_responses.csv";
+export const GOOGLE_FORM_RESPONSES_CSV_LOC = "./files/google_form_responses.csv";
+
+const env = await load({ envPath: "./secrets/.env" });
 
 export type ResponseBlob = {
     answers: string[];
@@ -81,22 +84,14 @@ export function appendTestProgramCSV(line: string): void {
  * Opens the google form sheet and gets the results from it
  */
 export async function getGoogleFormResponses(): Promise<CSVEntry_GoogleForm[]> {
-    
     const data = await getGoogleFormRaw();
-    console.log(data);
     return data.map((line) => new CSVEntry_GoogleForm(line));
-
 }
 
-import { load } from "jsr:@std/dotenv";
 export async function getGoogleFormRaw(): Promise<any[][]> {
-    
-    const env = await load({ envPath: "../secrets/.env" });
     const response = await getValues(env.SPREADSHEET_ID, "Form Responses 1");
     const values = response.data.values || [];
-    console.log("Values", values);
     return values;
-
 }
 
 export class QuestionResult {

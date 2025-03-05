@@ -24,7 +24,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use("/api/grading", gradingRouter);
 app.use("/api/testing", testingRouter);
 
-app.get("/*", express.static("./public"));
+app.get("/*", express.static("./src/public"));
 
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Listening on port ${PORT}`);
