@@ -1,8 +1,22 @@
 {
   "tasks": {
-    "dev": "deno run --watch main.ts"
+    "dev": "deno run --allow-all --watch src/main.ts",
+    "start": "deno run --allow-all src/main.ts",
+    "test": "deno test --fail-fast"
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1"
+  },
+  "lint": {
+    "include": ["src/"],
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "test": {
+    "include": [
+      "src/lang/tests/main_test.ts",
+      "src/main_test.ts"
+    ]
   }
 }
