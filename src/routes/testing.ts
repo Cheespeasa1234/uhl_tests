@@ -7,8 +7,9 @@ import crypto from "node:crypto";
 
 import { Quiz, Student } from "../lang/quiz/quiz.ts";
 import { makeTest } from "../lang/quiz/codegen.ts";
-import { ConfigKey, PresetManager } from "../config.ts";
+import { ConfigKey, PresetManager } from "../lib/config.ts";
 import { appendTestProgramCSV } from "../analyze_responses.ts";
+import { addNotification } from "../lib/notifications.ts";
 
 export const router = express.Router();
 
@@ -26,6 +27,7 @@ router.use((req: Request, res: Response, next: NextFunction) => {
     } else {
         const id = crypto.randomBytes(32).toString("hex");
         res.cookie("HCS_ID", id, { maxAge: 1000 * 60 * 60, secure: true, path: "/" });
+        addNotification({ message: "Started tracking new user", success: true });
         next();
     }
 });
@@ -62,6 +64,7 @@ router.post("/new-test", (req: Request, res: Response) => {
             success: false,
             message: "Testing disabled."
         });
+        addNotification({ message: `Student tried to start a test, but it was disabled`, success: true });
         return;
     }
 
@@ -73,8 +76,6 @@ router.post("/new-test", (req: Request, res: Response) => {
         });
         return;
     }
-
-    console.log("FLC: " + presetManager.getConfig(ConfigKey.FOR_LOOP_COUNT));
     
     const timeStarted = new Date();
     let timeToEnd: Date | null = null;
@@ -105,6 +106,8 @@ router.post("/new-test", (req: Request, res: Response) => {
             timeToEnd
         }
     });
+
+    addNotification({ message: `Created a new test for ${student.name}`, success: true });
 });
 
 router.post("/submit-test", (req: Request, res: Response) => {
@@ -170,4 +173,5 @@ router.post("/submit-test", (req: Request, res: Response) => {
     const due = (responseBlob.quiz.timeToEnd || new Date()).getTime();
     appendTestProgramCSV(`\n${sanitizeForCSV(name)},${epochTime},${due},${sanitizeForCSV(req.cookies["HCS_ID"])},${answerCode},${sanitizeForCSV(JSON.stringify(responseBlob))}`);
 
+    addNotification({ message: `Test just submitted by ${name}`, success: true });
 });

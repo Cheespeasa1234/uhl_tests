@@ -4,7 +4,7 @@ import express, { Request, Response, NextFunction } from "npm:express";
 import { router as gradingRouter } from "./routes/admin.ts";
 import { router as testingRouter } from "./routes/testing.ts";
 
-const PORT = 5173;
+const PORT = 8081;
 const app = express();
 
 function timeoutExit() {

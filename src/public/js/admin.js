@@ -125,6 +125,14 @@ function onSignIn() {
         enableTimeLimitInput.checked = Boolean(await getManualConfig("enableTimeLimit"));
         timeLimitInput.value = Number(await getManualConfig("timeLimit"));
     })();
+
+    setInterval(async () => {
+        const json = await fetch("./api/grading/notifications").then(res => res.json());
+        const notifications = json.data.notifications;
+        notifications.forEach(notif => {
+            showNotifToast(notif);
+        });
+    }, 5000);
 }
 
 function getActiveButton(tabsList) {

@@ -6,8 +6,9 @@ import crypto from "node:crypto";
 
 import { CSVEntry_GoogleForm, CSVEntry_TestProgram, getGoogleFormResponses, getTestProgramResponses, gradeStudentByFormInput, GradeResult, QuestionResult, getGoogleFormRaw, getTestProgramRaw, gradeStudent } from "../analyze_responses.ts";
 import { getActiveSessions, manualConfigs, presetManager } from "./testing.ts";
-import { PresetManager, type Preset } from "../config.ts";
+import { PresetManager, type Preset } from "../lib/config.ts";
 import { load } from "jsr:@std/dotenv";
+import { retrieveNotifications } from "../lib/notifications.ts";
 
 export const router = express.Router();
 router.use(bodyParser.json());
@@ -247,6 +248,18 @@ router.get("/config/list_of_presets", checkSidMiddleware, (req: Request, res: Re
         message: "Successfully got list of presets",
         data: {
             presets: presets
+        }
+    });
+});
+
+router.get("/notifications", checkSidMiddleware, (req: Request, res: Response) => {
+    const notifications = retrieveNotifications();
+    res.json({
+        success: true,
+        message: "Successfully retrieved the notifications",
+        data: {
+            amount: notifications.length,
+            notifications: notifications
         }
     });
 });
