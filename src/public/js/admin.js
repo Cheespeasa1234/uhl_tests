@@ -198,6 +198,14 @@ selectPresetCancelBtn.addEventListener("click", () => {
     modal.hide();
 });
 
+const opts = {
+    columnDefs: [
+        { className: "dt-left", targets: "_all" },
+        { className: "cell-scrollbar", targets: "_all" },
+    ],
+    order: [["0", "desc" ]]
+}
+
 /* Google form widget */
 const googleFormElement = document.querySelector("#google-form");
 const googleFormRefreshButton = document.querySelector("#refresh-google-form");
@@ -217,12 +225,7 @@ function setGoogleFormElement() {
             
             // on the element fully loading
             // googleFormElement.onload = () => {
-                let table1 = new DataTable('#google-form-created-table', {
-                    columnDefs: [
-                        { className: "dt-left", targets: "_all" },
-                        { className: "cell-scrollbar", targets: "_all" },
-                    ]
-                });
+                let table1 = new DataTable('#google-form-created-table', opts);
             // }
             
         }
@@ -248,12 +251,7 @@ function setTestProgramElement() {
 
             // on the element fully loading
             // testProgramElement.onload = () => {
-                let table2 = new DataTable('#test-program-created-table', {
-                    columnDefs: [
-                        { className: "dt-left", targets: "_all" },
-                        { className: "cell-scrollbar", targets: "_all" },
-                    ]
-                });
+                let table2 = new DataTable('#test-program-created-table', opts);
             // }
         }
     })

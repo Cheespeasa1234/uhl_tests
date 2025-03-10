@@ -10,10 +10,16 @@ The primary goals of this program are:
 4. provide a secure and useful admin interface
 
 ## To Do
-1. Create grading panel UI
-2. Connect admin page to admin API
-3. Restyle testing page
-4. Sort by class
+1. @Cheespeasa1234 
+    * TEST CODES
+    * Make sure its a valid test code
+    * Sort by what test they took
+    * in view status panel
+    * filter
+2. @MrV1ctor
+    * Restyle testing page
+    * Ideally using bootstrap?
+3. @Cheespeasa1234 Sort by class (low priority)
 
 # Installation & Development
 

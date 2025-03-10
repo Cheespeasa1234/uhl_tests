@@ -4,7 +4,7 @@ export function createTable (header, rows) {
     
     const table = document.createElement("table");
     
-    ["table", "nowrap", "stripe", "hover", "compact", "row-border", "border", "rounded"].forEach((className) => {
+    ["nowrap", "stripe", "hover", "compact", "row-border", "border", "rounded"].forEach((className) => {
         table.classList.add(className);
     });
     table.style.tableLayout = "fixed";
@@ -25,7 +25,7 @@ export function createTable (header, rows) {
             if (i === 0) {
                 const th = document.createElement("th");
                 th.scope = "row";
-                th.innerText = row[i];
+                th.innerHTML = `<span style="display: none">${new Date(row[i]).getTime()}</span>${row[i]}`;
                 tr.appendChild(th);
             } else {
                 const td = document.createElement("td");
