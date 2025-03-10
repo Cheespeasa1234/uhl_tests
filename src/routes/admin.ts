@@ -1,23 +1,24 @@
 // @deno-types="npm:@types/express@4.17.15"
-import express, { Request, Response, Router, NextFunction } from "npm:express";
+import express, { Request, Response, NextFunction } from "npm:express";
 import bodyParser from "npm:body-parser";
 import cookieParser from "npm:cookie-parser";
 import crypto from "node:crypto";
 
-import { CSVEntry_GoogleForm, CSVEntry_TestProgram, getGoogleFormResponses, getTestProgramResponses, gradeStudentByFormInput, GradeResult, QuestionResult, getGoogleFormRaw, getTestProgramRaw, gradeStudent } from "../analyze_responses.ts";
+import { getGoogleFormResponses, getGoogleFormRaw } from "../analyze_responses_old.ts";
+import { GoogleResponse, TestResponse, getResponses, getResponsesRaw, gradeStudent } from "../analyze_responses.ts";
 import { getActiveSessions, manualConfigs, presetManager } from "./testing.ts";
 import { PresetManager, type Preset } from "../lib/config.ts";
-import { load } from "jsr:@std/dotenv";
 import { retrieveNotifications } from "../lib/notifications.ts";
+import { logDebug, logInfo, logWarning } from "../lib/logger.ts";
+import { HCST_ADMIN_PASSWORD } from "../lib/env.ts";
 
 export const router = express.Router();
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded());
 router.use(cookieParser());
 
-const env = await load({ envPath: "./secrets/.env" });
-const secret: string = env.ADMIN_PASSWORD;
-console.log("SECRET: " + secret);
+const secret: string = HCST_ADMIN_PASSWORD;
+logDebug("admin", "SECRET: " + secret);
 
 let sessionId: string | undefined;
 let sessionIdClearTimeout: number | undefined;
@@ -25,6 +26,7 @@ let sessionIdClearTimeout: number | undefined;
 const checkSidMiddleware = (req: Request, res: Response, next: NextFunction) => {
     const sessionIdClaim = req.cookies['HCS_ADMIN_SID'];
     if (!sessionId || sessionIdClaim !== sessionId) {
+        logWarning("admin/session", "User tried to access admin routes without a valid sessionId");
         res.json({
             success: false,
             message: "Invalid sessionId (either it expired, or it is invalid)"
@@ -42,12 +44,14 @@ router.get("/am_i_signed_in", checkSidMiddleware, (req: Request, res: Response) 
 });
 
 router.post("/get_session_id", (req: Request, res: Response) => {
-    console.log(req.body);
+    logInfo("admin/session", "Got request to get session id");
+    
     const { pass } = req.body;
     if (pass === secret) {
         sessionId = crypto.randomBytes(16).toString("hex");
         if (sessionIdClearTimeout) {
             clearTimeout(sessionIdClearTimeout);
+            logInfo("admin/session", "Cleared previous timeout");
         }
         sessionIdClearTimeout = setTimeout(() => {
             sessionId = undefined;
@@ -62,6 +66,7 @@ router.post("/get_session_id", (req: Request, res: Response) => {
             }
         })
     } else {
+        logWarning("admin/session", "pass is not equal to secret. pass: "+ pass);
         res.json({
             success: false,
             message: "pass is not equal to secret. pass: "+ pass
@@ -70,6 +75,7 @@ router.post("/get_session_id", (req: Request, res: Response) => {
 });
 
 router.get("/sessions", checkSidMiddleware, (req: Request, res: Response) => {
+    logInfo("admin/sessions", "Fetching active sessions");
     return res.json({
         success: true,
         message: "Successfully fetched sessions",
@@ -80,6 +86,7 @@ router.get("/sessions", checkSidMiddleware, (req: Request, res: Response) => {
 });
 
 router.get("/google-form", checkSidMiddleware, async (req: Request, res: Response) => {
+    logInfo("admin/google-form", "Fetching Google form data");
     const data = await getGoogleFormRaw();
 
     return res.json({
@@ -87,21 +94,20 @@ router.get("/google-form", checkSidMiddleware, async (req: Request, res: Respons
         message: "Successfully fetched google form",
         data: {
             header: data[0],
-            rows: data.slice(1)
+            rows: data.slice(1) || []
         }
     });
 })
 
 router.get("/test-program", checkSidMiddleware, (req: Request, res: Response) => {
-    const data = getTestProgramRaw();
-    const header = data[0];
-    const rows = data.slice(1);
+    const data = getResponsesRaw();
 
     return res.json({
         success: true,
         message: "Successfully fetched test program",
         data: {
-            header, rows
+            header: data[0],
+            rows: (data.slice(1) || []).map(obj => Object.values(obj))
         }
     });
 })
@@ -117,8 +123,8 @@ router.get("/grade/:studentEmail", checkSidMiddleware, async (req: Request, res:
 
     const gfrPromised = await getGoogleFormResponses();
 
-    const testProgramResponses: CSVEntry_TestProgram[] = getTestProgramResponses().filter(val => val.name === studentEmail);
-    const googleFormResponses: CSVEntry_GoogleForm[] = gfrPromised.filter(val => val.email === studentEmail);
+    const testProgramResponses: TestResponse[] = getResponses().filter(val => val.email === studentEmail);
+    const googleFormResponses: GoogleResponse[] = gfrPromised.filter(val => val.email === studentEmail);
     
     if (testProgramResponses.length === 0) {
         return res.json({

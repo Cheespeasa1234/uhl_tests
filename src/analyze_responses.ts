@@ -1,42 +1,35 @@
-import { parse } from "jsr:@std/csv";
 import { Quiz, QuizQuestion } from "./lang/quiz/quiz.ts";
-import { getValues } from "./sheets.ts";
-import { load } from "jsr:@std/dotenv";
+import { DatabaseSync } from "node:sqlite";
+import { logInfo, logError } from "./lib/logger.ts";
 
-export const TEST_PROGRAM_RESPONSES_CSV_LOC = "./files/test_program_responses.csv";
-export const GOOGLE_FORM_RESPONSES_CSV_LOC = "./files/google_form_responses.csv";
+const db = new DatabaseSync("db/responses.db");
 
-const env = await load({ envPath: "./secrets/.env" });
-
-export type ResponseBlob = {
+export type TestResponseBlob = {
     answers: string[];
     quiz: Quiz;
 };
 
-export class CSVEntry_TestProgram {
-    name: string;
-    epochTime: Date;
+export class TestResponse {
+    id: number;
+    email: string;
+    time: Date;
     due: Date;
     idCookie: string;
     answerCode: string;
-    responseBlob: ResponseBlob;
+    blob: TestResponseBlob;
 
     constructor(entry: any) {
-        this.name = entry.name;
-        this.epochTime = new Date(Number(entry.epochTime));
-        this.due = new Date(Number(entry.due));
+        this.id = entry.id;
+        this.email = entry.email;
+        this.time = new Date(entry.time);
+        this.due = new Date(entry.due);
         this.idCookie = entry.idCookie;
         this.answerCode = entry.answerCode;
-
-        const s = entry.responseBlob.replaceAll("~c", ",").replaceAll(
-            "~q",
-            '"',
-        );
-        this.responseBlob = JSON.parse(s);
+        this.blob = JSON.parse(entry.responseBlob);
     }
 }
 
-export class CSVEntry_GoogleForm {
+export class GoogleResponse {
     timestamp: Date;
     email: string;
     answerCode: string;
@@ -50,48 +43,26 @@ export class CSVEntry_GoogleForm {
     }
 }
 
-/**
- * Opens the test program sheet and gets the csv entries from it
- */
-export function getTestProgramResponses(): CSVEntry_TestProgram[] {
-    const text = Deno.readTextFileSync(TEST_PROGRAM_RESPONSES_CSV_LOC);
-    const data = parse(text, {
-        skipFirstRow: true,
-        strip: true,
-        lazyQuotes: true,
-    });
-
-    return data.map((line) => {
-        return new CSVEntry_TestProgram(line);
-    });
+export function getResponses(): TestResponse[] {
+    const stmt = db.prepare("SELECT * FROM Responses");
+    const responsesAny = stmt.all();
+    const responses = responsesAny.map((r) => new TestResponse(r));
+    logInfo("analyze_responses", "Got responses from database");
+    return responses;
 }
 
-export function getTestProgramRaw(): any[][] {
-    const text = Deno.readTextFileSync(TEST_PROGRAM_RESPONSES_CSV_LOC);
-    const data = parse(text, {
-        strip: true,
-        lazyQuotes: true,
-    });
-
-    return data;
+export function getResponsesRaw(): any[][] {
+    const stmt = db.prepare("SELECT * FROM Responses");
+    const all = stmt.all() as any[];
+    const header = ["id", "email", "time", "due", "idCookie", "answerCode", "responseBlob"];
+    logInfo("analyze_responses", "Got raw responses from database");
+    return [header, ...all];
 }
 
-export function appendTestProgramCSV(line: string): void {
-    Deno.writeTextFileSync(TEST_PROGRAM_RESPONSES_CSV_LOC, line, { append: true });
-}
-
-/**
- * Opens the google form sheet and gets the results from it
- */
-export async function getGoogleFormResponses(): Promise<CSVEntry_GoogleForm[]> {
-    const data = await getGoogleFormRaw();
-    return data.map((line) => new CSVEntry_GoogleForm(line));
-}
-
-export async function getGoogleFormRaw(): Promise<any[][]> {
-    const response = await getValues(env.SPREADSHEET_ID, "Form Responses 1");
-    const values = response.data.values || [];
-    return values;
+export function addResponse(data: { email: string; time: Date; due: Date; idCookie: string; answerCode: string; blob: any }) {
+    const stmt = db.prepare("INSERT INTO Responses (email, time, due, idCookie, answerCode, responseBlob) VALUES (?, ?, ?, ?, ?, ?)");
+    stmt.run(data.email, data.time.getTime(), data.due.getTime(), data.idCookie, data.answerCode, JSON.stringify(data.blob));
+    logInfo("analyze_responses", "Inserted response into database");
 }
 
 export class QuestionResult {
@@ -140,97 +111,21 @@ export class GradeResult {
     }
 }
 
-/**
- * Takes a response entry and grades their results, and prints it all out.
- * @param csvEntry The CSV entry to grade
- */
-export function gradeStudent(csvEntry: CSVEntry_TestProgram): GradeResult {
-    
-    const grade = new GradeResult(csvEntry.name, csvEntry.epochTime, csvEntry.due);
-    for (let i = 0; i < csvEntry.responseBlob.quiz.questions.length; i++) {
-        const questionResult: QuestionResult = new QuestionResult(csvEntry.responseBlob.quiz.questions[i], csvEntry.responseBlob.answers[i])
+export function gradeStudent(entry: TestResponse): GradeResult {
+    const grade = new GradeResult(entry.email, entry.time, entry.due);
+    for (let i = 0; i < entry.blob.quiz.questions.length; i++) {
+        const questionResult: QuestionResult = new QuestionResult(entry.blob.quiz.questions[i], entry.blob.answers[i])
         grade.addQuestionResult(questionResult);
     }
-
+    logInfo("analyze_responses", "Graded student");
     return grade;
-
 }
 
-/**
- * Grades a student by their google form data
- * Checks the full responses csv, and finds the response that makes the most sense for it
- * @param responses The responses csv data that the student may be in
- * @param result Their submission to the google form
- */
-export function gradeStudentByFormInput(
-    response: CSVEntry_TestProgram,
-    result: CSVEntry_GoogleForm,
-): GradeResult | undefined {
-
-    // Check the answer
-    if (result.answerCode !== response.answerCode) {
-        console.log(
-            `answerCode in CSV (${result.answerCode}) does not match submitted answerCode (${response.answerCode})`,
-        );
+export function gradeStudentOnlyIfVerified(entry: TestResponse, googleEntry: GoogleResponse): GradeResult | undefined {
+    if (entry.answerCode !== googleEntry.answerCode) {
+        logError("analyze_responses", `answerCode in entry ${entry.answerCode} does not match answerCode in googleEntry ${googleEntry.answerCode}`);
         return undefined;
     }
-    return gradeStudent(response);
+    logInfo("analyze_responses", "Graded (verified)");
+    return gradeStudent(entry);
 }
-
-// function main() {
-//     const testProgramResponses: CSVEntry_TestProgram[] = getTestProgramResponses();
-//     const googleFormResponses: CSVEntry_GoogleForm[] = getGoogleFormResponses();
-    
-//     function conclr() {
-//         for (let i = 0; i < 10; i++) {
-//             console.log("\n");
-//         }
-//         console.clear();
-//     }
-    
-//     conclr();
-//     while (true) {
-//         console.log("What action to take?");
-//         console.log("  0) Exit");
-//         console.log("  1) Clear responses.csv");
-//         console.log("  2) Clear results.csv");
-//         console.log("  3) Grade a specific student");
-//         console.log("  4) Grade all form responses");
-    
-//         const action: number = Number(prompt("Select a number 1-4: "));
-//         conclr();
-//         if (action === 0) {
-//             exit();
-//         } else if (action === 1) {
-//             if (confirm("Are you 100% sure? This can't be undone.")) {
-//                 Deno.writeTextFileSync(
-//                     TEST_PROGRAM_RESPONSES_CSV_LOC,
-//                     "name,epochTime,idCookie,answerCode,responseBlob",
-//                 );
-//             }
-//         } else if (action === 2) {
-//             if (confirm("Are you 100% sure? This can't be undone.")) {
-//                 Deno.writeTextFileSync(
-//                     GOOGLE_FORM_RESPONSES_CSV_LOC,
-//                     "timestamp,email,answerCode,rating",
-//                 );
-//             }
-//         } else if (action === 3) {
-//             const email = prompt("What email: ");
-//             googleFormResponses.forEach((result) => {
-//                 console.log("Found a match. ");
-//                 if (result.email === email) {
-//                     gradeStudentByFormInput(testProgramResponses, result);
-//                 }
-//             });
-//         } else if (action === 4) {
-//             googleFormResponses.forEach((result) => {
-//                 gradeStudentByFormInput(testProgramResponses, result);
-//             });
-//         }
-    
-//         prompt("Press enter to continue");
-//         conclr();
-//     }
-// }
-

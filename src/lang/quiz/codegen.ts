@@ -8,9 +8,9 @@ export function generateForLoop(
     smaller = false,
 ): LineOfCode[] {
     // Create the top of the for loop
-    const direction = Math.random() > 0.5;
-    const length = Math.round(Math.random() * (smaller ? 3 : 5) + 3);
-    const increment = Math.ceil(Math.random() * (smaller ? 2 : 3) + 0);
+    const direction = Math.random() > 0.35; // TRUE: left to right
+    const length = Math.round(Math.random() * (smaller ? 1 : 2) + 3);
+    const increment = Math.ceil(Math.random() * (smaller ? 1 : 3) + 0);
     let code: LineOfCode;
     if (direction) {
         code = $(
@@ -55,12 +55,11 @@ export function generateStringQuestion(): LineOfCode[] {
         const originalString =
             options[Math.floor(Math.random() * options.length)];
         const version = Math.floor(Math.random() * 3);
-        if (version == 0) {
-            const start = Math.floor(
-                Math.random() * (originalString.length / 2),
-            );
-            const end = start +
-                Math.floor(Math.random() * (originalString.length / 2));
+        if (version == 0) { // substring
+            const start = Math.floor(Math.random() * (originalString.length / 2));
+            let end = start + Math.floor(Math.random() * (originalString.length / 2));
+            // if it ends in a space character, inc the end by 1
+            if (originalString[end - 1] === " ") end++;
             return [
                 {
                     action: "print",
@@ -72,7 +71,7 @@ export function generateStringQuestion(): LineOfCode[] {
                     ],
                 },
             ];
-        } else if (version == 1) {
+        } else if (version == 1) { // charAt
             const start = Math.floor(Math.random() * (originalString.length));
             return [
                 {
@@ -84,7 +83,7 @@ export function generateStringQuestion(): LineOfCode[] {
                     ],
                 },
             ];
-        } else if (version == 2) {
+        } else if (version == 2) { // length
             return [
                 {
                     action: "print",

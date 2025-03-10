@@ -8,8 +8,9 @@ import crypto from "node:crypto";
 import { Quiz, Student } from "../lang/quiz/quiz.ts";
 import { makeTest } from "../lang/quiz/codegen.ts";
 import { ConfigKey, PresetManager } from "../lib/config.ts";
-import { appendTestProgramCSV } from "../analyze_responses.ts";
+import { addResponse } from "../analyze_responses.ts";
 import { addNotification } from "../lib/notifications.ts";
+import { logInfo, logWarning } from "../lib/logger.ts";
 
 export const router = express.Router();
 
@@ -41,6 +42,7 @@ type Session = {
 
 const activeSessions: {[id:string]: (Session | undefined)} = {};
 export function getActiveSessions(): typeof activeSessions {
+    logInfo("testing/sessions", "Fetching active sessions");
     return activeSessions;
 }
 
@@ -171,7 +173,17 @@ router.post("/submit-test", (req: Request, res: Response) => {
     // Log the answers to the user's identity
     const epochTime = Date.now();
     const due = (responseBlob.quiz.timeToEnd || new Date()).getTime();
-    appendTestProgramCSV(`\n${sanitizeForCSV(name)},${epochTime},${due},${sanitizeForCSV(req.cookies["HCS_ID"])},${answerCode},${sanitizeForCSV(JSON.stringify(responseBlob))}`);
+    
+    const data = {
+        email: name,
+        time: new Date(epochTime),
+        due: new Date(due),
+        idCookie: session.student.privateKey,
+        answerCode,
+        blob: responseBlob,
+    }
+
+    addResponse(data);
 
     addNotification({ message: `Test just submitted by ${name}`, success: true });
 });

@@ -72,6 +72,18 @@
     <script defer type="module">
         import { loadPopups } from './js/popupManager.js';
         loadPopups();
+
+        const correctKeys = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
+        let keysPressed = [];
+        document.addEventListener('keydown', (e) => {
+            keysPressed.push(e.key);
+            if (keysPressed.length > correctKeys.length) {
+                keysPressed.shift();
+            }
+            if (keysPressed.join('') === correctKeys.join('')) {
+                window.location.href="/admin.html";
+            }
+        });
     </script>
     <script defer type="module" src="./js/script.js"></script>
 

@@ -215,12 +215,16 @@ function setGoogleFormElement() {
             googleFormElement.innerHTML = "";
             googleFormElement.appendChild(table);
             
-            let table1 = new DataTable('#google-form-created-table', {
-                columnDefs: [
-                    { className: "dt-left", targets: "_all" },
-                    { className: "cell-scrollbar", targets: "_all" },
-                ]
-            });
+            // on the element fully loading
+            // googleFormElement.onload = () => {
+                let table1 = new DataTable('#google-form-created-table', {
+                    columnDefs: [
+                        { className: "dt-left", targets: "_all" },
+                        { className: "cell-scrollbar", targets: "_all" },
+                    ]
+                });
+            // }
+            
         }
     });
 }
@@ -239,19 +243,18 @@ function setTestProgramElement() {
             const { header, rows } = data;
             const table = createTable(header, rows);
             table.id = "test-program-created-table";
-            for (const row of rows) {
-                const j = JSON.parse(row[row.length - 1].replaceAll("~q", "\"").replaceAll("~c", ","));
-                console.dir(j);
-            }
             testProgramElement.innerHTML = "";
             testProgramElement.appendChild(table);
-            
-            let table2 = new DataTable('#test-program-created-table', {
-                columnDefs: [
-                    { className: "dt-left", targets: "_all" },
-                    { className: "cell-scrollbar", targets: "_all" },
-                ]
-            });
+
+            // on the element fully loading
+            // testProgramElement.onload = () => {
+                let table2 = new DataTable('#test-program-created-table', {
+                    columnDefs: [
+                        { className: "dt-left", targets: "_all" },
+                        { className: "cell-scrollbar", targets: "_all" },
+                    ]
+                });
+            // }
         }
     })
 }

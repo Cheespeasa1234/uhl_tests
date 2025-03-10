@@ -1,8 +1,8 @@
 {
   "tasks": {
-    "dev": "deno run --allow-all --watch src/main.ts",
-    "start": "deno run --allow-all src/main.ts",
-    "test": "deno test --fail-fast"
+    "dev": "DEV=1 deno run --allow-all --watch src/main.ts",
+    "start": "DEV=0 deno run --allow-all src/main.ts",
+    "test": "DEV=1 deno test --fail-fast"
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1"

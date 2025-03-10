@@ -1,9 +1,12 @@
 'use strict';
 
-export function createTable(header, rows) {
+export function createTable (header, rows) {
+    
     const table = document.createElement("table");
     
-    table.classList.add("nowrap", "stripe", "hover", "compact", "row-border", "border", "rounded");
+    ["table", "nowrap", "stripe", "hover", "compact", "row-border", "border", "rounded"].forEach((className) => {
+        table.classList.add(className);
+    });
     table.style.tableLayout = "fixed";
     const thead = document.createElement("thead");
 

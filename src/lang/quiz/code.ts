@@ -2,6 +2,7 @@ import { ParsedToken } from "../typing/parsedToken.ts";
 import { RawToken, TokenType, VariableTokenType } from "../typing/token.ts";
 import { operate as useOperator } from "../typing/operation.ts";
 import { functions } from "../typing/func.ts";
+import { logError, logInfo, logWarning } from "../../lib/logger.ts";
 
 export type LineOfCode = {
     action: string;
@@ -86,9 +87,7 @@ export class CodeEnvironment {
         this.setVariableValue(variableReference, value);
         variableReference.subtype = value.type;
         if (variableReference.rawContent.startsWith("$*?_SYS")) {
-            console.log(
-                `WARNING: SYSTEM VARIABLE ${variableReference.rawContent} SET TO ${value.toString()}`,
-            );
+            logWarning("code", `SYSTEM VARIABLE ${variableReference.rawContent} SET TO ${value.toString()}`);
         }
     }
 
@@ -126,16 +125,7 @@ export class CodeEnvironment {
             ..._
         ] = [...values];
 
-        // console.log({
-        //   term1VariableReference: term1VariableReference.toString(),
-        //   term1InitialValueUnsafe: term1InitialValueUnsafe.toString(),
-        //   term2Value1Unsafe: term2Value1Unsafe.toString(),
-        //   term2Operator: term2Operator.toString(),
-        //   term2Value2Unsafe: term2Value2Unsafe.toString(),
-        //   term3VariableReference: term3VariableReference.toString(),
-        //   term3Operator: term3Operator.toString(),
-        //   term3Value1Unsafe: term3Value1Unsafe.toString()
-        // });
+        logInfo("code", `Looping ${value1Unsafe.toString()} ${operator.toString()} ${value2Unsafe.toString()}`);
 
         // If it is true, run the code inside the loop
         let c = 0;
@@ -189,7 +179,7 @@ export class CodeEnvironment {
     compile(code: LineOfCode[]): LineOfCode[] {
         const compiled: LineOfCode[] = [];
         for (const line of code) {
-            // console.log(line);
+            logInfo("code", `Compiling line ${this.line}`);
             const { values, nest_1, nest_2 } = line;
             this.line++;
             this.lineExecuting = line;
@@ -230,7 +220,7 @@ export class CodeEnvironment {
         const compiledCode = this.compile(code);
         try {
             for (const line of compiledCode) {
-                // console.log(line);
+                logInfo("code", `Executing line ${this.line}`);
                 const { values, nest_1, nest_2 } = line;
                 this.line++;
                 this.lineExecuting = line;
@@ -250,11 +240,7 @@ export class CodeEnvironment {
                 }
             }
         } catch (e) {
-            console.error(
-                `Error executing line ${this.line}: ${
-                    JSON.stringify(this.lineExecuting).substring(0, 20)
-                }...`,
-            );
+            logError("code", `Error executing line ${this.line}: ${JSON.stringify(this.lineExecuting).substring(0, 20)}...`);
             console.trace(e);
             throw e;
         }
