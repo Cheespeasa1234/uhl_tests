@@ -200,7 +200,7 @@ router.get("/config/get_preset_default", checkSidMiddleware, (req: Request, res:
         success: true,
         message: "Got the default preset",
         data: {
-            preset: PresetManager.defaultPreset
+            preset: presetManager.getDefaultPreset()
         }
     })
 })

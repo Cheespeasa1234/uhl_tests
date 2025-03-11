@@ -1,4 +1,4 @@
-export const PRESETS_JSON_FILE = "./files/presets.json";
+import { db, DB_Preset, selectDB_Preset, selectDB_PresetById } from "./db.ts";
 
 export type Preset = Record<ConfigKey, ConfigValue>;
 
@@ -56,32 +56,12 @@ export class ConfigValue {
 
 export class PresetManager {
 
-    /**
-     * The value of the default preset.
-     */
-    static readonly defaultPreset: Readonly<Preset> = {
-        [ConfigKey.FOR_LOOP_COUNT]: new ConfigValue(
-            ConfigValueType.NUMBER,
-            ConfigKey.FOR_LOOP_COUNT,
-            "2"
-        ),
-        [ConfigKey.NESTED_FOR_LOOP_COUNT]: new ConfigValue(
-            ConfigValueType.NUMBER,
-            ConfigKey.NESTED_FOR_LOOP_COUNT,
-            "2"
-        ),
-        [ConfigKey.STRING_COUNT]: new ConfigValue(
-            ConfigValueType.NUMBER,
-            ConfigKey.STRING_COUNT,
-            "2"
-        ),
-    }
     presets: Record<string, Preset>;
     currentPreset: Preset;
     
     constructor() {
         this.presets = this.downloadPresets();
-        this.currentPreset = PresetManager.defaultPreset;
+        this.currentPreset = this.getDefaultPreset();
     }
 
     /**
@@ -97,8 +77,12 @@ export class PresetManager {
      * @returns The presets
      */
     downloadPresets(): Record<string, Preset> {
-        const text: string = Deno.readTextFileSync(PRESETS_JSON_FILE);
-        const json: Record<string, Preset> = JSON.parse(text) as Record<string, Preset>;
+        const presets: DB_Preset[] = selectDB_Preset();
+        const json: Record<string, Preset> = {};
+        for (const preset of presets) {
+            json[preset.name] = JSON.parse(preset.blob);
+        }
+
         return json;
     }
     
@@ -106,8 +90,17 @@ export class PresetManager {
      * Saves the changes made to a file.
      */
     savePresets() {
-        const text: string = JSON.stringify(this.presets, null, 1);
-        Deno.writeTextFile(PRESETS_JSON_FILE, text);
+        for (const [name, preset] of Object.entries(this.presets)) {
+            const presetBlob = JSON.stringify(preset);
+            const presetId = selectDB_Preset().find((p) => p.name === name)?.id;
+            if (presetId) {
+                // Update
+                db.prepare("UPDATE Presets SET name = ?, blob = ? WHERE id = ?").run(name, presetBlob, presetId);
+            } else {
+                // Insert
+                db.prepare("INSERT INTO Presets (name, blob) VALUES (?, ?)").run(name, presetBlob);
+            }
+        }
     }
     
     /**
@@ -138,6 +131,10 @@ export class PresetManager {
 
     listOfPresets(): string[] {
         return Object.keys(this.presets);
+    }
+
+    getDefaultPreset(): Preset {
+        return JSON.parse(selectDB_PresetById(0).blob);
     }
 
 }

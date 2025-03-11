@@ -78,7 +78,16 @@ router.post("/new-test", (req: Request, res: Response) => {
         });
         return;
     }
-    
+
+    const testId = req.body['testid'];
+    if (!testId) {
+        res.json({
+            success: false,
+            message: "No testid provided"
+        });
+        return;
+    }
+
     const timeStarted = new Date();
     let timeToEnd: Date | null = null;
     if (manualConfigs.get("enableTimeLimit")) {

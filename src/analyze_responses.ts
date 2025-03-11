@@ -1,8 +1,6 @@
 import { Quiz, QuizQuestion } from "./lang/quiz/quiz.ts";
-import { DatabaseSync } from "node:sqlite";
 import { logInfo, logError } from "./lib/logger.ts";
-
-const db = new DatabaseSync("db/responses.db");
+import { db, DB_Response, insertDB_Response, selectDB_Response } from "./lib/db.ts";
 
 export type TestResponseBlob = {
     answers: string[];
@@ -51,19 +49,25 @@ export function getResponses(): TestResponse[] {
     return responses;
 }
 
-export function getResponsesRaw(): any[][] {
-    const stmt = db.prepare("SELECT * FROM Responses");
-    const all = stmt.all() as any[];
+export function getResponsesRaw() {
+    const all = selectDB_Response();
     const header = ["id", "email", "time", "due", "idCookie", "answerCode", "responseBlob"];
     logInfo("analyze_responses", "Got raw responses from database");
     return [header, ...all];
 }
 
 export function addResponse(data: { email: string; time: Date; due: Date; idCookie: string; answerCode: string; blob: any }) {
-    const stmt = db.prepare("INSERT INTO Responses (email, time, due, idCookie, answerCode, responseBlob) VALUES (?, ?, ?, ?, ?, ?)");
-    stmt.run(data.email, data.time.getTime(), data.due.getTime(), data.idCookie, data.answerCode, JSON.stringify(data.blob));
+    insertDB_Response({
+        email: data.email,
+        time: data.time.getTime(),
+        due: data.due.getTime(),
+        idCookie: data.idCookie,
+        answerCode: data.answerCode,
+        responseBlob: JSON.stringify(data.blob)
+    })
     logInfo("analyze_responses", "Inserted response into database");
 }
+
 
 export class QuestionResult {
     question: QuizQuestion;
