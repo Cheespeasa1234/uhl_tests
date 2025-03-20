@@ -1,5 +1,5 @@
 import { loadSync } from "jsr:@std/dotenv";
-import { logInfo, logError } from "./logger.ts";
+import { logError, logInfo } from "./logger.ts";
 
 export const HCST_SPREADSHEET_ID: string = getEnv("HCST_SPREADSHEET_ID");
 export const HCST_ADMIN_PASSWORD: string = getEnv("HCST_ADMIN_PASSWORD");
@@ -12,6 +12,8 @@ export function getEnv(key: string): string {
     const value = env[key];
     if (value === undefined) {
         logError("env", `Key ${key} is not set`);
+    } else {
+        logInfo("env", `Key ${key} is set`);
     }
     return value;
 }

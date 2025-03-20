@@ -125,3 +125,12 @@ The top of the grade result displays the email of the student, the amount of que
 In the box, you will see the grade of the first question. It will tell you the question number, the prompt, and the code provided to the student. Below this are two boxes. The first box is what the student typed in as their response, and the second is what the computer says is the correct answer. If the left border is red on the first box, the answer is incorrect. There is also some text below this to tell you.
 
 On the left and right are buttons to scroll through the questions. Press the right arrow button to get the next question. This cycles through, so you can press right on the last question to get to the first.
+
+## Name ideas
+* Shock (electricity, quick / snappy)
+* Starball (tarball, stars)
+* Juhlkit (J Uhl, Toolkit)
+* Quizitive (inquizitive)
+* **Blujay (blue jay, Jay uhl)**
+* Asesy (assess, assessment)
+* **LeviLearn (levison, learn)**

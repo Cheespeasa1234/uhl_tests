@@ -3,3 +3,6 @@
 secrets
 files
 db/*.db
+frontend/build
+frontend/node_modules
+dfrontend

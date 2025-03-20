@@ -1,6 +1,6 @@
 'use strict';
 
-export function createTable (header, rows) {
+export function createTable(header, rows) {
     
     const table = document.createElement("table");
     
@@ -55,6 +55,71 @@ export function createListOfOptions(list) {
     return out;
 }
 
+export function createTestCodeConfigInputs(testCodesObject) {
+    const configArea = document.createElement("div");
+    configArea.id = "test-code-config-area";
+
+    const { tests, amount } = testCodesObject;
+
+    for (let i = 0; i < amount; i++) {
+        const { id, code, created, presetId, presetName, enabled } = tests[i];
+        const inputGroup = document.createElement("div");
+        inputGroup.classList.add("input-group");
+
+        const span = document.createElement("span");
+        span.classList.add("input-group-text", "id-input-tc", "col-sm-1");
+        span.innerText = id;
+
+        const span2 = document.createElement("span");
+        span2.classList.add("input-group-text");
+        span2.innerText = "Secret";
+
+        const codeInput = document.createElement("input");
+        codeInput.setAttribute("type", "text");
+        codeInput.setAttribute("value", code);
+        codeInput.classList.add("form-control", "code-input-tc");
+
+        const span3 = document.createElement("span");
+        span3.classList.add("input-group-text");
+        span3.innerText = "Preset";
+
+        const presetNameInput = document.createElement("input");
+        presetNameInput.setAttribute("type", "text");
+        presetNameInput.setAttribute("value", presetName);
+        presetNameInput.classList.add("form-control", "preset-input-tc");
+
+        const enabledInputLabel = document.createElement("div");
+        enabledInputLabel.classList.add("input-group-text");
+        enabledInputLabel.innerText = "Enabled";
+
+        const enabledInputContainer = document.createElement("div");
+        enabledInputContainer.classList.add("input-group-text");
+
+        const enabledInput = document.createElement("input");
+        enabledInput.setAttribute("type", "checkbox");
+        const check = enabled == 1;
+        if (check) {
+            enabledInput.setAttribute("checked", check);
+        }
+        enabledInput.classList.add("mt-0", "form-check-input", "enabled-input-tc");
+        enabledInputContainer.appendChild(enabledInput);
+
+        inputGroup.appendChild(span);
+        inputGroup.appendChild(span2);
+        inputGroup.appendChild(codeInput);
+        inputGroup.appendChild(span3);
+        inputGroup.appendChild(presetNameInput);
+        inputGroup.appendChild(enabledInputLabel);
+        inputGroup.appendChild(enabledInputContainer);
+
+        configArea.appendChild(inputGroup);
+    }
+    
+    console.log(JSON.stringify(testCodesObject));
+
+    return configArea;
+}
+
 export function createConfigInputs(presetObject) {
     const configArea = document.createElement("div");
     configArea.id = "config-area";
@@ -75,13 +140,8 @@ export function createConfigInputs(presetObject) {
         input.setAttribute("value", value);
         input.classList.add("form-control");
 
-        const button = document.createElement("button");
-        button.classList.add("btn", "btn-outline-secondary");
-        button.innerHTML = "Reset";
-
         inputGroup.appendChild(span);
         inputGroup.appendChild(input);
-        inputGroup.appendChild(button);
 
         configArea.appendChild(inputGroup);
     }

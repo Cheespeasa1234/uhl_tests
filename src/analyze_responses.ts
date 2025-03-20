@@ -1,6 +1,8 @@
 import { Quiz, QuizQuestion } from "./lang/quiz/quiz.ts";
 import { logInfo, logError } from "./lib/logger.ts";
-import { db, DB_Response, insertDB_Response, selectDB_Response } from "./lib/db.ts";
+import { DB_Response } from "./lib/db.ts";
+import { getValues } from "./sheets.ts";
+import { HCST_SPREADSHEET_ID } from "./lib/env.ts";
 
 export type TestResponseBlob = {
     answers: string[];
@@ -16,6 +18,7 @@ export class TestResponse {
     answerCode: string;
     blob: TestResponseBlob;
 
+    // deno-lint-ignore no-explicit-any
     constructor(entry: any) {
         this.id = entry.id;
         this.email = entry.email;
@@ -33,6 +36,7 @@ export class GoogleResponse {
     answerCode: string;
     rating: number;
 
+    // deno-lint-ignore no-explicit-any
     constructor(entry: any) {
         this.timestamp = new Date(entry[0]);
         this.email = entry[1];
@@ -42,32 +46,36 @@ export class GoogleResponse {
 }
 
 export function getResponses(): TestResponse[] {
-    const stmt = db.prepare("SELECT * FROM Responses");
-    const responsesAny = stmt.all();
-    const responses = responsesAny.map((r) => new TestResponse(r));
+    const responsesAny: DB_Response[] = DB_Response.select();
+    const responses: TestResponse[] = responsesAny.map((r) => new TestResponse(r));
     logInfo("analyze_responses", "Got responses from database");
     return responses;
 }
 
 export function getResponsesRaw() {
-    const all = selectDB_Response();
-    const header = ["id", "email", "time", "due", "idCookie", "answerCode", "responseBlob"];
+    const all = DB_Response.select();
+    const header = Object.keys(all[0]);
     logInfo("analyze_responses", "Got raw responses from database");
+
     return [header, ...all];
 }
 
-export function addResponse(data: { email: string; time: Date; due: Date; idCookie: string; answerCode: string; blob: any }) {
-    insertDB_Response({
-        email: data.email,
-        time: data.time.getTime(),
-        due: data.due.getTime(),
-        idCookie: data.idCookie,
-        answerCode: data.answerCode,
-        responseBlob: JSON.stringify(data.blob)
-    })
-    logInfo("analyze_responses", "Inserted response into database");
+/**
+ * Opens the google form sheet and gets the results from it
+ */
+export async function getGoogleFormResponses(): Promise<GoogleResponse[]> {
+    const data = await getGoogleFormRaw();
+    const responses = data.map((line) => new GoogleResponse(line));
+    logInfo("analyze_responses", "Got responses from Google Form");
+    return responses;
 }
 
+// deno-lint-ignore no-explicit-any
+export async function getGoogleFormRaw(): Promise<any[][]> {
+    const response = await getValues(HCST_SPREADSHEET_ID, "Form Responses 1");
+    const values = response.data.values || [];
+    return values;
+}
 
 export class QuestionResult {
     question: QuizQuestion;

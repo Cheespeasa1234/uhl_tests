@@ -2,7 +2,7 @@
 import express, { Request, Response, NextFunction } from "npm:express";
 
 import { router as gradingRouter } from "./routes/admin.ts";
-import { router as testingRouter } from "./routes/testing.ts";
+import { router as testingRouter } from "./routes/students.ts";
 import { logDebug, logInfo } from "./lib/logger.ts";
 import { HCST_PORT, HCST_HOST } from "./lib/env.ts";
 
@@ -37,7 +37,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use("/api/grading", gradingRouter);
 app.use("/api/testing", testingRouter);
 
-app.get("/*", express.static("./src/public"));
+app.get("/*", express.static("./frontend/build/"));
 
 app.listen(Number(PORT), HOST, () => {
     logInfo("main", `Listening on port ${PORT}`);

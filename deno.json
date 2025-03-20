@@ -10,7 +10,8 @@
   "lint": {
     "include": ["src/"],
     "rules": {
-      "tags": ["recommended"]
+      "tags": ["recommended"],
+      "exclude": ["no-namespace"]
     }
   },
   "test": {

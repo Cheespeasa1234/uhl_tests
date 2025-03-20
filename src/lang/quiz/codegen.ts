@@ -1,6 +1,8 @@
 import { $, CodeEnvironment, type LineOfCode } from "./code.ts";
 import { ParsedToken } from "../typing/parsedToken.ts";
 import { Quiz, QuizQuestion } from "./quiz.ts";
+import { DB_TestGroup, DB_Preset } from "../../lib/db.ts";
+import { Preset } from "../../lib/config.ts";
 
 export function generateForLoop(
     varname: string,
@@ -161,11 +163,15 @@ export function codeToJava(code: LineOfCode[], depth = 0): string {
     return ans;
 }
 
-export function makeTest(timeStarted: Date, timeToEnd: Date | null, testLoopCount: number, testDoubleLoopCount: number, testStringCount: number): Quiz {
+export function makeTest(timeStarted: Date, timeToEnd: Date | null, testGroup: DB_TestGroup): Quiz {
+
+    const preset: DB_Preset = DB_Preset.selectById(testGroup.presetId);
+    const blob: Preset = preset.getBlobAsPreset();
+
     const questions: QuizQuestion[] = [];
 
     // Create for loop questions
-    for (let i = 0; i < testLoopCount; i++) {
+    for (let i = 0; i < blob["For Loop Count"].getNumberValue(); i++) {
         questions.push(
             new QuizQuestion(
                 generateForLoop("i", [$("print", "$*#i")]),
@@ -175,7 +181,7 @@ export function makeTest(timeStarted: Date, timeToEnd: Date | null, testLoopCoun
     }
 
     // Create double loop question
-    for (let i = 0; i < testDoubleLoopCount; i++) {
+    for (let i = 0; i < blob["Nested For Loop Count"].getNumberValue(); i++) {
         questions.push(
             new QuizQuestion(
                 generateDoubleForLoop(),
@@ -185,13 +191,13 @@ export function makeTest(timeStarted: Date, timeToEnd: Date | null, testLoopCoun
     }
 
     // Create string question
-    for (let i = 0; i < testStringCount; i++) {
+    for (let i = 0; i < blob["String Count"].getNumberValue(); i++) {
         questions.push(new QuizQuestion(
             generateStringQuestion(),
             "What will the output of this code be? (strings)"
         ));
     }
 
-    const quiz = new Quiz(questions, timeStarted, timeToEnd);
+    const quiz = new Quiz(questions, timeStarted, timeToEnd, testGroup);
     return quiz;
 }

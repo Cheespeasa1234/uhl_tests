@@ -1,7 +1,5 @@
 <html lang="en">
 
-</html>
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -203,13 +201,13 @@
                         <h3>Configure test contents</h3>
 
                         <div class="btn-group mb-2">
-                            <button id="save-preset" type="button" class="btn btn-secondary" data-tippy-content="Save the below configuration values to a given preset, either new or pre-existing.">Save
+                            <button id="save-preset" type="button" class="btn btn-outline-secondary" data-tippy-content="Save the below configuration values to a given preset, either new or pre-existing.">Save
                                 to preset</button>
-                            <button id="load-preset" type="button" class="btn btn-secondary" data-tippy-content="Set the below configuration values to the values of a given pre-existing preset.">Load
+                            <button id="load-preset" type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values of a given pre-existing preset.">Load
                                 from preset</button>
-                            <button id="reset-preset" type="button" class="btn btn-secondary" data-tippy-content="Set the below configuration values to the values of the hard-coded default preset.">Load
+                            <button id="reset-preset" type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values of the hard-coded default preset.">Load
                                 from default</button>
-                            <button id="undo-preset" type="button" class="btn btn-secondary" data-tippy-content="Set the below configuration values to the values currently in use by the server.">Load from current</button>
+                            <button id="undo-preset" type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values currently in use by the server.">Load from current</button>
                         </div>
 
                         <div id="config-area">
@@ -220,6 +218,21 @@
                             <button id="save-config" type="button" class="btn btn-primary" data-tippy-content="Sets the configuration that new tests are created with to the above configuration values.">Set
                                 configuration</button>
                         </div>
+                    </div>
+
+                    <div class="p-3">
+                        <h3>Configure Test Codes</h3>
+                        
+                        <div class="btn-group mb-2">
+                            <button id="save-test-code-config" type="button" class="btn btn-outline-secondary" data-tippy-content="Save the below test code values to the server.">Save changes</button>
+                            <button id="reset-test-code-config" type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below test code values to the values stored on the server.">Undo changes</button>
+                        </div>
+                        
+                        <div id="test-code-config-area">
+
+                        </div>
+                        
+                        <button id="reset-test-code-config" class="btn btn-secondary" data-tippy-content="Resets all your changes to the test codes.">Reset</button>
                     </div>
 
                 </div>

@@ -1,3 +1,4 @@
+import { DB_TestGroup } from "../../lib/db.ts";
 import { LineOfCode, CodeEnvironment } from "./code.ts";
 import { codeToJava, outputToJava } from "./codegen.ts";
 import crypto from "node:crypto";
@@ -11,6 +12,11 @@ export class Student {
         this.name = name;
         this.privateKey = crypto.randomBytes(16).toString("hex");
     }
+}
+
+export type QuizQuestionCensored = {
+    questionString: string;
+    descriptor: string;
 }
 
 export class QuizQuestion {
@@ -59,13 +65,15 @@ export class QuizResponse extends QuizQuestion {
 
 export class Quiz {
     questions: QuizQuestion[];
+    testGroup: DB_TestGroup;
     timeStarted: Date;
     timeToEnd: Date | null;
 
-    constructor(questions: QuizQuestion[], timeStarted: Date, timeToEnd: Date | null) {
+    constructor(questions: QuizQuestion[], timeStarted: Date, timeToEnd: Date | null, testGroup: DB_TestGroup) {
         this.questions = questions;
         this.timeStarted = timeStarted;
         this.timeToEnd = timeToEnd;
+        this.testGroup = testGroup;
     }
 
     canBeSubmittedNow(): boolean {
@@ -78,7 +86,7 @@ export class Quiz {
         return true;
     }
     
-    getCensoredQuestions(): any[] {
+    getCensoredQuestions(): QuizQuestionCensored[] {
         return this.questions.map(question => {
             return { questionString: question.questionString, descriptor: question.descriptor }
         })

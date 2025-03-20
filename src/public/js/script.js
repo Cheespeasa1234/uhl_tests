@@ -33,6 +33,7 @@ if (!hcsid) {
 }
 
 const nameInput = document.querySelector("#name");
+const testCodeInput = document.querySelector("#test-code");
 const takeTestButton = document.querySelector("#take-test");
 const testArea = document.querySelector("#test");
 const submissionPopupDialog = document.querySelector("#submission-popup");
@@ -58,17 +59,17 @@ function displaySubmissionPopup(response) {
 function clearDocument() {
     testArea.innerHTML = "";
     nameInput.value = "";
+    testCodeInput.value = "practice2025";
     studentSelf = undefined;
 }
 
 takeTestButton.onclick = () => {
-    showNotifToast({success: true, message: "Fetching a new test" });
-
     fetch("./api/testing/new-test", {
         method: "POST",
         headers: new Headers({ "content-type": "application/json" }),
         body: JSON.stringify({
             "name": nameInput.value,
+            "code": testCodeInput.value,
         }),
     }).then((r) => {
         console.log(r);

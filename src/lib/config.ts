@@ -1,4 +1,4 @@
-import { db, DB_Preset, selectDB_Preset, selectDB_PresetById } from "./db.ts";
+import { DB_Preset } from "./db.ts";
 
 export type Preset = Record<ConfigKey, ConfigValue>;
 
@@ -54,6 +54,10 @@ export class ConfigValue {
     }
 }
 
+/**
+ * Stores a full copy of all presets, and manages the editing of presets.
+ * Will only save to the database when the savePresets method is called.
+ */
 export class PresetManager {
 
     presets: Record<string, Preset>;
@@ -68,7 +72,6 @@ export class PresetManager {
      * Get the value of a key of the currently opened preset.
      */
     getConfig(key: ConfigKey): ConfigValue {
-        console.log("Current preset: " + JSON.stringify(this.currentPreset[key]));
         return this.currentPreset[key];
     }
     
@@ -77,7 +80,7 @@ export class PresetManager {
      * @returns The presets
      */
     downloadPresets(): Record<string, Preset> {
-        const presets: DB_Preset[] = selectDB_Preset();
+        const presets: DB_Preset[] = DB_Preset.select();
         const json: Record<string, Preset> = {};
         for (const preset of presets) {
             json[preset.name] = JSON.parse(preset.blob);
@@ -92,13 +95,11 @@ export class PresetManager {
     savePresets() {
         for (const [name, preset] of Object.entries(this.presets)) {
             const presetBlob = JSON.stringify(preset);
-            const presetId = selectDB_Preset().find((p) => p.name === name)?.id;
+            const presetId = DB_Preset.selectByName(name).getId();
             if (presetId) {
-                // Update
-                db.prepare("UPDATE Presets SET name = ?, blob = ? WHERE id = ?").run(name, presetBlob, presetId);
+                DB_Preset.setBlobFromPreset(DB_Preset.selectById(presetId), preset);
             } else {
-                // Insert
-                db.prepare("INSERT INTO Presets (name, blob) VALUES (?, ?)").run(name, presetBlob);
+                DB_Preset.create({ name, blob: presetBlob });
             }
         }
     }
@@ -134,7 +135,7 @@ export class PresetManager {
     }
 
     getDefaultPreset(): Preset {
-        return JSON.parse(selectDB_PresetById(0).blob);
+        return JSON.parse(DB_Preset.selectById(0).blob);
     }
 
 }

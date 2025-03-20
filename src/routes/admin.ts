@@ -4,13 +4,13 @@ import bodyParser from "npm:body-parser";
 import cookieParser from "npm:cookie-parser";
 import crypto from "node:crypto";
 
-import { getGoogleFormResponses, getGoogleFormRaw } from "../analyze_responses_old.ts";
-import { GoogleResponse, TestResponse, getResponses, getResponsesRaw, gradeStudent } from "../analyze_responses.ts";
-import { getActiveSessions, manualConfigs, presetManager } from "./testing.ts";
-import { PresetManager, type Preset } from "../lib/config.ts";
+import { GoogleResponse, TestResponse, getResponses, getResponsesRaw, gradeStudent, getGoogleFormRaw, getGoogleFormResponses } from "../analyze_responses.ts";
+import { getActiveSessions, manualConfigs, presetManager } from "./students.ts";
+import { type Preset } from "../lib/config.ts";
 import { retrieveNotifications } from "../lib/notifications.ts";
 import { logDebug, logInfo, logWarning } from "../lib/logger.ts";
 import { HCST_ADMIN_PASSWORD } from "../lib/env.ts";
+import { DB_Preset, DB_TestGroup } from "../lib/db.ts";
 
 export const router = express.Router();
 router.use(bodyParser.json());
@@ -36,7 +36,7 @@ const checkSidMiddleware = (req: Request, res: Response, next: NextFunction) => 
     }
 }
 
-router.get("/am_i_signed_in", checkSidMiddleware, (req: Request, res: Response) => {
+router.get("/am_i_signed_in", checkSidMiddleware, (_req: Request, res: Response) => {
     res.json({
         success: true,
         message: "Valid sessionId"
@@ -74,7 +74,7 @@ router.post("/get_session_id", (req: Request, res: Response) => {
     }
 });
 
-router.get("/sessions", checkSidMiddleware, (req: Request, res: Response) => {
+router.get("/sessions", checkSidMiddleware, (_req: Request, res: Response) => {
     logInfo("admin/sessions", "Fetching active sessions");
     return res.json({
         success: true,
@@ -85,7 +85,7 @@ router.get("/sessions", checkSidMiddleware, (req: Request, res: Response) => {
     });
 });
 
-router.get("/google-form", checkSidMiddleware, async (req: Request, res: Response) => {
+router.get("/google-form", checkSidMiddleware, async (_req: Request, res: Response) => {
     logInfo("admin/google-form", "Fetching Google form data");
     const data = await getGoogleFormRaw();
 
@@ -99,7 +99,7 @@ router.get("/google-form", checkSidMiddleware, async (req: Request, res: Respons
     });
 })
 
-router.get("/test-program", checkSidMiddleware, (req: Request, res: Response) => {
+router.get("/test-program", checkSidMiddleware, (_req: Request, res: Response) => {
     const data = getResponsesRaw();
 
     return res.json({
@@ -195,14 +195,14 @@ router.get("/config/get_preset/:presetName", checkSidMiddleware, (req: Request, 
 /**
  * Gets the default preset.
  */
-router.get("/config/get_preset_default", checkSidMiddleware, (req: Request, res: Response) => {
+router.get("/config/get_preset_default", checkSidMiddleware, (_req: Request, res: Response) => {
     res.json({
         success: true,
         message: "Got the default preset",
         data: {
             preset: presetManager.getDefaultPreset()
         }
-    })
+    });
 })
 
 /**
@@ -236,7 +236,7 @@ router.post("/config/set_config", checkSidMiddleware, (req: Request, res: Respon
 /**
  * Get the current configuration in use.
  */
-router.get("/config/get_config", checkSidMiddleware, (req: Request, res: Response) => {
+router.get("/config/get_config", checkSidMiddleware, (_req: Request, res: Response) => {
     console.log(presetManager.currentPreset);
     res.json({
         success: true,
@@ -247,7 +247,7 @@ router.get("/config/get_config", checkSidMiddleware, (req: Request, res: Respons
     })
 });
 
-router.get("/config/list_of_presets", checkSidMiddleware, (req: Request, res: Response) => {
+router.get("/config/list_of_presets", checkSidMiddleware, (_req: Request, res: Response) => {
     const presets = presetManager.listOfPresets();
     res.json({
         success: true,
@@ -258,7 +258,177 @@ router.get("/config/list_of_presets", checkSidMiddleware, (req: Request, res: Re
     });
 });
 
-router.get("/notifications", checkSidMiddleware, (req: Request, res: Response) => {
+router.get("/config/testcodes/:code", checkSidMiddleware, (req: Request, res: Response) => {
+    const code = req.params['code'];
+    // get the tests that have the given code
+    const test = DB_TestGroup.selectByCode(code);
+    if (test) {
+        res.json({
+            success: true,
+            message: "Successfully retrieved test",
+            data: {
+                test: test
+            }
+        });
+    } else {
+        res.json({
+            success: false,
+            message: "Test not found"
+        });
+    }
+});
+
+router.get("/config/testcodes", checkSidMiddleware, (_req: Request, res: Response) => {
+    const tests: any[] = DB_TestGroup.select() as DB_TestGroup[];
+    tests.forEach(test => {
+        test.presetName = DB_TestGroup.getPresetName(test);
+    });
+
+    res.json({
+        success: true,
+        message: "Successfully retrieved test codes",
+        data: {
+            amount: tests.length,
+            tests: tests
+        }
+    });
+});
+
+router.post("/config/update_testcodes", checkSidMiddleware, (req: Request, res: Response) => {
+    const testCodes = req.body['testCodes'];
+    if (!testCodes) {
+        return res.json({
+            success: false,
+            message: "No testCodes provided"
+        });
+    }
+
+    for (let i = 0; i < testCodes.length; i++) {
+        const testCode = testCodes[i];
+        const id = testCode['id'];
+        const code = testCode['code'];
+        const presetName = testCode['presetName'];
+        const enabled = testCode['enabled'];
+
+        if (!id) {
+            return res.json({
+                success: false,
+                message: `No id provided for index ${i}`
+            });
+        }
+
+        if (!code) {
+            return res.json({
+                success: false,
+                message: `No code provided for index ${i}`
+            });
+        }
+
+        if (!presetName) {
+            return res.json({
+                success: false,
+                message: `No presetName provided for index ${i}`
+            });
+        }
+
+        if (!Number.isFinite(Number(id))) {
+            return res.json({
+                success: false,
+                message: `id is not a number for index ${i}`
+            });
+        }
+
+        const test = DB_TestGroup.selectById(Number(id));
+        if (!test) {
+            return res.json({
+                success: false,
+                message: `Test not found for index ${i}`
+            });
+        }
+
+        const preset = DB_Preset.selectById(test.presetId);
+
+        test.code = code.toString();
+        test.presetId = preset.getId();
+        test.enabled = enabled ? 1 : 0;
+        
+        test.update();
+    }
+
+    res.json({
+        success: true,
+        message: "Successfully updated test codes"
+    });
+});
+
+
+router.get("/config/update_testcode", checkSidMiddleware, (req: Request, res: Response) => {
+    const id = req.query['id'];
+    const code = req.query['code'];
+    const presetName = req.query['presetName'];
+    const enabled = req.query['enabled'];
+
+    if (!id) {
+        return res.json({
+            success: false,
+            message: "No id provided"
+        });
+    }
+
+    if (!code) {
+        return res.json({
+            success: false,
+            message: "No code provided"
+        });
+    }
+
+    if (!presetName) {
+        return res.json({
+            success: false,
+            message: "No presetName provided"
+        });
+    }
+
+    if (!enabled) {
+        return res.json({
+            success: false,
+            message: "No enabled provided"
+        });
+    }
+
+    if (!Number.isFinite(Number(id))) {
+        return res.json({
+            success: false,
+            message: "id is not a number"
+        });
+    }
+
+    const test = DB_TestGroup.selectById(Number(id));
+    if (!test) {
+        return res.json({
+            success: false,
+            message: "Test not found"
+        });
+    }
+
+    const preset = DB_Preset.selectByName(presetName.toString());
+    if (!preset) {
+        return res.json({
+            success: false,
+            message: "Preset not found"
+        });
+    }
+
+    const enabledBoolean = enabled === "true";
+
+    test.code = code.toString();
+    test.presetId = preset.getId();
+    test.enabled = enabledBoolean ? 1 : 0;
+
+    test.update();
+});
+
+router.get("/notifications", checkSidMiddleware, (_req: Request, res: Response) => {
     const notifications = retrieveNotifications();
     res.json({
         success: true,
