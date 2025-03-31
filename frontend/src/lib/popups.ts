@@ -1,11 +1,6 @@
-import { toast } from "svelte-french-toast";
+import { toast } from "svelte-hot-french-toast";
 
-export type API_Response = {
-    success: boolean,
-    message: string,
-    data?: any,
-    [key: string]: any,
-}
+
 
 export function showNotifToast(json: { success: boolean, message: string, data?: any }) {
     const { success, message } = json;
@@ -15,12 +10,6 @@ export function showNotifToast(json: { success: boolean, message: string, data?:
         toast.error(message);
     }
     console.trace(json);
-}
-
-export async function fetchToJsonMiddleware(response: Response): Promise<API_Response> {
-    const json = await response.json();
-    showNotifToast(json);
-    return json;
 }
 
 // const modalElement = document.getElementById("modal");

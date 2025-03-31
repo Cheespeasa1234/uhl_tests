@@ -21,7 +21,10 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
+		"@sveltejs/adapter-node": "^5.2.12",
 		"@sveltejs/adapter-static": "^3.0.8",
-		"svelte-french-toast": "^1.2.0"
+		"@sveltestrap/sveltestrap": "^7.1.0",
+		"bootstrap": "^5.3.3",
+		"svelte-hot-french-toast": "^1.0.0"
 	}
 }

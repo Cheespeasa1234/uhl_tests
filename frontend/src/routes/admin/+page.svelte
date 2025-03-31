@@ -1,9 +1,39 @@
 <script lang="ts">
-    import { fetchToJsonMiddleware } from "$lib/popups";
+    import { fetchToJsonMiddleware, type API_Response } from "$lib/util";
+    import { showNotifToast } from "$lib/popups";
     import { sanitize } from "$lib/util";
+    import { onMount } from "svelte";
+    import { type Grade } from "$lib/grade";
+
+    import "../admin.css"
+    import "../quiz.css"
+
+    import DataDisplayTable from "./DataDisplayTable.svelte";
+    import StudentGrade from "./StudentGrade.svelte";
 
     let passwordInputValue: string = $state("");
-    let signedIn: boolean = $state(false);
+    let signedIn: boolean = $state(true);
+    let gradeStudentEmailInputValue: string = $state("");
+
+    let googleFormTable: DataDisplayTable;
+    let testProgramTable: DataDisplayTable;
+    
+    let graded: boolean = $state(true);
+    let gradeData: Grade | undefined = $state(undefined);
+
+    async function onSignIn() {
+        googleFormTable.refresh();
+        testProgramTable.refresh();
+
+        setInterval(async () => {
+            const json = await fetch("./api/grading/notifications")
+                .then(fetchToJsonMiddleware);
+            const notifications: API_Response[] = json.data.notifications;
+            notifications.forEach(notif => {
+                showNotifToast(notif);
+            });
+        }, 5000);
+    }
 
     async function getPresetList(): Promise<string[]> {
         const response = await fetch("./api/grading/config/list_of_presets")
@@ -55,6 +85,33 @@
             }
         });
     }
+
+    async function gradeStudent() {
+        fetch("./api/grading/grade/" + gradeStudentEmailInputValue)
+        .then(fetchToJsonMiddleware)
+        .then(json => {
+            const { success, data } = json;
+            
+            if (success) {
+                graded = true;
+                gradeData = data.grade;
+            } else {
+                graded = false;
+            }
+        });
+    }
+
+    onMount(() => {
+        fetch("./api/grading/am_i_signed_in")
+        .then(fetchToJsonMiddleware)
+        .then(json => {
+            const { success } = json;
+            signedIn = success;
+            if (success) {
+                onSignIn();
+            }
+        });
+    });
 </script>
 
 <div class="modal" tabindex="-1" id="modal" data-bs-backdrop="static">
@@ -255,17 +312,8 @@
             </div>
             <div class="tab-pane fade" id="nav-p2" role="tabpanel" aria-labelledby="nav-p2-tab">
 
-                <div class="p-3">
-                    <h4>Google form table</h4>
-                    <div class="container" id="google-form"></div>
-                    <button class="btn btn-primary" type="button" id="refresh-google-form">Refresh</button>
-                </div>
-
-                <div class="p-3">
-                    <h4>Quiz submissions table</h4>
-                    <div class="container" id="test-program"></div>
-                    <button class="btn btn-primary" type="button" id="refresh-test-program">Refresh</button>
-                </div>
+                <DataDisplayTable name="Google form table" url="./api/grading/google_form" bind:this={googleFormTable} />
+                <DataDisplayTable name="Quiz submissions table" url="./api/grading/test_program" bind:this={testProgramTable} />
 
             </div>
             <div class="tab-pane fade" id="nav-p3" role="tabpanel" aria-labelledby="nav-p3-tab">
@@ -274,11 +322,13 @@
                     <h4>Grade student by email</h4>
                     <div class="input-group">
                         <span class="input-group-text">Student Email</span>
-                        <input type="text" class="form-control" id="student-to-grade" autocomplete="off">
-                        <button class="btn btn-outline-primary" type="button" id="grade-student">Search</button>
+                        <input bind:value={gradeStudentEmailInputValue} type="text" class="form-control" id="student-to-grade" autocomplete="off">
+                        <button onclick={gradeStudent} class="btn btn-outline-primary" type="button" id="grade-student">Search</button>
                     </div>
 
-                    <div class="container border rounded" id="grade-student-results"></div>
+                    {#if graded}
+                        <StudentGrade grade={gradeData!}/>
+                    {/if}
                 </div>
 
             </div>

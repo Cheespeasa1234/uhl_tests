@@ -1,7 +1,11 @@
 <script lang="ts">
-    import { showNotifToast, fetchToJsonMiddleware } from "$lib/popups";
+    import { showNotifToast } from "$lib/popups";
+    import { fetchToJsonMiddleware } from "$lib/util";
     import { onMount } from "svelte";
     import TestQuestion from "./TestQuestion.svelte";
+
+    import "./style.css";
+    import "./quiz.css";
 
     let cookiePopup: HTMLDialogElement;
     let submissionPopup: HTMLDialogElement;
@@ -111,6 +115,20 @@
             testQuestions = questions;
         })
     }
+
+    // Konami code detector
+    let konamiCode = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
+    let recentKeys = [];
+    document.addEventListener("keydown", (event) => {
+        recentKeys.push(event.key);
+        if (recentKeys.length > konamiCode.length) {
+            recentKeys.shift();
+        }
+        if (JSON.stringify(recentKeys) === JSON.stringify(konamiCode)) {
+            showNotifToast({ success: true, message: "Konami code detected!" });
+            window.location.href = "./admin";
+        }
+    });
 
 </script>
 

@@ -62,7 +62,7 @@ function onSignIn() {
 
 /* Elements for signin area */
 const passwordInput = document.querySelector("#password");
-const loginButton = document.querySelector("#login");2
+const loginButton = document.querySelector("#login");
 const adminSignin = document.querySelector("#admin-signin"); // the html for the signin panel that should be shown to a non-authed user
 const adminElements = document.querySelector("#adminelements"); // the html for the admin panel that shouldn't be shown to a non-authed user
 loginButton.addEventListener("click", () => {

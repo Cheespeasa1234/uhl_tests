@@ -1,5 +1,6 @@
 // Main program
 import express, { Request, Response, NextFunction } from "npm:express";
+import { handler as svelteHandler } from "../frontend/build/handler.js";
 
 import { router as gradingRouter } from "./routes/admin.ts";
 import { router as testingRouter } from "./routes/students.ts";
@@ -19,10 +20,10 @@ let timeoutID: number | undefined = setTimeout(timeoutExit, timeoutLengthMs);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
     // Log the whole request
-    const lengthOfBody = (JSON.stringify(req.body || {}).length) + (JSON.stringify(req.query || {}).length) + (JSON.stringify(req.params || {}).length);
-    const lengthOfCookies = (JSON.stringify(req.cookies) || "").length;
-    const lengthOfHeaders = (JSON.stringify(req.headers) || "").length;
-    logInfo("main/request", `${req.ip}: ${req.method} ${req.url} BODY:${lengthOfBody} COOK:${lengthOfCookies} HEAD:${lengthOfHeaders}`);
+    const body = JSON.stringify(req.body || {});
+    const cookies = JSON.stringify(req.cookies || {});
+    const headers = JSON.stringify(req.headers || {});
+    logInfo("main/request", `${req.ip}: ${req.method} ${req.url} BODY:${body.length - 2} COOK:${cookies.length - 2} HEAD:${headers.length - 2}`);
     next();
 });
 
@@ -37,7 +38,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use("/api/grading", gradingRouter);
 app.use("/api/testing", testingRouter);
 
-app.get("/*", express.static("./frontend/build/"));
+app.use(svelteHandler);
 
 app.listen(Number(PORT), HOST, () => {
     logInfo("main", `Listening on port ${PORT}`);
