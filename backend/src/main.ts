@@ -1,6 +1,5 @@
 // Main program
 import express, { Request, Response, NextFunction } from "npm:express";
-import { handler as svelteHandler } from "../frontend/build/handler.js";
 
 import { router as gradingRouter } from "./routes/admin.ts";
 import { router as testingRouter } from "./routes/students.ts";
@@ -37,8 +36,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 app.use("/api/grading", gradingRouter);
 app.use("/api/testing", testingRouter);
-
-app.use(svelteHandler);
 
 app.listen(Number(PORT), HOST, () => {
     logInfo("main", `Listening on port ${PORT}`);

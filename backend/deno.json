@@ -1,19 +1,13 @@
 {
   "tasks": {
-    "build_svelte": {
-      "command": "cd frontend && npm run build",
-      "description": "Build the Svelte frontend"
-    },
 
     "dev": {
       "command": "DEV=1 deno run --allow-all --watch src/main.ts",
-      "dependencies": ["build_svelte"],
       "description": "Run the development server"
     },
 
     "start": {
       "command": "DEV=0 deno run --allow-all src/main.ts",
-      "dependencies": ["build_svelte"],
       "description": "Run the production server"
     },
 

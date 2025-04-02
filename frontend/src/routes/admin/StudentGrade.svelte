@@ -1,7 +1,11 @@
 <script lang="ts">
     import { type Grade } from "$lib/grade";
     import GradeQuestion from "./GradeQuestion.svelte";
-    const { grade }: { grade: Grade } = $props();
+
+    const props = $props();
+    console.log("Props", props);
+    const { grade }: { grade: Grade } = props;
+    
     const { name, epochTime, due, questions, numberCorrect } = grade;
     const { correct, incorrect } = numberCorrect;
     

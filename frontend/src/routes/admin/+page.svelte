@@ -25,14 +25,14 @@
         googleFormTable.refresh();
         testProgramTable.refresh();
 
-        setInterval(async () => {
-            const json = await fetch("./api/grading/notifications")
-                .then(fetchToJsonMiddleware);
-            const notifications: API_Response[] = json.data.notifications;
-            notifications.forEach(notif => {
-                showNotifToast(notif);
-            });
-        }, 5000);
+        // setInterval(async () => {
+        //     const json = await fetch("./api/grading/notifications")
+        //         .then(fetchToJsonMiddleware);
+        //     const notifications: API_Response[] = json.data.notifications;
+        //     notifications.forEach(notif => {
+        //         showNotifToast(notif);
+        //     });
+        // }, 5000);
     }
 
     async function getPresetList(): Promise<string[]> {
@@ -86,20 +86,21 @@
         });
     }
 
-    async function gradeStudent() {
-        fetch("./api/grading/grade/" + gradeStudentEmailInputValue)
-        .then(fetchToJsonMiddleware)
-        .then(json => {
-            const { success, data } = json;
+    // async function gradeStudent() {
+    //     fetch("./api/grading/grade/" + gradeStudentEmailInputValue)
+    //     .then(fetchToJsonMiddleware)
+    //     .then(json => {
+    //         const { success, data } = json;
+    //         console.log("Grading data", json);
             
-            if (success) {
-                graded = true;
-                gradeData = data.grade;
-            } else {
-                graded = false;
-            }
-        });
-    }
+    //         if (success) {
+    //             graded = true;
+    //             gradeData = data.grade;
+    //         } else {
+    //             graded = false;
+    //         }
+    //     });
+    // }
 
     onMount(() => {
         fetch("./api/grading/am_i_signed_in")
@@ -323,10 +324,10 @@
                     <div class="input-group">
                         <span class="input-group-text">Student Email</span>
                         <input bind:value={gradeStudentEmailInputValue} type="text" class="form-control" id="student-to-grade" autocomplete="off">
-                        <button onclick={gradeStudent} class="btn btn-outline-primary" type="button" id="grade-student">Search</button>
+                        <button class="btn btn-outline-primary" type="button" id="grade-student">Search</button>
                     </div>
 
-                    {#if graded}
+                    {#if graded && gradeData !== undefined}
                         <StudentGrade grade={gradeData!}/>
                     {/if}
                 </div>

@@ -8,10 +8,11 @@ export const HCST_PORT: string = getEnv("HCST_PORT");
 export const HCST_HOST: string = getEnv("HCST_HOST");
 
 export function getEnv(key: string): string {
-    const env = loadSync({ envPath: "./secrets/.env" });
+    const env = loadSync({ envPath: ".env" });
     const value = env[key];
     if (value === undefined) {
         logError("env", `Key ${key} is not set`);
+        Deno.exit(1);
     } else {
         logInfo("env", `Key ${key} is set`);
     }

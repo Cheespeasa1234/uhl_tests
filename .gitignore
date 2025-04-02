@@ -1,8 +1,11 @@
 .vscode
 .env
-secrets
-files
-db/*.db
+
+backend/secrets
+backend/files
+backend/db/*.db
+backend/dfrontend
+**/.env
+
 frontend/build
 frontend/node_modules
-dfrontend

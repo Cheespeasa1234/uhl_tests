@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-node';
+import adapter from '@sveltejs/adapter-auto';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -13,9 +13,13 @@ const config = {
 			// strict: true,
 
 			out: 'build',
-			precompress: true,
-			envPrefix: ''
+			precompress: false,
+			envPrefix: 'FRONTEND_',
 		}),
+	},
+	debug: true,
+	paths: {
+		origin: "./",
 	}
 };
 

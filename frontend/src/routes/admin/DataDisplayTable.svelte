@@ -1,6 +1,5 @@
 <script lang="ts">
     import { fetchToJsonMiddleware } from "$lib/util";
-    import { onMount } from "svelte";
 
     const { name, url }: { name: string, url: string } = $props();
 
@@ -18,6 +17,7 @@
             }
         });
     }
+
 </script>
 
 <div class="p-3">

@@ -85,8 +85,8 @@ router.get("/sessions", checkSidMiddleware, (_req: Request, res: Response) => {
     });
 });
 
-router.get("/google-form", checkSidMiddleware, async (_req: Request, res: Response) => {
-    logInfo("admin/google-form", "Fetching Google form data");
+router.get("/google_form", checkSidMiddleware, async (_req: Request, res: Response) => {
+    logInfo("admin/google_form", "Fetching Google form data");
     const data = await getGoogleFormRaw();
 
     return res.json({
@@ -99,7 +99,7 @@ router.get("/google-form", checkSidMiddleware, async (_req: Request, res: Respon
     });
 })
 
-router.get("/test-program", checkSidMiddleware, (_req: Request, res: Response) => {
+router.get("/test_program", checkSidMiddleware, (_req: Request, res: Response) => {
     const data = getResponsesRaw();
 
     return res.json({
