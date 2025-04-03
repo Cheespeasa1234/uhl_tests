@@ -52,14 +52,6 @@ export function getResponses(): TestResponse[] {
     return responses;
 }
 
-export function getResponsesRaw() {
-    const all = DB_Response.select();
-    const header = Object.keys(all[0]);
-    logInfo("analyze_responses", "Got raw responses from database");
-
-    return [header, ...all];
-}
-
 /**
  * Opens the google form sheet and gets the results from it
  */

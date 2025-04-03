@@ -2,7 +2,7 @@
     import { showNotifToast } from "$lib/popups";
     import { fetchToJsonMiddleware } from "$lib/util";
     import { onMount } from "svelte";
-    import TestQuestion from "./TestQuestion.svelte";
+    import TestQuestion from "./components/TestQuestion.svelte";
 
     import "./style.css";
     import "./quiz.css";

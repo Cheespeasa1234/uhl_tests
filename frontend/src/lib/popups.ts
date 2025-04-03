@@ -5,9 +5,17 @@ import { toast } from "svelte-hot-french-toast";
 export function showNotifToast(json: { success: boolean, message: string, data?: any }) {
     const { success, message } = json;
     if (success) {
-        toast.success(message);
+        toast.success(message,
+            {
+                position: "top-end"
+            }
+        );
     } else {
-        toast.error(message);
+        toast.error(message,
+            {
+                position: "top-end"
+            }
+        );
     }
     console.trace(json);
 }

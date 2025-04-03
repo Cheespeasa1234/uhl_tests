@@ -15,7 +15,7 @@ abstract class _Table {
     }
 
     // deno-lint-ignore no-unused-vars
-    static selectById(id: number): _Table {
+    static selectById(id: number): _Table | undefined {
         throw new Error("Method not implemented.");
     }
 
@@ -24,7 +24,7 @@ abstract class _Table {
     }
 
     // deno-lint-ignore no-explicit-any no-unused-vars
-    static create(data: any): _Table {
+    static create(data: any): _Table | undefined {
         throw new Error("Method not implemented.");
     }
 
@@ -144,15 +144,17 @@ export class DB_Preset extends _Table {
         return objs.map((o) => new DB_Preset(o.id, o.name, o.blob)) as DB_Preset[];
     }
 
-    static override selectById(id: number): DB_Preset {
+    static override selectById(id: number): DB_Preset | undefined {
         const stmt = db.prepare("SELECT * FROM Presets WHERE id = ?");
         const res: any = stmt.get(id);
+        if (res === undefined) return undefined;
         return new DB_Preset(res.id, res.name, res.blob) as DB_Preset;
     }
 
-    static selectByName(name: string): DB_Preset {
+    static selectByName(name: string): DB_Preset | undefined {
         const stmt = db.prepare("SELECT * FROM Presets WHERE name = ?");
         const res: any = stmt.get(name);
+        if (res === undefined) return undefined;
         return new DB_Preset(res.id, res.name, res.blob) as DB_Preset;
     }
 }
@@ -183,13 +185,14 @@ export class DB_TestGroup extends _Table {
         return new Date(o.created);
     }
 
-    static getPreset(o: DB_TestGroup): DB_Preset {
+    static getPreset(o: DB_TestGroup): DB_Preset | undefined {
         const p = DB_Preset.selectById(o.presetId);
         return p;
     }
 
-    static getPresetName(o: DB_TestGroup): string {
+    static getPresetName(o: DB_TestGroup): string | undefined {
         const p = DB_TestGroup.getPreset(o);
+        if (p === undefined) return undefined;
         const name = p.name;
         return name;
     }

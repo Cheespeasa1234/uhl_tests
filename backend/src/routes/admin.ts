@@ -4,7 +4,7 @@ import bodyParser from "npm:body-parser";
 import cookieParser from "npm:cookie-parser";
 import crypto from "node:crypto";
 
-import { GoogleResponse, TestResponse, getResponses, getResponsesRaw, gradeStudent, getGoogleFormRaw, getGoogleFormResponses } from "../analyze_responses.ts";
+import { GoogleResponse, TestResponse, getResponses, gradeStudent, getGoogleFormResponses } from "../analyze_responses.ts";
 import { getActiveSessions, manualConfigs, presetManager } from "./students.ts";
 import { type Preset } from "../lib/config.ts";
 import { retrieveNotifications } from "../lib/notifications.ts";
@@ -87,27 +87,26 @@ router.get("/sessions", checkSidMiddleware, (_req: Request, res: Response) => {
 
 router.get("/google_form", checkSidMiddleware, async (_req: Request, res: Response) => {
     logInfo("admin/google_form", "Fetching Google form data");
-    const data = await getGoogleFormRaw();
-
+    const data: GoogleResponse[] = (await getGoogleFormResponses()).slice(1);
+    
     return res.json({
         success: true,
         message: "Successfully fetched google form",
         data: {
-            header: data[0],
-            rows: data.slice(1) || []
+            rows: data
         }
     });
 })
 
 router.get("/test_program", checkSidMiddleware, (_req: Request, res: Response) => {
-    const data = getResponsesRaw();
+    logInfo("admin/test_program", "Fetching test program data");
+    const data: TestResponse[] = getResponses();
 
     return res.json({
         success: true,
         message: "Successfully fetched test program",
         data: {
-            header: data[0],
-            rows: (data.slice(1) || []).map(obj => Object.values(obj))
+            rows: data
         }
     });
 })
@@ -347,9 +346,16 @@ router.post("/config/update_testcodes", checkSidMiddleware, (req: Request, res: 
         }
 
         const preset = DB_Preset.selectById(test.presetId);
+        if (preset) {
+            test.presetId = preset.getId();
+        } else {
+            return res.json({
+                success: false,
+                message: `Test returned undefined for id ${test.presetId}`
+            })
+        }
 
         test.code = code.toString();
-        test.presetId = preset.getId();
         test.enabled = enabled ? 1 : 0;
         
         test.update();

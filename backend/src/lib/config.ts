@@ -65,7 +65,7 @@ export class PresetManager {
     
     constructor() {
         this.presets = this.downloadPresets();
-        this.currentPreset = this.getDefaultPreset();
+        this.currentPreset = this.getDefaultPreset()!;
     }
 
     /**
@@ -95,9 +95,15 @@ export class PresetManager {
     savePresets() {
         for (const [name, preset] of Object.entries(this.presets)) {
             const presetBlob = JSON.stringify(preset);
-            const presetId = DB_Preset.selectByName(name).getId();
+            const presetObj = DB_Preset.selectByName(name);
+            if (presetObj === undefined) {
+                continue;
+            }
+            const presetId = presetObj.getId();
             if (presetId) {
-                DB_Preset.setBlobFromPreset(DB_Preset.selectById(presetId), preset);
+                const p = DB_Preset.selectById(presetId);
+                if (p !== undefined)
+                    DB_Preset.setBlobFromPreset(p, preset);
             } else {
                 DB_Preset.create({ name, blob: presetBlob });
             }
@@ -134,8 +140,12 @@ export class PresetManager {
         return Object.keys(this.presets);
     }
 
-    getDefaultPreset(): Preset {
-        return JSON.parse(DB_Preset.selectById(0).blob);
+    getDefaultPreset(): Preset | undefined {
+        const def = DB_Preset.selectById(0);
+        if (def === undefined) {
+            return undefined;
+        }
+        return JSON.parse(def.blob);
     }
 
 }

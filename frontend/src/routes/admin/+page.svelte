@@ -1,15 +1,33 @@
 <script lang="ts">
-    import { fetchToJsonMiddleware, type API_Response } from "$lib/util";
-    import { showNotifToast } from "$lib/popups";
-    import { sanitize } from "$lib/util";
-    import { onMount } from "svelte";
+    import { fetchToJsonMiddleware, sanitize } from "$lib/util";
     import { type Grade } from "$lib/grade";
-
+    import type { Preset } from "$lib/preset";
+    import { onMount } from "svelte";
+    
     import "../admin.css"
     import "../quiz.css"
+    
+    import ConfigInputs from "../components/ConfigInputs.svelte";
+    import DataDisplayTable from "../components/DataDisplayTable.svelte";
+    import StudentGrade from "../components/StudentGrade.svelte";
+    import Modal from "../components/modal/Modal.svelte";
+    import SelectPresetModal from "../components/modal/SelectPresetModal.svelte";
+    import { showNotifToast } from "$lib/popups";
 
-    import DataDisplayTable from "./DataDisplayTable.svelte";
-    import StudentGrade from "./StudentGrade.svelte";
+    const googleFormHeader = [
+        { key: "timestamp", name: "Timestamp" },
+        { key: "email", name: "Email" },
+        { key: "answerCode", name: "Answer Code" },
+        { key: "rating", name: "Difficulty Rating" },
+    ];
+
+    const testProgramHeader = [
+        { key: "time", name: "Start Time" },
+        { key: "due", name: "Due Time" },
+        { key: "email", name: "Email" },
+        { key: "answerCode", name: "Answer Code" },
+        { key: "idCookie", name: "ID Cookie" },
+    ];
 
     let passwordInputValue: string = $state("");
     let signedIn: boolean = $state(true);
@@ -21,10 +39,47 @@
     let graded: boolean = $state(true);
     let gradeData: Grade | undefined = $state(undefined);
 
+    let enableTestingInputValue: boolean = $state(false);
+    let enableTestingInputIsNew: boolean = $state(false);
+    let enableTestingInputValueChanged: number = $state(0);
+    let enableTimeLimitInputValue: boolean = $state(true);
+    let enableTimeLimitInputIsNew: boolean = $state(false);
+    let enableTimeLimitInputValueChanged: number = $state(0);
+    let timeLimitInputValue: number = $state(40);
+    let timeLimitInputIsNew: boolean = $state(false);
+    let timeLimitInputValueChanged: number = $state(0);
+    
     async function onSignIn() {
         googleFormTable.refresh();
         testProgramTable.refresh();
 
+        enableTestingInputValue = Boolean(await getManualConfig("enableStudentTesting"));
+        enableTestingInputValueChanged = Date.now();
+        enableTimeLimitInputValue = Boolean(await getManualConfig("enableTimeLimit"));
+        enableTimeLimitInputValueChanged = Date.now();
+        timeLimitInputValue = Number(await getManualConfig("timeLimit"));
+        timeLimitInputValueChanged = Date.now();
+
+        resetPreset();
+        
+        setInterval(() => {
+            const now = Date.now();
+
+            // See how long ago
+            if (enableTestingInputIsNew && (now - enableTestingInputValueChanged) >= 1000) {
+                enableTestingInputIsNew = false;
+                setManualConfig("enableStudentTesting", enableTestingInputValue, "boolean");
+            }
+            if (enableTimeLimitInputIsNew && (now - enableTimeLimitInputValueChanged) >= 1000) {
+                enableTimeLimitInputIsNew = false;
+                setManualConfig("enableTimeLimit", enableTimeLimitInputValue, "boolean");
+            }
+            if (timeLimitInputIsNew && (now - timeLimitInputValueChanged) >= 1000) {
+                timeLimitInputIsNew = false;
+                setManualConfig("timeLimit", timeLimitInputValue, "number");
+            }
+        }, 1000 * 2);
+        
         // setInterval(async () => {
         //     const json = await fetch("./api/grading/notifications")
         //         .then(fetchToJsonMiddleware);
@@ -35,12 +90,17 @@
         // }, 5000);
     }
 
-    async function getPresetList(): Promise<string[]> {
+    async function getPresetList(): Promise<string[] | undefined> {
         const response = await fetch("./api/grading/config/list_of_presets")
             .then(fetchToJsonMiddleware);
 
-        const presetList = response.data.presets;
-        return presetList;
+        if (response.success) {
+            const presetList = response.data.presets;
+            return presetList;
+        } else {
+            return undefined;
+        }
+
     }
 
     async function getManualConfig(key: string) {
@@ -51,9 +111,9 @@
         return response.data.value;
     }
 
-    async function setManualConfig(key: string, value: string, type: string) {
+    async function setManualConfig(key: string, value: string | number | boolean, type: "string" | "number" | "boolean") {
         const sanitizedKey = sanitize(key);
-        const sanitizedValue = sanitize(value);
+        const sanitizedValue = sanitize(String(value));
         const sanitizedType = sanitize(type);
         const response = await fetch("./api/grading/manualConfig/", {
             method: "POST",
@@ -86,21 +146,125 @@
         });
     }
 
-    // async function gradeStudent() {
-    //     fetch("./api/grading/grade/" + gradeStudentEmailInputValue)
-    //     .then(fetchToJsonMiddleware)
-    //     .then(json => {
-    //         const { success, data } = json;
-    //         console.log("Grading data", json);
+    async function gradeStudent() {
+        fetch("./api/grading/grade/" + gradeStudentEmailInputValue)
+        .then(fetchToJsonMiddleware)
+        .then(json => {
+            const { success, data } = json;
+            console.log("Grading data", json);
             
-    //         if (success) {
-    //             graded = true;
-    //             gradeData = data.grade;
-    //         } else {
-    //             graded = false;
-    //         }
-    //     });
-    // }
+            if (success) {
+                graded = true;
+                gradeData = data.grade;
+            } else {
+                graded = false;
+            }
+        });
+    }
+
+    let resetPresetBtn: HTMLButtonElement;
+    let savePresetBtn: HTMLButtonElement;
+    let loadPresetBtn: HTMLButtonElement;
+    let undoPresetBtn: HTMLButtonElement;
+    let saveConfigBtn: HTMLButtonElement;
+
+    let preset: Preset | undefined = $state(undefined);
+    let presetEl: ConfigInputs;
+    async function resetPreset() {
+        resetPresetBtn.disabled = true;
+        const json = await fetch("./api/grading/config/get_preset_default")
+            .then(fetchToJsonMiddleware);
+        
+        const { success, data } = json;
+        if (success) {
+            preset = data.preset;
+        }
+        resetPresetBtn.disabled = false;
+    }
+
+    async function savePreset() {
+        savePresetBtn.disabled = true;
+        const preset: Preset = presetEl.getPresetValue();
+        const presetList: string[] | undefined = await getPresetList();
+        if (presetList === undefined) {
+            savePresetBtn.disabled = false;
+            return;
+        }
+
+        selectPresetModal.show(presetList, async (success, message, category, value) => {
+            showNotifToast({ success, message });
+
+            if (success) {
+                await fetch("./api/grading/config/set_preset", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        presetName: value,
+                        preset: preset,
+                    }),
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                }).then(fetchToJsonMiddleware);
+            }
+            savePresetBtn.disabled = false;
+        });
+    }
+
+    async function loadPreset() {
+        loadPresetBtn.disabled = true;
+
+        const presetList: string[] | undefined = await getPresetList();
+        if (presetList === undefined) {
+            return;
+        }
+        selectPresetModal.show(presetList, async (success, message, category, value) => {
+            if (success) {
+                if (category != "pre") {
+                    showNotifToast({ success: false, message: `Can only load from a pre-existing preset- attempted to load from a ${category} preset.`})
+                } else {
+                    const json = await fetch(`./api/grading/config/get_preset/${value}`)
+                        .then(fetchToJsonMiddleware);
+
+                    if (json.success) {
+                        preset = json.data.preset;
+                    }
+                }
+            }
+        });
+        
+        loadPresetBtn.disabled = false;
+    }
+
+    async function undoPreset() {
+        undoPresetBtn.disabled = true;
+
+        const json = await fetch("./api/grading/config/get_config")
+            .then(fetchToJsonMiddleware);
+        
+        if (json.success) {
+            preset = json.data.preset;
+        }
+
+        undoPresetBtn.disabled = false;
+    }
+
+    async function saveConfig() {
+        saveConfigBtn.disabled = true;
+        const preset: Preset = presetEl.getPresetValue();
+
+        const json = await fetch("./api/grading/config/set_config", {
+            method: "POST",
+            body: JSON.stringify({ preset }),
+            headers: {
+                "Content-Type": "application/json",
+            },
+        })
+            .then(fetchToJsonMiddleware);
+        saveConfigBtn.disabled = false;
+    }
+
+    let showSelectPresetModal: boolean = $state(false);
+    let selectPresetModal: SelectPresetModal;
 
     onMount(() => {
         fetch("./api/grading/am_i_signed_in")
@@ -114,6 +278,8 @@
         });
     });
 </script>
+
+<SelectPresetModal bind:this={selectPresetModal} />
 
 <div class="modal" tabindex="-1" id="modal" data-bs-backdrop="static">
     <div class="modal-dialog d-none" id="selectPresetModalDialog">
@@ -249,14 +415,20 @@
                 <div class="p-3">
                     <h3>Configure test submission</h3>
                     <div class="form-check" data-tippy-content="If enabled, students will be able to access the student portal, take tests, and submit their results.">
-                        <input class="form-check-input" type="checkbox" value="" id="enable-testing">
+                        <input oninput={() => {
+                            enableTestingInputValueChanged = Date.now();
+                            enableTestingInputIsNew = true;
+                        }} bind:checked={enableTestingInputValue} class="form-check-input" type="checkbox" id="enable-testing">
                         <label class="form-check-label" for="enable-testing">
                             Enable student testing
                         </label>
                     </div>
 
                     <div class="form-check" data-tippy-content="If enabled, from the time a student requests a quiz, they only have a certain amount of time provided to submit their results before it becomes invalid. Students can still submit late answers, but the grading system will notify you.">
-                        <input class="form-check-input" type="checkbox" value="" id="enable-time-lim">
+                        <input oninput={() => {
+                            enableTimeLimitInputValueChanged = Date.now();
+                            enableTimeLimitInputIsNew = true;
+                        }} bind:checked={enableTimeLimitInputValue} class="form-check-input" type="checkbox" id="enable-time-lim">
                         <label class="form-check-label" for="enable-time-lim">
                             Enable time limit
                         </label>
@@ -264,7 +436,10 @@
 
                     <div class="input-group">
                         <span class="input-group-text" id="basic-addon1">Time limit</span>
-                        <input type="number" value="40" id="time-lim" class="form-control" aria-label="Username"
+                        <input oninput={() => {
+                            timeLimitInputValueChanged = Date.now();
+                            timeLimitInputIsNew = true;
+                        }} bind:value={timeLimitInputValue} type="number" id="time-lim" class="form-control" aria-label="Username"
                             aria-describedby="basic-addon1">
                         <span class="input-group-text" id="basic-addon1">minutes</span>
                     </div>
@@ -276,21 +451,23 @@
                     <h3>Configure test contents</h3>
 
                     <div class="btn-group mb-2">
-                        <button id="save-preset" type="button" class="btn btn-outline-secondary" data-tippy-content="Save the below configuration values to a given preset, either new or pre-existing.">Save
+                        <button bind:this={savePresetBtn} onclick={savePreset} type="button" class="btn btn-outline-secondary" data-tippy-content="Save the below configuration values to a given preset, either new or pre-existing.">Save
                             to preset</button>
-                        <button id="load-preset" type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values of a given pre-existing preset.">Load
+                        <button bind:this={loadPresetBtn} onclick={loadPreset} id="load-preset" type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values of a given pre-existing preset.">Load
                             from preset</button>
-                        <button id="reset-preset" type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values of the hard-coded default preset.">Load
+                        <button bind:this={resetPresetBtn} onclick={resetPreset} type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values of the hard-coded default preset.">Load
                             from default</button>
-                        <button id="undo-preset" type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values currently in use by the server.">Load from current</button>
+                        <button bind:this={undoPresetBtn} onclick={undoPreset} id="undo-preset" type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values currently in use by the server.">Load from current</button>
                     </div>
 
-                    <div id="config-area">
-
-                    </div>
+                    {#if preset !== undefined}
+                        <ConfigInputs bind:this={presetEl} preset={preset} />
+                    {:else}
+                        <p>Loading Presets...</p>
+                    {/if}
 
                     <div class="btn-group mb-2">
-                        <button id="save-config" type="button" class="btn btn-primary" data-tippy-content="Sets the configuration that new tests are created with to the above configuration values.">Set
+                        <button bind:this={saveConfigBtn} onclick={saveConfig} id="save-config" type="button" class="btn btn-primary" data-tippy-content="Sets the configuration that new tests are created with to the above configuration values.">Set
                             configuration</button>
                     </div>
                 </div>
@@ -313,8 +490,8 @@
             </div>
             <div class="tab-pane fade" id="nav-p2" role="tabpanel" aria-labelledby="nav-p2-tab">
 
-                <DataDisplayTable name="Google form table" url="./api/grading/google_form" bind:this={googleFormTable} />
-                <DataDisplayTable name="Quiz submissions table" url="./api/grading/test_program" bind:this={testProgramTable} />
+                <DataDisplayTable row_heads={googleFormHeader} name="Google form table" url="./api/grading/google_form" bind:this={googleFormTable} />
+                <DataDisplayTable row_heads={testProgramHeader} name="Quiz submissions table" url="./api/grading/test_program" bind:this={testProgramTable} />
 
             </div>
             <div class="tab-pane fade" id="nav-p3" role="tabpanel" aria-labelledby="nav-p3-tab">
@@ -324,7 +501,7 @@
                     <div class="input-group">
                         <span class="input-group-text">Student Email</span>
                         <input bind:value={gradeStudentEmailInputValue} type="text" class="form-control" id="student-to-grade" autocomplete="off">
-                        <button class="btn btn-outline-primary" type="button" id="grade-student">Search</button>
+                        <button onclick={gradeStudent} class="btn btn-outline-primary" type="button" id="grade-student">Search</button>
                     </div>
 
                     {#if graded && gradeData !== undefined}
