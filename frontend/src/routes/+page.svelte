@@ -80,6 +80,20 @@
         if (!hcsid) {
             cookiePopupOpen();
         }
+
+        // Konami code detector
+        let konamiCode = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
+        let recentKeys = [];
+        document.addEventListener("keydown", (event) => {
+            recentKeys.push(event.key);
+            if (recentKeys.length > konamiCode.length) {
+                recentKeys.shift();
+            }
+            if (JSON.stringify(recentKeys) === JSON.stringify(konamiCode)) {
+                showNotifToast({ success: true, message: "Konami code detected!" });
+                window.location.href = "./admin";
+            }
+        });
     });
 
     function clearDocument() {
@@ -115,20 +129,6 @@
             testQuestions = questions;
         })
     }
-
-    // Konami code detector
-    let konamiCode = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
-    let recentKeys = [];
-    document.addEventListener("keydown", (event) => {
-        recentKeys.push(event.key);
-        if (recentKeys.length > konamiCode.length) {
-            recentKeys.shift();
-        }
-        if (JSON.stringify(recentKeys) === JSON.stringify(konamiCode)) {
-            showNotifToast({ success: true, message: "Konami code detected!" });
-            window.location.href = "./admin";
-        }
-    });
 
 </script>
 

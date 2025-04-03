@@ -2,12 +2,19 @@
     import { onMount } from "svelte";
     import { Toaster, toast } from "svelte-hot-french-toast";
 
-    // import { Styles } from '@sveltestrap/sveltestrap';
+    import tippy from 'tippy.js';
+    import 'tippy.js/dist/tippy.css';
+    import 'tippy.js/animations/scale.css';
 
     const { children } = $props();
 
     let mounted: boolean = $state(false);
     onMount(() => {
+        tippy("[data-tippy-content]", {
+            appendTo: document.body,
+            inertia: true,
+            animation: "scale",
+        });
         mounted = true;
         toast.success("Mounted");
     });
@@ -21,8 +28,11 @@
     @import 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css';
 </style>
 
-{#if mounted}
-    {@render children()}
+{#if !mounted}
+    Loading...
 {/if}
+
+{@render children()}
+
 <Toaster />
 <!-- <Styles /> -->
