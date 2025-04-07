@@ -1,8 +1,7 @@
 import { $, CodeEnvironment, type LineOfCode } from "./code.ts";
 import { ParsedToken } from "../typing/parsedToken.ts";
 import { Quiz, QuizQuestion } from "./quiz.ts";
-import { DB_TestGroup, DB_Preset } from "../../lib/db.ts";
-import { Preset } from "../../lib/config.ts";
+import { Test, Preset, PresetData } from "../../lib/db_sqlz.ts";
 
 export function generateForLoop(
     varname: string,
@@ -163,10 +162,11 @@ export function codeToJava(code: LineOfCode[], depth = 0): string {
     return ans;
 }
 
-export function makeTest(timeStarted: Date, timeToEnd: Date | null, testGroup: DB_TestGroup): Quiz {
+export async function makeTest(timeStarted: Date, timeToEnd: Date | null, testGroup: Test): Promise<Quiz> {
 
-    const preset: DB_Preset = DB_Preset.selectById(testGroup.presetId);
-    const blob: Preset = preset.getBlobAsPreset();
+    const preset: Preset | null = await Preset.findByPk(testGroup.presetId);
+    if (!preset) throw new Error("That preset doesn't exist");
+    const blob: PresetData = preset.getPresetData();
 
     const questions: QuizQuestion[] = [];
 

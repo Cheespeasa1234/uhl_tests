@@ -17,7 +17,13 @@ export type API_Response = {
 }
 
 export async function fetchToJsonMiddleware(response: Response): Promise<API_Response> {
-    const json = await response.json();
-    showNotifToast(json);
-    return json;
+    try {
+        const json = await response.json();
+        showNotifToast(json);
+        return json;
+    } catch (e) {
+        const json = { success: false, message: `${e}`, data: { error: e }};
+        showNotifToast(json);
+        return json;
+    }
 }

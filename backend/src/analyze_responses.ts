@@ -1,34 +1,8 @@
 import { Quiz, QuizQuestion } from "./lang/quiz/quiz.ts";
 import { logInfo, logError } from "./lib/logger.ts";
-import { DB_Response } from "./lib/db.ts";
+import { Submission } from "./lib/db_sqlz.ts";
 import { getValues } from "./sheets.ts";
 import { HCST_SPREADSHEET_ID } from "./lib/env.ts";
-
-export type TestResponseBlob = {
-    answers: string[];
-    quiz: Quiz;
-};
-
-export class TestResponse {
-    id: number;
-    email: string;
-    time: Date;
-    due: Date;
-    idCookie: string;
-    answerCode: string;
-    blob: TestResponseBlob;
-
-    // deno-lint-ignore no-explicit-any
-    constructor(entry: any) {
-        this.id = entry.id;
-        this.email = entry.email;
-        this.time = new Date(entry.time);
-        this.due = new Date(entry.due);
-        this.idCookie = entry.idCookie;
-        this.answerCode = entry.answerCode;
-        this.blob = JSON.parse(entry.responseBlob);
-    }
-}
 
 export class GoogleResponse {
     timestamp: Date;
@@ -45,9 +19,8 @@ export class GoogleResponse {
     }
 }
 
-export function getResponses(): TestResponse[] {
-    const responsesAny: DB_Response[] = DB_Response.select();
-    const responses: TestResponse[] = responsesAny.map((r) => new TestResponse(r));
+export async function getResponses(): Promise<Submission[]> {
+    const responses = await Submission.findAll();
     logInfo("analyze_responses", "Got responses from database");
     return responses;
 }
@@ -115,17 +88,18 @@ export class GradeResult {
     }
 }
 
-export function gradeStudent(entry: TestResponse): GradeResult {
-    const grade = new GradeResult(entry.email, entry.time, entry.due);
-    for (let i = 0; i < entry.blob.quiz.questions.length; i++) {
-        const questionResult: QuestionResult = new QuestionResult(entry.blob.quiz.questions[i], entry.blob.answers[i])
+export function gradeStudent(entry: Submission): GradeResult {
+    const grade = new GradeResult(entry.email, entry.getTime(), entry.getDue());
+    const blob = entry.getBlob();
+    for (let i = 0; i < blob.quiz.questions.length; i++) {
+        const questionResult: QuestionResult = new QuestionResult(blob.quiz.questions[i], blob.answers[i])
         grade.addQuestionResult(questionResult);
     }
     logInfo("analyze_responses", "Graded student");
     return grade;
 }
 
-export function gradeStudentOnlyIfVerified(entry: TestResponse, googleEntry: GoogleResponse): GradeResult | undefined {
+export function gradeStudentOnlyIfVerified(entry: Submission, googleEntry: GoogleResponse): GradeResult | undefined {
     if (entry.answerCode !== googleEntry.answerCode) {
         logError("analyze_responses", `answerCode in entry ${entry.answerCode} does not match answerCode in googleEntry ${googleEntry.answerCode}`);
         return undefined;

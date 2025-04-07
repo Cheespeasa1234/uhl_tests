@@ -18,11 +18,8 @@ const timeoutLengthMs = 1000 * 60 * 10;
 let timeoutID: number | undefined = setTimeout(timeoutExit, timeoutLengthMs);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-    // Log the whole request
-    const body = JSON.stringify(req.body || {});
-    const cookies = JSON.stringify(req.cookies || {});
-    const headers = JSON.stringify(req.headers || {});
-    logInfo("main/request", `${req.ip}: ${req.method} ${req.url} BODY:${body.length - 2} COOK:${cookies.length - 2} HEAD:${headers.length - 2}`);
+    const statusCode = res.statusCode;
+    logInfo("main/req", `${req.ip}: ${req.method} - ${res.statusCode} ${req.url}`);
     next();
 });
 

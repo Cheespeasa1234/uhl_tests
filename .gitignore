@@ -5,6 +5,7 @@ backend/secrets
 backend/files
 backend/db/*.db
 backend/dfrontend
+backend/node_modules
 **/.env
 
 frontend/build

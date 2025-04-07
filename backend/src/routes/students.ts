@@ -11,7 +11,7 @@ import { PresetManager } from "../lib/config.ts";
 // import { addResponse } from "../analyze_responses.ts";
 import { addNotification } from "../lib/notifications.ts";
 import { logInfo } from "../lib/logger.ts";
-import { DB_TestGroup, DB_Response, DB_Response_Data_Settings } from "../lib/db.ts";
+import { Test, Submission } from "../lib/db_sqlz.ts";
 
 export const router = express.Router();
 
@@ -60,7 +60,7 @@ manualConfigs.set("debugMode", false);
  * 
  * Request a new test.
  */
-router.post("/new-test", (req: Request, res: Response) => {
+router.post("/new-test", async (req: Request, res: Response) => {
     
     if (!manualConfigs.get("enableStudentTesting")) {
         res.json({
@@ -89,7 +89,12 @@ router.post("/new-test", (req: Request, res: Response) => {
         return;
     }
 
-    const testGroup = DB_TestGroup.selectByCode(testCode);
+    const testGroup = await Test.findOne({
+        where: {
+            code: testCode
+        }
+    })
+
     if (!testGroup) {
         res.json({
             success: false,
@@ -105,7 +110,7 @@ router.post("/new-test", (req: Request, res: Response) => {
         const newTime = timeStarted.getTime() + timeLimitMillis;
         timeToEnd = new Date(newTime);
     }
-    const quiz: Quiz = makeTest(
+    const quiz: Quiz = await makeTest(
         timeStarted,
         timeToEnd,
         testGroup
@@ -191,17 +196,17 @@ router.post("/submit-test", (req: Request, res: Response) => {
     const epochTime = Date.now();
     const due = (responseBlob.quiz.timeToEnd || new Date()).getTime();
     
-    const data: DB_Response_Data_Settings = {
+    const data = {
         email: name,
         time: epochTime,
         due: due,
         idCookie: session.student.privateKey,
         answerCode,
         responseBlob: JSON.stringify(responseBlob),
-        testId: responseBlob.quiz.testGroup.getId(),
+        testId: responseBlob.quiz.testGroup.id
     }
 
-    DB_Response.create(data);
+    Submission.create(data);
 
     addNotification({ message: `Test just submitted by ${name}`, success: true });
 });

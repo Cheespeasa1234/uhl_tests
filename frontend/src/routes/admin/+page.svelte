@@ -226,7 +226,7 @@
                         .then(fetchToJsonMiddleware);
 
                     if (json.success) {
-                        preset = json.data.preset;
+                        preset = JSON.parse(json.data.preset.blob);
                     }
                 }
             }
@@ -242,7 +242,7 @@
             .then(fetchToJsonMiddleware);
         
         if (json.success) {
-            preset = json.data.preset;
+            preset = JSON.parse(json.data.preset.blob);
         }
 
         undoPresetBtn.disabled = false;

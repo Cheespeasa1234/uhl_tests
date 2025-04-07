@@ -1,4 +1,4 @@
-import { DB_TestGroup } from "../../lib/db.ts";
+import { Test } from "../../lib/db_sqlz.ts";
 import { LineOfCode, CodeEnvironment } from "./code.ts";
 import { codeToJava, outputToJava } from "./codegen.ts";
 import crypto from "node:crypto";
@@ -65,11 +65,11 @@ export class QuizResponse extends QuizQuestion {
 
 export class Quiz {
     questions: QuizQuestion[];
-    testGroup: DB_TestGroup;
+    testGroup: Test;
     timeStarted: Date;
     timeToEnd: Date | null;
 
-    constructor(questions: QuizQuestion[], timeStarted: Date, timeToEnd: Date | null, testGroup: DB_TestGroup) {
+    constructor(questions: QuizQuestion[], timeStarted: Date, timeToEnd: Date | null, testGroup: Test) {
         this.questions = questions;
         this.timeStarted = timeStarted;
         this.timeToEnd = timeToEnd;

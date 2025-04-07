@@ -29,30 +29,30 @@ export enum LogLevel {
     Error =     `${ANSI_YELLOW}[ERROR]${ANSI_RESET}`,
 }
 
-function log(level: LogLevel, scope: string, message: string) {
+function log(level: LogLevel, scope: string, ...data: any[]) {
     // Get the locale time for EST
     const now = new Date().toLocaleString("en-US", {
         timeZone: "America/New_York",
     });
-    console.log(`${ANSI_PURPLE}[${now}]${ANSI_RESET}${level}${ANSI_GREEN}[${scope}]${ANSI_RESET} ${message}`);
+    console.log(`${ANSI_PURPLE}[${now}]${ANSI_RESET}${level}${ANSI_GREEN}[${scope}]${ANSI_RESET}`, data.join(" "));
 
     // Write to log file
-    const logMessage = `[${now}]${removeAnsi(level)}[${scope}] ${message}\n`;
+    const logMessage = `[${now}]${removeAnsi(level)}[${scope}] ${data.join(" ")}\n`;
     Deno.writeTextFile(name, logMessage, { append: true });
 }
 
-export function logDebug(scope: string, message: string) {
-    log(LogLevel.Debug, scope, message);
+export function logDebug(scope: string, ...data: any[]) {
+    log(LogLevel.Debug, scope, data);
 }
 
-export function logInfo(scope: string, message: string) {
-    log(LogLevel.Info, scope, message);
+export function logInfo(scope: string, ...data: any[]) {
+    log(LogLevel.Info, scope, data);
 }
 
-export function logWarning(scope: string, message: string) {
-    log(LogLevel.Warning, scope, message);
+export function logWarning(scope: string, ...data: any[]) {
+    log(LogLevel.Warning, scope, data);
 }
 
-export function logError(scope: string, message: string) {
-    log(LogLevel.Error, scope, message);
+export function logError(scope: string, ...data: any[]) {
+    log(LogLevel.Error, scope, data);
 }
