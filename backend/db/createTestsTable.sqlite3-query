@@ -1,8 +1,0 @@
--- database: ./responses.db
-
-CREATE TABLE Tests (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    code TEXT NOT NULL,
-    time INTEGER NOT NULL,
-    presetName TEXT NOT NULL
-);

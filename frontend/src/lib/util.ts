@@ -16,14 +16,44 @@ export type API_Response = {
     [key: string]: any,
 }
 
-export async function fetchToJsonMiddleware(response: Response): Promise<API_Response> {
+export async function getJSON(url: string): Promise<API_Response> {
+    const response = await fetch(url);
+    console.groupCollapsed(`GET ${url} - ${response.status}`);
+    let json: API_Response;
     try {
-        const json = await response.json();
-        showNotifToast(json);
-        return json;
+        json = await response.json();
     } catch (e) {
-        const json = { success: false, message: `${e}`, data: { error: e }};
-        showNotifToast(json);
-        return json;
+        json = { success: false, message: `${e}`, data: { error: e }};
+        console.error(e);
+        console.log(new Error().stack);
     }
+    showNotifToast(json);
+    console.dir(json);
+    console.trace();
+    console.groupEnd();
+    return json as API_Response;
+}
+
+export async function postJSON(url: string, body: any): Promise<API_Response> {
+    const response = await fetch(url, {
+        method: "POST",
+        body: JSON.stringify(body),
+        headers: {
+            "Content-Type": "application/json"
+        }
+    });
+    console.groupCollapsed(`POST ${url} - ${response.status}`);
+    let json: API_Response;
+    try {
+        json = await response.json();
+    } catch (e) {
+        json = { success: false, message: `${e}`, data: { error: e }};
+        console.error(e);
+        console.log(new Error().stack);
+    }
+    showNotifToast(json);
+    console.dir(json);
+    console.trace();
+    console.groupEnd();
+    return json as API_Response;
 }

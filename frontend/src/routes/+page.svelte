@@ -1,6 +1,6 @@
 <script lang="ts">
     import { showNotifToast } from "$lib/popups";
-    import { fetchToJsonMiddleware } from "$lib/util";
+    import { postJSON, getJSON } from "$lib/util";
     import { onMount } from "svelte";
     import TestQuestion from "./components/TestQuestion.svelte";
 
@@ -35,18 +35,10 @@
             answers.push(answer.nodeValue);
         }
 
-        fetch("./api/testing/submit-test", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                "answers": answers,
-                "studentSelf": studentSelf,
-            }),
-        })
-        .then(fetchToJsonMiddleware)
-        .then(json => {
+        postJSON("./api/testing/submit-test", {
+            "answers": answers,
+            "studentSelf": studentSelf,
+        }).then(json => {
             const { success, message, answerCode } = json;
             submissionSuccess = success;
             submissionMessage = message;
@@ -104,18 +96,10 @@
     }
 
     function takeTest() {
-        fetch("./api/testing/new-test", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                "name": nameInputValue,
-                "code": testCodeInputValue,
-            }),
-        })
-        .then(fetchToJsonMiddleware)
-        .then(json => {
+        postJSON("./api/testing/new-test", {
+            "name": nameInputValue,
+            "code": testCodeInputValue,
+        }).then(json => {
             const { success, message, data } = json;
 
             if (!success) {

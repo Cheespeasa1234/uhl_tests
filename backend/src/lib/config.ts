@@ -1,4 +1,5 @@
 import { Preset, ConfigKey, ConfigValue } from "./db_sqlz.ts";
+import { logDebug, logError, logInfo } from "./logger.ts";
 
 /**
  * Stores a full copy of all presets, and manages the editing of presets.
@@ -6,106 +7,73 @@ import { Preset, ConfigKey, ConfigValue } from "./db_sqlz.ts";
  */
 export class PresetManager {
 
-    presets: Record<string, Preset>;
-    currentPreset?: Preset;
+    /**
+     * The current preset loaded in the manager.
+     */
+    private currentPreset: Preset | null;
     
     constructor() {
-        this.presets = {};
+        this.currentPreset = null;
     }
 
+    /**
+     * Returns whether or not the current preset is available. If it is null, it is unavailable.
+     * @returns Whether or not the current preset is available
+     */
     currentPresetExists(): boolean {
-        return this.currentPreset !== undefined && this.currentPreset !== null;
+        return this.currentPreset !== null;
     }
 
     /**
      * Get the value of a key of the currently opened preset.
      */
-    getConfig(key: ConfigKey): ConfigValue {
-        return this.currentPreset!.getPresetData()[key];
+    async getConfig(key: ConfigKey): Promise<ConfigValue> {
+        const cur = await this.getCurrentPreset();
+        return JSON.parse(cur.blob)[key]
     }
-    
-    /**
-     * Read in the presets from the preset JSON file.
-     * @returns The presets
-     */
-    async downloadPresets(): Promise<Record<string, Preset>> {
-        const presets: Preset[] = await Preset.findAll();
-        const json: Record<string, Preset> = {};
-        for (const preset of presets) {
-            json[preset.name] = preset;
-        }
 
-        return json;
-    }
-    
     /**
-     * Saves the changes made to a file.
+     * Gets the current preset loaded in this manager. If none is loaded, the default preset is loaded.
+     * @returns The current preset.
      */
-    async savePresets() {
-        for (const [name, preset] of Object.entries(this.presets)) {
-            const presetBlob = JSON.stringify(preset);
-            const presetObj: Preset | null = await Preset.findOne({
-                where: {
-                    name: name
-                }
-            })
-            
-            if (presetObj === null) {
-                Preset.update({
-                    blob: presetBlob,
-                }, {
-                    where: {
-                        name: name,
-                    }
-                })
-            } else {
-                Preset.create({
-                    blob: presetBlob,
-                    name: name
-                })
-            }
+    async getCurrentPreset(): Promise<Preset> {
+        if (this.currentPreset !== null) {
+            logDebug("config", "Exists");
+            return this.currentPreset;
+        } else {
+            logDebug("config", "DNE");
+            this.currentPreset = await this.getDefaultPreset();
+            logDebug("config", `New current preset: ${JSON.stringify(this.currentPreset)}`);
+            return this.currentPreset;
         }
     }
-    
+
     /**
-     * Download the presets again.
+     * Loads a different preset into the manager
+     * @param preset The new preset to load
      */
-    async loadPresets(): Promise<void> {
-        this.presets = await this.downloadPresets();
-    }
-    
-    /**
-     * Gets the value of a given preset.
-     * @param presetName The name of the preset
-     * @returns The preset
-     */
-    getPreset(presetName: string): Preset | undefined {
-        return this.presets[presetName];
-    }
-    
-    /**
-     * Sets the value of a preset.
-     * @param presetName The name of the preset to set
-     * @param presetValue The new value of the preset
-     */
-    setPreset(presetName: string, presetValue: Preset) {
-        this.presets[presetName] = presetValue;
-        this.savePresets();
+    setCurrentPreset(preset: Preset) {
+        logDebug("config", `Set current preset from ${JSON.stringify(this.currentPreset)} to ${JSON.stringify(preset)}`)
+        this.currentPreset = preset;
     }
 
-    listOfPresets(): string[] {
-        return Object.keys(this.presets);
-    }
-
-    async getDefaultPreset(): Promise<Preset | null> {
-        const def: Preset = await Preset.findOne({
+    /**
+     * Gets the preset with id=0 and name=DEFAULT from the database. If no preset is found, it exits the program.
+     * @returns The default preset
+     */
+    async getDefaultPreset(): Promise<Preset> {
+        const def: Preset | null = await Preset.findOne({
             where: {
                 id: 0,
                 name: "DEFAULT",
             }
         });
-        console.log(def.toJSON());
-        return def.toJSON();
+        if (def === null) {
+            logError("config", "Could not find default preset...");
+            Deno.exit(2);
+        }
+
+        return def;
     }
 
 }

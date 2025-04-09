@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { fetchToJsonMiddleware } from "$lib/util";
+    import { getJSON, postJSON } from "$lib/util";
     import { TableHandler, Datatable, ThSort, ThFilter } from "@vincjo/datatables";
 
     const { name, url, row_heads }: { name: string, url: string, row_heads: { key: string, name: string }[] } = $props();
@@ -7,8 +7,7 @@
     let table: TableHandler | undefined = $state(undefined);
 
     export function refresh() {
-        fetch(url)
-        .then(fetchToJsonMiddleware)
+        getJSON(url)
         .then(json => {
             const { success, data } = json;
             if (success) {

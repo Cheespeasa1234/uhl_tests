@@ -32,7 +32,9 @@
     Loading...
 {/if}
 
-{@render children()}
+<div style="display: {mounted ? "block" : "none"}">
+    {@render children()}
+</div>
 
 <Toaster />
 <!-- <Styles /> -->

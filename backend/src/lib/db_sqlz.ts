@@ -69,10 +69,6 @@ export class Preset extends Model {
     declare blob: string;
     declare createdAt: Date;
     declare updatedAt: Date;
-
-    getPresetData(): PresetData {
-        return JSON.parse(this.blob);
-    }
 }
 
 Preset.init({

@@ -4,6 +4,14 @@ export type PresetValue = {
     valueType: string,
 }
 
+export type PresetBlob = {
+    [key: string]: PresetValue,
+}
+
 export type Preset = {
-    [key: string]: PresetValue
+    id: number,
+    name: string,
+    blob: string,
+    createdAt: string,
+    updatedAt: string,
 }

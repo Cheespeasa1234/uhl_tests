@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { fetchToJsonMiddleware, sanitize } from "$lib/util";
+    import { getJSON, postJSON, sanitize, type API_Response } from "$lib/util";
     import { type Grade } from "$lib/grade";
     import type { Preset } from "$lib/preset";
     import { onMount } from "svelte";
@@ -91,11 +91,10 @@
     }
 
     async function getPresetList(): Promise<string[] | undefined> {
-        const response = await fetch("./api/grading/config/list_of_presets")
-            .then(fetchToJsonMiddleware);
+        const response = await getJSON("./api/grading/config/list_of_presets")
 
         if (response.success) {
-            const presetList = response.data.presets;
+            const presetList = response.data.presets.map((preset: any) => preset.name);
             return presetList;
         } else {
             return undefined;
@@ -105,8 +104,7 @@
 
     async function getManualConfig(key: string) {
         const sanitizedKey = sanitize(key);
-        const response = await fetch("./api/grading/manualConfig/" + sanitizedKey)
-            .then(fetchToJsonMiddleware);
+        const response = await getJSON("./api/grading/manualConfig/" + sanitizedKey)
 
         return response.data.value;
     }
@@ -115,29 +113,17 @@
         const sanitizedKey = sanitize(key);
         const sanitizedValue = sanitize(String(value));
         const sanitizedType = sanitize(type);
-        const response = await fetch("./api/grading/manualConfig/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                key: sanitizedKey,
-                value: sanitizedValue,
-                type: sanitizedType,
-            }),
-        }).then(fetchToJsonMiddleware);
+        const response = await postJSON("./api/grading/manualConfig/", {
+            key: sanitizedKey,
+            value: sanitizedValue,
+            type: sanitizedType,
+        });
     }
 
     function loginButtonClick() {
-        fetch("./api/grading/get_session_id", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                pass: passwordInputValue,
-            }),
-        }).then(fetchToJsonMiddleware).then(json => {
+        postJSON("./api/grading/get_session_id", {
+            pass: passwordInputValue,
+        }).then(json => {
             const { success } = json;
             signedIn = success;
             if (success) {
@@ -147,8 +133,7 @@
     }
 
     async function gradeStudent() {
-        fetch("./api/grading/grade/" + gradeStudentEmailInputValue)
-        .then(fetchToJsonMiddleware)
+        getJSON("./api/grading/grade/" + gradeStudentEmailInputValue)
         .then(json => {
             const { success, data } = json;
             console.log("Grading data", json);
@@ -169,11 +154,15 @@
     let saveConfigBtn: HTMLButtonElement;
 
     let preset: Preset | undefined = $state(undefined);
+    $effect(() => {
+        if (preset !== undefined) {
+            presetEl.setPresetValue(preset);
+        }
+    })
     let presetEl: ConfigInputs;
     async function resetPreset() {
         resetPresetBtn.disabled = true;
-        const json = await fetch("./api/grading/config/get_preset_default")
-            .then(fetchToJsonMiddleware);
+        const json = await getJSON("./api/grading/config/get_preset_default");
         
         const { success, data } = json;
         if (success) {
@@ -184,10 +173,18 @@
 
     async function savePreset() {
         savePresetBtn.disabled = true;
-        const preset: Preset = presetEl.getPresetValue();
+        
+        const preset: Preset | undefined = presetEl.getPresetValue();
+        if (preset === undefined) {
+            savePresetBtn.disabled = false;
+            showNotifToast({ success: false, message: "Preset is undefined."});
+            return;
+        }
+        
         const presetList: string[] | undefined = await getPresetList();
         if (presetList === undefined) {
             savePresetBtn.disabled = false;
+            showNotifToast({ success: false, message: "Preset list is undefined."});
             return;
         }
 
@@ -195,16 +192,10 @@
             showNotifToast({ success, message });
 
             if (success) {
-                await fetch("./api/grading/config/set_preset", {
-                    method: "POST",
-                    body: JSON.stringify({
-                        presetName: value,
-                        preset: preset,
-                    }),
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
-                }).then(fetchToJsonMiddleware);
+                await postJSON("./api/grading/config/set_preset", {
+                    presetName: value,
+                    preset: preset,
+                });
             }
             savePresetBtn.disabled = false;
         });
@@ -222,11 +213,10 @@
                 if (category != "pre") {
                     showNotifToast({ success: false, message: `Can only load from a pre-existing preset- attempted to load from a ${category} preset.`})
                 } else {
-                    const json = await fetch(`./api/grading/config/get_preset/${value}`)
-                        .then(fetchToJsonMiddleware);
+                    const json = await getJSON(`./api/grading/config/get_preset/${value}`);
 
                     if (json.success) {
-                        preset = JSON.parse(json.data.preset.blob);
+                        preset = json.data.preset;
                     }
                 }
             }
@@ -238,11 +228,14 @@
     async function undoPreset() {
         undoPresetBtn.disabled = true;
 
-        const json = await fetch("./api/grading/config/get_config")
-            .then(fetchToJsonMiddleware);
+        const { success, data }: API_Response = await getJSON("./api/grading/config/get_config");
         
-        if (json.success) {
-            preset = JSON.parse(json.data.preset.blob);
+        try {
+            if (success) {
+                preset = data.preset;
+            }
+        } catch (e) {
+            console.error(e);
         }
 
         undoPresetBtn.disabled = false;
@@ -250,16 +243,15 @@
 
     async function saveConfig() {
         saveConfigBtn.disabled = true;
-        const preset: Preset = presetEl.getPresetValue();
+        const preset: Preset | undefined = presetEl.getPresetValue();
 
-        const json = await fetch("./api/grading/config/set_config", {
-            method: "POST",
-            body: JSON.stringify({ preset }),
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
-            .then(fetchToJsonMiddleware);
+        if (preset === undefined) {
+            saveConfigBtn.disabled = false;
+            showNotifToast({ success: false, message: "Preset is undefined, can not save." });
+            return;
+        }
+
+        await postJSON("./api/grading/config/set_config", { preset: preset });
         saveConfigBtn.disabled = false;
     }
 
@@ -267,8 +259,7 @@
     let selectPresetModal: SelectPresetModal;
 
     onMount(() => {
-        fetch("./api/grading/am_i_signed_in")
-        .then(fetchToJsonMiddleware)
+        getJSON("./api/grading/am_i_signed_in")
         .then(json => {
             const { success } = json;
             signedIn = success;
@@ -290,11 +281,11 @@
     </div>
 </div>
 
-<div id="adminelements" class="container-fluid h-100 border border-2 border-red { signedIn ? '' : 'd-none' }">
-    <div class="row h-100">
+<div id="adminelements" class="container-fluid h-100 { signedIn ? '' : 'd-none' }">
+    <!-- <div class="row h-100" style="height: 100vh;"> -->
 
-        <nav class="col-sm-2 border border-1 rounded m-1 p-1">
-            <div class="nav nav-pills flex-column" id="nav-tab" role="tablist">
+        <nav class="row border border-1 rounded m-1 p-1">
+            <div class="nav gap-10 nav-pills" id="nav-tab" role="tablist">
                 <button class="nav-link active" id="nav-p1-tab" data-bs-toggle="tab" data-bs-target="#nav-p1"
                     type="button" role="tab" aria-controls="nav-home" aria-selected="true">Configure
                     Test</button>
@@ -360,7 +351,7 @@
                     </div>
 
                     {#if preset !== undefined}
-                        <ConfigInputs bind:this={presetEl} preset={preset} />
+                        <ConfigInputs bind:this={presetEl} />
                     {:else}
                         <p>Loading Presets...</p>
                     {/if}
@@ -411,6 +402,6 @@
             </div>
         </div>
 
-    </div>
+    <!-- </div> -->
 
 </div>

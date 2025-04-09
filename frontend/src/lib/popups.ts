@@ -17,7 +17,6 @@ export function showNotifToast(json: { success: boolean, message: string, data?:
             }
         );
     }
-    console.trace(json);
 }
 
 // const modalElement = document.getElementById("modal");

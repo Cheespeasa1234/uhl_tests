@@ -1,6 +1,7 @@
 // @deno-types="npm:@types/express@4.17.15"
 import express, { Request, Response, NextFunction } from "npm:express";
-import bodyParser from "npm:body-parser";
+import bodyParser// @ts-types="body-parser"
+, { json } from "npm:body-parser";
 import cookieParser from "npm:cookie-parser";
 import crypto from "node:crypto";
 
@@ -10,6 +11,7 @@ import { retrieveNotifications } from "../lib/notifications.ts";
 import { logDebug, logInfo, logWarning } from "../lib/logger.ts";
 import { HCST_ADMIN_PASSWORD } from "../lib/env.ts";
 import { Preset, Test, Submission } from "../lib/db_sqlz.ts";
+import { HTTP } from "../lib/http.ts";
 
 export const router = express.Router();
 router.use(bodyParser.json());
@@ -26,10 +28,12 @@ const checkSidMiddleware = (req: Request, res: Response, next: NextFunction) => 
     const sessionIdClaim = req.cookies['HCS_ADMIN_SID'];
     if (!sessionId || sessionIdClaim !== sessionId) {
         logWarning("admin/session", "User tried to access admin routes without a valid sessionId");
-        res.json({
-            success: false,
-            message: "Invalid sessionId (either it expired, or it is invalid)"
-        })
+        res
+            .status(HTTP.CLIENT_ERROR.UNAUTHORIZED)
+            .json({
+                success: false,
+                message: "Invalid sessionId (either it expired, or it is invalid)"
+            })
     } else {
         next();
     }
@@ -66,15 +70,17 @@ router.post("/get_session_id", (req: Request, res: Response) => {
         })
     } else {
         logWarning("admin/session", "pass is not equal to secret. pass: "+ pass);
-        res.json({
-            success: false,
-            message: "pass is not equal to secret. pass: "+ pass
-        })
+        res
+            .status(HTTP.CLIENT_ERROR.UNAUTHORIZED)
+            .json({
+                success: false,
+                message: "pass is not equal to secret. pass: "+ pass
+            });
     }
 });
 
 router.get("/sessions", checkSidMiddleware, (_req: Request, res: Response) => {
-    logInfo("admin/sessions", "Fetching active sessions");
+    logInfo("admin/session", "Fetching active sessions");
     return res.json({
         success: true,
         message: "Successfully fetched sessions",
@@ -113,10 +119,12 @@ router.get("/test_program", checkSidMiddleware, async (_req: Request, res: Respo
 router.get("/grade/:studentEmail", checkSidMiddleware, async (req: Request, res: Response) => {
     const studentEmail = req.params['studentEmail'];
     if (!studentEmail) {
-        return res.json({
-            success: false,
-            message: "Student email not provided"
-        });
+        return res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "Student email not provided"
+            });
     }
 
     const gfrPromised = await getGoogleFormResponses();
@@ -125,17 +133,21 @@ router.get("/grade/:studentEmail", checkSidMiddleware, async (req: Request, res:
     const googleFormResponses: GoogleResponse[] = gfrPromised.filter(val => val.email === studentEmail);
     
     if (testProgramResponses.length === 0) {
-        return res.json({
-            success: false,
-            message: "No test program responses found where that email exists"
-        })
+        return res
+            .status(HTTP.CLIENT_ERROR.NOT_FOUND)
+            .json({
+                success: false,
+                message: "No test program responses found where that email exists"
+            });
     }
 
     if (googleFormResponses.length === 0) {
-        return res.json({
-            success: false,
-            message: "No google form responses found where that email exists"
-        })
+        return res
+            .status(HTTP.CLIENT_ERROR.NOT_FOUND)
+            .json({
+                success: false,
+                message: "No google form responses found where that email exists"
+            });
     }
 
     // find the test response and google form response that are most recent and that match
@@ -162,31 +174,36 @@ router.get("/grade/:studentEmail", checkSidMiddleware, async (req: Request, res:
         }
     }
 
-    return res.json({
-        success: false,
-        message: "No answerCode match found",
-    })
+    return res
+        .status(HTTP.CLIENT_ERROR.NOT_FOUND)
+        .json({
+            success: false,
+            message: "No answerCode match found",
+        });
 });
 
-/**
- * Get the value of the given preset. If the presetName is "default", the default preset is obtained.
- */
-router.get("/config/get_preset/:presetName", checkSidMiddleware, (req: Request, res: Response) => {
+router.get("/config/get_preset/:presetName", checkSidMiddleware, async (req: Request, res: Response) => {
     const presetName = req.params['presetName'];
-    const preset = presetManager.getPreset(presetName);
-    if (preset) {
+    const preset: Preset | null = await Preset.findOne({
+        where: {
+            name: presetName
+        }
+    });
+    if (preset === null) {
+        res
+            .status(HTTP.CLIENT_ERROR.NOT_FOUND)
+            .json({
+                success: false,
+                message: "That preset name doesn't exist.",
+            });
+    } else {
         res.json({
             success: true,
             message: "Successfully retrieved preset",
             data: {
-                preset: preset
+                preset: preset,
             }
-        })
-    } else {
-        res.json({
-            success: false,
-            message: "That preset name doesn't exist.",
-        })
+        });
     }
 });
 
@@ -194,11 +211,12 @@ router.get("/config/get_preset/:presetName", checkSidMiddleware, (req: Request, 
  * Gets the default preset.
  */
 router.get("/config/get_preset_default", checkSidMiddleware, async (_req: Request, res: Response) => {
+    const preset = await presetManager.getDefaultPreset();
     res.json({
         success: true,
         message: "Got the default preset",
         data: {
-            preset: await presetManager.getDefaultPreset()
+            preset: preset,
         }
     });
 })
@@ -206,15 +224,63 @@ router.get("/config/get_preset_default", checkSidMiddleware, async (_req: Reques
 /**
  * Set the value of a preset to a given value.
  */
-router.post("/config/set_preset", checkSidMiddleware, (req: Request, res: Response) => {
+router.post("/config/set_preset", checkSidMiddleware, async (req: Request, res: Response) => {
     const presetName = req.body['presetName'];
-    const preset: Preset = req.body['preset'] as Preset;
-    presetManager.setPreset(presetName, preset);
+    const preset = req.body['preset'];
 
-    res.json({
-        success: true,
-        message: "Successfully set " + presetName + " to the given value."
+    if (!presetName) {
+        return res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "Parameter 'presetName' not provided"
+            });
+    }
+
+    if (!preset) {
+        return res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "Parameter 'preset' not provided"
+            });
+    }
+
+    const count = await Preset.count({
+        where: {
+            name: presetName,
+        }
     });
+
+    if (count == 0) {
+        // create a new preset
+        await Preset.create({
+            name: presetName,
+            blob: preset.blob
+        });
+
+        return res
+            .status(HTTP.SUCCESS.CREATED)
+            .json({
+                success: true,
+                message: "Successfully created preset"
+            });
+    } else {
+        await Preset.update({
+            blob: preset.blob
+        }, {
+            where: {
+                name: presetName
+            }
+        });
+
+        return res
+            .status(HTTP.SUCCESS.OK)
+            .json({
+                success: true,
+                message: "Successfully updated preset"
+            });
+    }
 });
 
 /**
@@ -222,8 +288,8 @@ router.post("/config/set_preset", checkSidMiddleware, (req: Request, res: Respon
  */
 router.post("/config/set_config", checkSidMiddleware, (req: Request, res: Response) => {
     const preset = req.body['preset'];
-    console.log("Setting currentPreset to " + preset);
-    presetManager.currentPreset = preset;
+    logDebug("admin/preset", "Setting currentPreset to " + JSON.stringify(preset));
+    presetManager.setCurrentPreset(preset);
 
     res.json({
         success: true,
@@ -234,24 +300,27 @@ router.post("/config/set_config", checkSidMiddleware, (req: Request, res: Respon
 /**
  * Get the current configuration in use.
  */
-router.get("/config/get_config", checkSidMiddleware, (_req: Request, res: Response) => {
-    console.log(presetManager.currentPreset);
+router.get("/config/get_config", checkSidMiddleware, async (_req: Request, res: Response) => {
+    const currentPreset: Preset = await presetManager.getCurrentPreset();
+    logDebug("admin/preset", `current preset: ${JSON.stringify(currentPreset)}`);
     res.json({
         success: true,
         message: "Successfully got the current configuration",
         data: {
-            preset: presetManager.currentPreset
+            preset: currentPreset
         }
     })
 });
 
-router.get("/config/list_of_presets", checkSidMiddleware, (_req: Request, res: Response) => {
-    const presets = presetManager.listOfPresets();
+router.get("/config/list_of_presets", checkSidMiddleware, async (_req: Request, res: Response) => {
+    const names = await Preset.findAll({
+        attributes: ["name"]
+    });
     res.json({
         success: true,
         message: "Successfully got list of presets",
         data: {
-            presets: presets
+            presets: names
         }
     });
 });

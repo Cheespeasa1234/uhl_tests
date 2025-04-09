@@ -6,6 +6,7 @@ const ANSI_CYAN = "\x1b[36m";
 const ANSI_BOLD = "\x1b[1m";
 const ANSI_PURPLE = "\x1b[35m";
 const ANSI_GREEN = "\x1b[32m";
+const ANSI_GRAY = "\x1b[30m";
 
 function removeAnsi(str: string) {
     return str.replace("\x1b[0m", "")
@@ -23,18 +24,18 @@ Deno.createSync(name);
 Deno.writeTextFile(name, "");
 
 export enum LogLevel {
-    Debug =     `${ANSI_BLUE}[DEBUG]${ANSI_RESET}`,
+    Debug =     `${ANSI_PURPLE}[DEBUG]${ANSI_RESET}`,
     Info =      `${ANSI_CYAN}[INFO] ${ANSI_RESET}`,
-    Warning =   `${ANSI_RED}${ANSI_BOLD}[WARN] ${ANSI_RESET}`,
-    Error =     `${ANSI_YELLOW}[ERROR]${ANSI_RESET}`,
+    Warning =   `${ANSI_YELLOW}${ANSI_BOLD}[WARN] ${ANSI_RESET}`,
+    Error =     `${ANSI_RED}${ANSI_BOLD}[ERROR]${ANSI_RESET}`,
 }
 
 function log(level: LogLevel, scope: string, ...data: any[]) {
     // Get the locale time for EST
-    const now = new Date().toLocaleString("en-US", {
+    const now = new Date().toLocaleTimeString("en-US", {
         timeZone: "America/New_York",
     });
-    console.log(`${ANSI_PURPLE}[${now}]${ANSI_RESET}${level}${ANSI_GREEN}[${scope}]${ANSI_RESET}`, data.join(" "));
+    console.log(`${ANSI_GRAY}[${now}]${ANSI_RESET}${level}${ANSI_GREEN}[${scope}]${ANSI_RESET}`, data.join(" "));
 
     // Write to log file
     const logMessage = `[${now}]${removeAnsi(level)}[${scope}] ${data.join(" ")}\n`;
