@@ -14,6 +14,7 @@
     import SelectPresetModal from "../components/modal/SelectPresetModal.svelte";
     import { showNotifToast } from "$lib/popups";
 
+    // The first row of a table of the google form.
     const googleFormHeader = [
         { key: "timestamp", name: "Timestamp" },
         { key: "email", name: "Email" },
@@ -21,6 +22,7 @@
         { key: "rating", name: "Difficulty Rating" },
     ];
 
+    // The first row of a table of the student responses.
     const testProgramHeader = [
         { key: "time", name: "Start Time" },
         { key: "due", name: "Due Time" },
@@ -49,6 +51,7 @@
     let timeLimitInputIsNew: boolean = $state(false);
     let timeLimitInputValueChanged: number = $state(0);
     
+    // Run when access is granted to the administrator panel, after mount
     async function onSignIn() {
         googleFormTable.refresh();
         testProgramTable.refresh();
@@ -65,7 +68,7 @@
         setInterval(() => {
             const now = Date.now();
 
-            // See how long ago
+            // If it has been 1000ms since any of the config inputs were changed, send the change to the server
             if (enableTestingInputIsNew && (now - enableTestingInputValueChanged) >= 1000) {
                 enableTestingInputIsNew = false;
                 setManualConfig("enableStudentTesting", enableTestingInputValue, "boolean");
@@ -80,6 +83,7 @@
             }
         }, 1000 * 2);
         
+        // // Every 5000ms, check the notifications and show them.
         // setInterval(async () => {
         //     const json = await fetch("./api/grading/notifications")
         //         .then(fetchToJsonMiddleware);
@@ -90,6 +94,7 @@
         // }, 5000);
     }
 
+    // Get the list of available preset names from the server
     async function getPresetList(): Promise<string[] | undefined> {
         const response = await getJSON("./api/grading/config/list_of_presets")
 
@@ -102,6 +107,7 @@
 
     }
 
+    // Get the global configuration values from the server
     async function getManualConfig(key: string) {
         const sanitizedKey = sanitize(key);
         const response = await getJSON("./api/grading/manualConfig/" + sanitizedKey)
@@ -109,6 +115,7 @@
         return response.data.value;
     }
 
+    // Set a configuration value to the server
     async function setManualConfig(key: string, value: string | number | boolean, type: "string" | "number" | "boolean") {
         const sanitizedKey = sanitize(key);
         const sanitizedValue = sanitize(String(value));
@@ -120,6 +127,7 @@
         });
     }
 
+    // When the LOGIN button is pressed
     function loginButtonClick() {
         postJSON("./api/grading/get_session_id", {
             pass: passwordInputValue,
@@ -132,6 +140,7 @@
         });
     }
 
+    // When the grade student button is pressed
     async function gradeStudent() {
         getJSON("./api/grading/grade/" + gradeStudentEmailInputValue)
         .then(json => {
@@ -153,6 +162,7 @@
     let undoPresetBtn: HTMLButtonElement;
     let saveConfigBtn: HTMLButtonElement;
 
+    // Set the value of the preset in the component when the preset value changes
     let preset: Preset | undefined = $state(undefined);
     $effect(() => {
         if (preset !== undefined) {
@@ -160,6 +170,8 @@
         }
     })
     let presetEl: ConfigInputs;
+    
+    // Get the default preset
     async function resetPreset() {
         resetPresetBtn.disabled = true;
         const json = await getJSON("./api/grading/config/get_preset_default");
@@ -171,6 +183,7 @@
         resetPresetBtn.disabled = false;
     }
 
+    // Save the config to a new preset
     async function savePreset() {
         savePresetBtn.disabled = true;
         
@@ -201,6 +214,7 @@
         });
     }
 
+    // Load the config of a preset into the component
     async function loadPreset() {
         loadPresetBtn.disabled = true;
 
@@ -225,6 +239,7 @@
         loadPresetBtn.disabled = false;
     }
 
+    // Set the values of the preset component to the values the server is currently using
     async function undoPreset() {
         undoPresetBtn.disabled = true;
 
@@ -241,6 +256,7 @@
         undoPresetBtn.disabled = false;
     }
 
+    // Set the config on the server to the config values in the component
     async function saveConfig() {
         saveConfigBtn.disabled = true;
         const preset: Preset | undefined = presetEl.getPresetValue();
@@ -299,7 +315,7 @@
         </nav>
 
         <div class="tab-content col border border-1 rounded m-1 p-2" id="nav-tabContent">
-            <div style="width: 50%" class="tab-pane fade show active" id="nav-p1" role="tabpanel"
+            <div style="width: fit-content" class="tab-pane fade show active" id="nav-p1" role="tabpanel"
                 aria-labelledby="nav-p1-tab">
 
                 <div class="p-3">

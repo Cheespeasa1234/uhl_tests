@@ -29,17 +29,12 @@
 }
 
 .input-group {
-    min-width: 60%;
     margin-bottom: 10px;
     display: flex;
 }
 
 :root {
     text-overflow: ellipsis;
-}
-
-.btn-group {
-    min-width: 600px;
 }
 
 input {

@@ -25,10 +25,15 @@
         {@const { key, value, valueType } = propertyValue}
 
         <div class="input-group">
-            <span class="input-group-text col-sm-6">
+            <span class="input-group-text col-sm-4">
                 {key}
             </span>
-            <input type={valueType} bind:value={changedBlob[prop].value} class="form-control" />
+            <input type={valueType} bind:value={changedBlob[prop].value} class="form-control col-sm-4" />
+            <span class="input-group-text col-sm-1">
+                {#if preset !== undefined && changedBlob[prop].value !== JSON.parse(preset.blob)[prop].value}
+                    *
+                {/if}
+            </span>
         </div>
     {/each}
 </div>

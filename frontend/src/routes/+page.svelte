@@ -56,6 +56,11 @@
         showNotifToast({ success: true, message: "Cancelled submission" });
     }
 
+    /**
+     * Gets a cookie's value from the browser. Returns an empty string if none found.
+     * @param name The key of the cookie
+     * @returns The cookie's content, or an empty string if none found.
+     */
     function getCookie(name: string): string {
         const z = name + "=";
         const w = decodeURIComponent(document.cookie).split(";");
@@ -68,6 +73,8 @@
     }
 
     onMount(() => {
+
+        // Get the ID cookie, if not there, ask for approval.
         const hcsid = getCookie("HCS_ID");
         if (!hcsid) {
             cookiePopupOpen();
@@ -88,6 +95,7 @@
         });
     });
 
+    // The student has submitted their answers- clear the screen
     function clearDocument() {
         testQuestions = [];
         nameInputValue = "";
@@ -95,6 +103,7 @@
         studentSelf = undefined;
     }
 
+    // Get a new test and place it on the screen
     function takeTest() {
         postJSON("./api/testing/new-test", {
             "name": nameInputValue,

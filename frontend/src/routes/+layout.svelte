@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import { Toaster, toast } from "svelte-hot-french-toast";
 
+    // Tooltips
     import tippy from 'tippy.js';
     import 'tippy.js/dist/tippy.css';
     import 'tippy.js/animations/scale.css';
@@ -10,6 +11,7 @@
 
     let mounted: boolean = $state(false);
     onMount(() => {
+        // Take all elements with a data attribute `data-tippy-content` and set the tooltip with tippy
         tippy("[data-tippy-content]", {
             appendTo: document.body,
             inertia: true,
@@ -37,4 +39,3 @@
 </div>
 
 <Toaster />
-<!-- <Styles /> -->
