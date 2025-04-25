@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { getJSON, postJSON, sanitize, type API_Response } from "$lib/util";
-    import { type Grade } from "$lib/grade";
-    import type { Preset } from "$lib/preset";
+    import { getJSON, postJSON, sanitize, type API_Response, getPresetList } from "$lib/util";
+    import { type Grade, type Preset, type PresetListEntry, type Test } from "$lib/types";
     import { onMount } from "svelte";
     
     import "../admin.css"
@@ -13,6 +12,7 @@
     import Modal from "../components/modal/Modal.svelte";
     import SelectPresetModal from "../components/modal/SelectPresetModal.svelte";
     import { showNotifToast } from "$lib/popups";
+    import TestCodeInputs from "../components/TestCodeInputs.svelte";
 
     // The first row of a table of the google form.
     const googleFormHeader = [
@@ -64,6 +64,7 @@
         timeLimitInputValueChanged = Date.now();
 
         resetPreset();
+        resetTestCodes();
         
         setInterval(() => {
             const now = Date.now();
@@ -92,19 +93,6 @@
         //         showNotifToast(notif);
         //     });
         // }, 5000);
-    }
-
-    // Get the list of available preset names from the server
-    async function getPresetList(): Promise<string[] | undefined> {
-        const response = await getJSON("./api/grading/config/list_of_presets")
-
-        if (response.success) {
-            const presetList = response.data.presets.map((preset: any) => preset.name);
-            return presetList;
-        } else {
-            return undefined;
-        }
-
     }
 
     // Get the global configuration values from the server
@@ -162,25 +150,46 @@
     let undoPresetBtn: HTMLButtonElement;
     let saveConfigBtn: HTMLButtonElement;
 
+    let resetTestCodesBtn: HTMLButtonElement;
+    let saveTestCodesBtn: HTMLButtonElement;
+
     // Set the value of the preset in the component when the preset value changes
+    let presetEl: ConfigInputs;
     let preset: Preset | undefined = $state(undefined);
     $effect(() => {
         if (preset !== undefined) {
             presetEl.setPresetValue(preset);
         }
-    })
-    let presetEl: ConfigInputs;
+    });
+
+    let testListEl: TestCodeInputs;
+    let testList: Test[] | undefined = $state(undefined);
+    $effect(() => {
+        if (testList !== undefined) {
+            testListEl.setTestListValue(testList);
+        }
+    });
     
     // Get the default preset
     async function resetPreset() {
         resetPresetBtn.disabled = true;
         const json = await getJSON("./api/grading/config/get_preset_default");
-        
         const { success, data } = json;
         if (success) {
             preset = data.preset;
         }
         resetPresetBtn.disabled = false;
+    }
+
+    async function resetTestCodes() {
+        resetTestCodesBtn.disabled = true;
+        const json = await getJSON("./api/grading/config/testcodes");
+        const { success, data } = json;
+        if (success) {
+            testList = data.tests;
+            console.log(testList);
+        }
+        resetTestCodesBtn.disabled = false;
     }
 
     // Save the config to a new preset
@@ -194,21 +203,32 @@
             return;
         }
         
-        const presetList: string[] | undefined = await getPresetList();
+        const presetList: PresetListEntry[] | undefined = await getPresetList();
         if (presetList === undefined) {
             savePresetBtn.disabled = false;
             showNotifToast({ success: false, message: "Preset list is undefined."});
             return;
         }
 
-        selectPresetModal.show(presetList, async (success, message, category, value) => {
+        selectPresetModal.show(presetList, async (success, message, category, value, presetData) => {
             showNotifToast({ success, message });
 
             if (success) {
-                await postJSON("./api/grading/config/set_preset", {
-                    presetName: value,
-                    preset: preset,
-                });
+                if (category === "new") {
+                    if (!presetData || !presetData.name || !presetData.id) {
+                        showNotifToast({ success: false, message: "Something went wrong" });
+                        return;
+                    }
+                    const p = preset;
+                    p.name = presetData.name;
+                    await postJSON("./api/grading/config/new_preset", {
+                        preset: p,
+                    });
+                } else if (category === "pre") {
+                    await postJSON("./api/grading/config/set_preset", {
+                        preset: preset,
+                    });
+                }
             }
             savePresetBtn.disabled = false;
         });
@@ -218,7 +238,7 @@
     async function loadPreset() {
         loadPresetBtn.disabled = true;
 
-        const presetList: string[] | undefined = await getPresetList();
+        const presetList: PresetListEntry[] | undefined = await getPresetList();
         if (presetList === undefined) {
             return;
         }
@@ -240,36 +260,36 @@
     }
 
     // Set the values of the preset component to the values the server is currently using
-    async function undoPreset() {
-        undoPresetBtn.disabled = true;
+    // async function undoPreset() {
+    //     undoPresetBtn.disabled = true;
 
-        const { success, data }: API_Response = await getJSON("./api/grading/config/get_config");
+    //     const { success, data }: API_Response = await getJSON("./api/grading/config/get_config");
         
-        try {
-            if (success) {
-                preset = data.preset;
-            }
-        } catch (e) {
-            console.error(e);
-        }
+    //     try {
+    //         if (success) {
+    //             preset = data.preset;
+    //         }
+    //     } catch (e) {
+    //         console.error(e);
+    //     }
 
-        undoPresetBtn.disabled = false;
-    }
+    //     undoPresetBtn.disabled = false;
+    // }
 
     // Set the config on the server to the config values in the component
-    async function saveConfig() {
-        saveConfigBtn.disabled = true;
-        const preset: Preset | undefined = presetEl.getPresetValue();
+    // async function saveConfig() {
+    //     saveConfigBtn.disabled = true;
+    //     const preset: Preset | undefined = presetEl.getPresetValue();
 
-        if (preset === undefined) {
-            saveConfigBtn.disabled = false;
-            showNotifToast({ success: false, message: "Preset is undefined, can not save." });
-            return;
-        }
+    //     if (preset === undefined) {
+    //         saveConfigBtn.disabled = false;
+    //         showNotifToast({ success: false, message: "Preset is undefined, can not save." });
+    //         return;
+    //     }
 
-        await postJSON("./api/grading/config/set_config", { preset: preset });
-        saveConfigBtn.disabled = false;
-    }
+    //     await postJSON("./api/grading/config/set_config", { preset: preset });
+    //     saveConfigBtn.disabled = false;
+    // }
 
     let showSelectPresetModal: boolean = $state(false);
     let selectPresetModal: SelectPresetModal;
@@ -359,11 +379,11 @@
                     <div class="btn-group mb-2">
                         <button bind:this={savePresetBtn} onclick={savePreset} type="button" class="btn btn-outline-secondary" data-tippy-content="Save the below configuration values to a given preset, either new or pre-existing.">Save
                             to preset</button>
-                        <button bind:this={loadPresetBtn} onclick={loadPreset} id="load-preset" type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values of a given pre-existing preset.">Load
+                        <button bind:this={loadPresetBtn} onclick={loadPreset} type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values of a given pre-existing preset.">Load
                             from preset</button>
                         <button bind:this={resetPresetBtn} onclick={resetPreset} type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values of the hard-coded default preset.">Load
                             from default</button>
-                        <button bind:this={undoPresetBtn} onclick={undoPreset} id="undo-preset" type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values currently in use by the server.">Load from current</button>
+                        <!-- <button bind:this={undoPresetBtn} onclick={undoPreset} type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values currently in use by the server.">Load from current</button> -->
                     </div>
 
                     {#if preset !== undefined}
@@ -372,10 +392,10 @@
                         <p>Loading Presets...</p>
                     {/if}
 
-                    <div class="btn-group mb-2">
+                    <!-- <div class="btn-group mb-2">
                         <button bind:this={saveConfigBtn} onclick={saveConfig} id="save-config" type="button" class="btn btn-primary" data-tippy-content="Sets the configuration that new tests are created with to the above configuration values.">Set
                             configuration</button>
-                    </div>
+                    </div> -->
                 </div>
 
                 <div class="p-3">
@@ -383,12 +403,14 @@
                     
                     <div class="btn-group mb-2">
                         <button id="save-test-code-config" type="button" class="btn btn-outline-secondary" data-tippy-content="Save the below test code values to the server.">Save changes</button>
-                        <button id="reset-test-code-config" type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below test code values to the values stored on the server.">Undo changes</button>
+                        <button bind:this={resetTestCodesBtn} type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below test code values to the values stored on the server.">Undo changes</button>
+                    </div>
+
+                    <div class="btn-group mb-2">
+                        <button id="new-test-code" type="button" class="btn btn-outline-secondary" data-tippy-content="Create a brand new test code.">New test code</button>
                     </div>
                     
-                    <div id="test-code-config-area">
-
-                    </div>
+                    <TestCodeInputs bind:this={testListEl} />
                     
                     <button id="reset-test-code-config" class="btn btn-secondary" data-tippy-content="Resets all your changes to the test codes.">Reset</button>
                 </div>

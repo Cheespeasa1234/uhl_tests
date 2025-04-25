@@ -186,7 +186,7 @@ router.get("/config/get_preset/:presetName", checkSidMiddleware, async (req: Req
     const presetName = req.params['presetName'];
     const preset: Preset | null = await Preset.findOne({
         where: {
-            name: presetName
+            name: presetName,
         }
     });
     if (preset === null) {
@@ -221,21 +221,52 @@ router.get("/config/get_preset_default", checkSidMiddleware, async (_req: Reques
     });
 })
 
-/**
- * Set the value of a preset to a given value.
- */
-router.post("/config/set_preset", checkSidMiddleware, async (req: Request, res: Response) => {
-    const presetName = req.body['presetName'];
-    const preset = req.body['preset'];
+router.post("/config/new_preset", checkSidMiddleware, async (req: Request, res: Response) => {
+    const preset: Preset = req.body['preset'];
 
-    if (!presetName) {
+    if (!preset) {
+        return res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                succcess: false,
+                message: "Parameter 'preset' not provided"
+            });
+    }
+
+    const count = await Preset.count({
+        where: {
+            name: preset.name,
+        }
+    });
+
+    if (count !== 0) {
         return res
             .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
             .json({
                 success: false,
-                message: "Parameter 'presetName' not provided"
+                message: "Can not create new preset with name that already exists."
             });
     }
+
+    await Preset.create({
+        name: preset.name,
+        blob: preset.blob,
+    });
+
+    return res
+        .status(HTTP.SUCCESS.OK)
+        .json({
+            success: true,
+            message: "Successfully made new preset"
+        });
+
+});
+
+/**
+ * Set the value of a preset to a given value.
+ */
+router.post("/config/set_preset", checkSidMiddleware, async (req: Request, res: Response) => {
+    const preset: Preset = req.body['preset'];
 
     if (!preset) {
         return res
@@ -248,29 +279,24 @@ router.post("/config/set_preset", checkSidMiddleware, async (req: Request, res: 
 
     const count = await Preset.count({
         where: {
-            name: presetName,
+            id: preset.id,
         }
     });
 
     if (count == 0) {
-        // create a new preset
-        await Preset.create({
-            name: presetName,
-            blob: preset.blob
-        });
-
         return res
-            .status(HTTP.SUCCESS.CREATED)
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
             .json({
-                success: true,
-                message: "Successfully created preset"
+                success: false,
+                message: "Preset does not exist, could not update it"
             });
     } else {
         await Preset.update({
-            blob: preset.blob
+            name: preset.name,
+            blob: preset.blob,
         }, {
             where: {
-                name: presetName
+                id: preset.id
             }
         });
 
@@ -314,7 +340,7 @@ router.get("/config/get_config", checkSidMiddleware, async (_req: Request, res: 
 
 router.get("/config/list_of_presets", checkSidMiddleware, async (_req: Request, res: Response) => {
     const names = await Preset.findAll({
-        attributes: ["name"]
+        attributes: ["name", "id"]
     });
     res.json({
         success: true,

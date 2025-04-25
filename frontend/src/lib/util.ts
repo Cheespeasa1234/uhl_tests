@@ -3,6 +3,7 @@
  */
 
 import { showNotifToast } from "./popups.ts";
+import { type PresetListEntry } from "./types.ts";
 
 /**
  * Remove all characters from a string that are not alphanumeric or hyphens.
@@ -104,4 +105,15 @@ export async function postJSON(url: string, body: any): Promise<API_Response> {
     console.trace();
     console.groupEnd();
     return json as API_Response;
+}
+
+export async function getPresetList(): Promise<PresetListEntry[] | undefined> {
+    const response = await getJSON("./api/grading/config/list_of_presets")
+
+    if (response.success) {
+        return response.data.presets;
+    } else {
+        return undefined;
+    }
+
 }
