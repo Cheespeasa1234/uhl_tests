@@ -333,21 +333,29 @@
 <div id="adminelements" class="container-fluid h-100 { signedIn ? '' : 'd-none' }">
     <!-- <div class="row h-100" style="height: 100vh;"> -->
 
-        <nav class="row border border-1 rounded m-1 p-1">
-            <div class="nav gap-10 nav-pills" id="nav-tab" role="tablist">
+    <nav class="mt-2">
+        <ul class="nav nav-tabs" id="nav-tab" role="tablist">
+            <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="nav-p1-tab" data-bs-toggle="tab" data-bs-target="#nav-p1"
-                    type="button" role="tab" aria-controls="nav-home" aria-selected="true">Configure
-                    Test</button>
-                <button class="nav-link" id="nav-p2-tab" data-bs-toggle="tab" data-bs-target="#nav-p2" type="button"
-                    role="tab" aria-controls="nav-profile" aria-selected="false">View
-                    Status</button>
-                <button class="nav-link" id="nav-p3-tab" data-bs-toggle="tab" data-bs-target="#nav-p3" type="button"
-                    role="tab" aria-controls="nav-contact" aria-selected="false">Grade
-                    Tests</button>
-            </div>
-        </nav>
-
-        <div class="tab-content col border border-1 rounded m-1 p-2" id="nav-tabContent">
+                    type="button" role="tab" aria-controls="nav-p1" aria-selected="true">
+                    Configure Test
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="nav-p2-tab" data-bs-toggle="tab" data-bs-target="#nav-p2"
+                    type="button" role="tab" aria-controls="nav-p2" aria-selected="false">
+                    View Status
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="nav-p3-tab" data-bs-toggle="tab" data-bs-target="#nav-p3"
+                    type="button" role="tab" aria-controls="nav-p3" aria-selected="false">
+                    Grade Tests
+                </button>
+            </li>
+        </ul>
+    </nav>
+        <div class="tab-content col border border-1 p-2" id="nav-tabContent">
             <div style="width: fit-content" class="tab-pane fade show active" id="nav-p1" role="tabpanel"
                 aria-labelledby="nav-p1-tab">
 
