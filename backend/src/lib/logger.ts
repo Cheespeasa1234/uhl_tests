@@ -8,6 +8,11 @@ const ANSI_PURPLE = "\x1b[35m";
 const ANSI_GREEN = "\x1b[32m";
 const ANSI_GRAY = "\x1b[30m";
 
+const disabledScopes = [
+    /^code(\/.*)?$/,
+    /^db(\/.*)?$/
+];
+
 function removeAnsi(str: string) {
     return str.replace("\x1b[0m", "")
         .replace("\x1b[31m", "")
@@ -19,6 +24,7 @@ function removeAnsi(str: string) {
         .replace("\x1b[32m", "");
 }
 
+const enableFileLog = false;
 const name = `files/log.txt`;
 Deno.createSync(name);
 Deno.writeTextFile(name, "");
@@ -31,6 +37,11 @@ export enum LogLevel {
 }
 
 function log(level: LogLevel, scope: string, ...data: any[]) {
+    for (const scopeRegex of disabledScopes) {
+        if (scopeRegex.test(scope)) {
+            return;
+        }
+    }
     // Get the locale time for EST
     const now = new Date().toLocaleTimeString("en-US", {
         timeZone: "America/New_York",
@@ -38,6 +49,7 @@ function log(level: LogLevel, scope: string, ...data: any[]) {
     console.log(`${ANSI_GRAY}[${now}]${ANSI_RESET}${level}${ANSI_GREEN}[${scope}]${ANSI_RESET}`, data.join(" "));
 
     // Write to log file
+    if (!enableFileLog) return;
     const logMessage = `[${now}]${removeAnsi(level)}[${scope}] ${data.join(" ")}\n`;
     Deno.writeTextFile(name, logMessage, { append: true });
 }

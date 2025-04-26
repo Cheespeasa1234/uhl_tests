@@ -9,7 +9,19 @@ const sequelize = new Sequelize({
     },
 });
 
-export type PresetData = Record<ConfigKey, ConfigValue>;
+export type PresetData = Map<ConfigKey, ConfigValue>;
+export function parsePresetData(blob: string): PresetData {
+    const data: PresetData = new Map();
+    const json = JSON.parse(blob);
+    for (const configKey in json) {
+        const configValue = json[configKey];
+        const valueType = configValue["valueType"];
+        const key = configValue["key"];
+        const value = configValue["value"];
+        data.set(configKey as ConfigKey, new ConfigValue(valueType, key, value));
+    }
+    return data;
+}
 
 export enum ConfigKey {
     FOR_LOOP_COUNT = "For Loop Count",

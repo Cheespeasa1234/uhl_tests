@@ -10,7 +10,7 @@ import { makeTest } from "../lang/quiz/codegen.ts";
 import { PresetManager } from "../lib/config.ts";
 // import { addResponse } from "../analyze_responses.ts";
 import { addNotification } from "../lib/notifications.ts";
-import { logInfo } from "../lib/logger.ts";
+import { logInfo, logWarning } from "../lib/logger.ts";
 import { Test, Submission } from "../lib/db_sqlz.ts";
 
 export const router = express.Router();
@@ -103,6 +103,15 @@ router.post("/new-test", async (req: Request, res: Response) => {
         return;
     }
 
+    if (!testGroup.enabled) {
+        logWarning(`students/new-test`, `Student used disabled test code: ${testGroup.code}. Consider changing the code to keep it secret.`);
+        res.json({
+            success: false,
+            message: "Invalid test code"
+        });
+        return;
+    }
+
     const timeStarted = new Date();
     let timeToEnd: Date | null = null;
     if (manualConfigs.get("enableTimeLimit")) {
@@ -184,9 +193,9 @@ router.post("/submit-test", (req: Request, res: Response) => {
         quiz: session.quiz,
     };
 
-    console.log(responseBlob);
-    console.log(JSON.stringify(responseBlob));
-    console.log(sanitizeForCSV(JSON.stringify(responseBlob)));
+    // console.log(responseBlob);
+    // console.log(JSON.stringify(responseBlob));
+    // console.log(sanitizeForCSV(JSON.stringify(responseBlob)));
 
     function sanitizeForCSV(text: string) {
         return text.replaceAll(",", "~c").replaceAll("\"", "~q").replaceAll("\n", "");

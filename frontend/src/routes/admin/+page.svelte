@@ -192,6 +192,19 @@
         resetTestCodesBtn.disabled = false;
     }
 
+    async function saveTestCodes() {
+        console.log("Test List:", testList);
+        const json = await postJSON("./api/grading/config/update_testcodes", {
+            testCodes: testList
+        });
+    }
+
+    async function newTestCode() {
+        const json = await getJSON("./api/grading/config/new_testcode");
+        console.log(json.data.test);
+        testList?.push(json.data.test);
+    }
+
     // Save the config to a new preset
     async function savePreset() {
         savePresetBtn.disabled = true;
@@ -369,8 +382,6 @@
                             aria-describedby="basic-addon1">
                         <span class="input-group-text" id="basic-addon1">minutes</span>
                     </div>
-
-                    <button class="btn btn-primary mt-2" id="configure-test-submission-refresh" data-tippy-content="Save changes to student testing, and time limit.">Update</button>
                 </div>
 
                 <div class="p-3">
@@ -402,17 +413,15 @@
                     <h3>Configure Test Codes</h3>
                     
                     <div class="btn-group mb-2">
-                        <button id="save-test-code-config" type="button" class="btn btn-outline-secondary" data-tippy-content="Save the below test code values to the server.">Save changes</button>
-                        <button bind:this={resetTestCodesBtn} type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below test code values to the values stored on the server.">Undo changes</button>
+                        <button onclick={saveTestCodes} type="button" class="btn btn-outline-secondary" data-tippy-content="Save the below test code values to the server.">Save changes</button>
+                        <button bind:this={resetTestCodesBtn} type="button" class="btn btn-outline-secondary" data-tippy-content="Resets changes to the test codes.">Undo changes</button>
                     </div>
 
                     <div class="btn-group mb-2">
-                        <button id="new-test-code" type="button" class="btn btn-outline-secondary" data-tippy-content="Create a brand new test code.">New test code</button>
+                        <button onclick={newTestCode} type="button" class="btn btn-outline-secondary" data-tippy-content="Create a brand new test code.">New test code</button>
                     </div>
                     
                     <TestCodeInputs bind:this={testListEl} />
-                    
-                    <button id="reset-test-code-config" class="btn btn-secondary" data-tippy-content="Resets all your changes to the test codes.">Reset</button>
                 </div>
 
             </div>

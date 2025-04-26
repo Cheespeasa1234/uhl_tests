@@ -8,7 +8,6 @@ export class Student {
     privateKey: string;
 
     constructor(name: string) {
-        console.log("NAME:", name);
         this.name = name;
         this.privateKey = crypto.randomBytes(16).toString("hex");
     }
@@ -26,7 +25,6 @@ export class QuizQuestion {
     descriptor: string;
 
     constructor(questionCode: LineOfCode[], descriptor?: string) {
-        console.log("CONSTRUCTOR CALLED");
         this.questionCode = questionCode;
         this.questionString = codeToJava(questionCode);
         this.answer = this.getAnswer();

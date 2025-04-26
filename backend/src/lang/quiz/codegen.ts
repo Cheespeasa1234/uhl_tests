@@ -1,7 +1,8 @@
 import { $, CodeEnvironment, type LineOfCode } from "./code.ts";
 import { ParsedToken } from "../typing/parsedToken.ts";
 import { Quiz, QuizQuestion } from "./quiz.ts";
-import { Test, Preset, PresetData } from "../../lib/db_sqlz.ts";
+import { Test, Preset, PresetData, parsePresetData, ConfigKey } from "../../lib/db_sqlz.ts";
+import { logDebug, logInfo } from "../../lib/logger.ts";
 
 export function generateForLoop(
     varname: string,
@@ -166,12 +167,13 @@ export async function makeTest(timeStarted: Date, timeToEnd: Date | null, testGr
 
     const preset: Preset | null = await Preset.findByPk(testGroup.presetId);
     if (!preset) throw new Error("That preset doesn't exist");
-    const blob: PresetData = preset.getPresetData();
+    const blob: PresetData = parsePresetData(preset.blob);
+    logDebug("codegen", `Blob: ${preset.blob}`);
 
     const questions: QuizQuestion[] = [];
 
     // Create for loop questions
-    for (let i = 0; i < blob["For Loop Count"].getNumberValue(); i++) {
+    for (let i = 0; i < blob.get(ConfigKey.FOR_LOOP_COUNT)!.getNumberValue(); i++) {
         questions.push(
             new QuizQuestion(
                 generateForLoop("i", [$("print", "$*#i")]),
@@ -181,7 +183,7 @@ export async function makeTest(timeStarted: Date, timeToEnd: Date | null, testGr
     }
 
     // Create double loop question
-    for (let i = 0; i < blob["Nested For Loop Count"].getNumberValue(); i++) {
+    for (let i = 0; i < blob.get(ConfigKey.NESTED_FOR_LOOP_COUNT)!.getNumberValue(); i++) {
         questions.push(
             new QuizQuestion(
                 generateDoubleForLoop(),
@@ -191,7 +193,7 @@ export async function makeTest(timeStarted: Date, timeToEnd: Date | null, testGr
     }
 
     // Create string question
-    for (let i = 0; i < blob["String Count"].getNumberValue(); i++) {
+    for (let i = 0; i < blob.get(ConfigKey.STRING_COUNT)!.getNumberValue(); i++) {
         questions.push(new QuizQuestion(
             generateStringQuestion(),
             "What will the output of this code be? (strings)"

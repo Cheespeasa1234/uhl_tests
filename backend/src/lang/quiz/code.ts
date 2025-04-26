@@ -74,7 +74,7 @@ export class CodeEnvironment {
             this.variableExistsByName("_SYS_ENABLEOUT") &&
             this.getVariableValueByName("_SYS_ENABLEOUT").asBoolean()
         ) {
-            console.log(output);
+            logInfo("code/print", output);
         }
         this.output = this.output.concat(output);
     }
@@ -125,7 +125,7 @@ export class CodeEnvironment {
             ..._
         ] = [...values];
 
-        logInfo("code", `Looping ${value1Unsafe.toString()} ${operator.toString()} ${value2Unsafe.toString()}`);
+        logInfo("code/loop", `Looping ${value1Unsafe.toString()} ${operator.toString()} ${value2Unsafe.toString()}`);
 
         // If it is true, run the code inside the loop
         let c = 0;
@@ -179,7 +179,7 @@ export class CodeEnvironment {
     compile(code: LineOfCode[]): LineOfCode[] {
         const compiled: LineOfCode[] = [];
         for (const line of code) {
-            logInfo("code", `Compiling line ${this.line}`);
+            logInfo("code/compile", `Compiling line ${this.line}`);
             const { values, nest_1, nest_2 } = line;
             this.line++;
             this.lineExecuting = line;
@@ -220,7 +220,7 @@ export class CodeEnvironment {
         const compiledCode = this.compile(code);
         try {
             for (const line of compiledCode) {
-                logInfo("code", `Executing line ${this.line}`);
+                logInfo("code/execute", `Executing line ${this.line}`);
                 const { values, nest_1, nest_2 } = line;
                 this.line++;
                 this.lineExecuting = line;
@@ -240,7 +240,7 @@ export class CodeEnvironment {
                 }
             }
         } catch (e) {
-            logError("code", `Error executing line ${this.line}: ${JSON.stringify(this.lineExecuting).substring(0, 20)}...`);
+            logError("code/execute", `Error executing line ${this.line}: ${JSON.stringify(this.lineExecuting).substring(0, 20)}...`);
             console.trace(e);
             throw e;
         }

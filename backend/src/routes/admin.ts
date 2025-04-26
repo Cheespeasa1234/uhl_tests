@@ -211,12 +211,13 @@ router.get("/config/get_preset/:presetName", checkSidMiddleware, async (req: Req
  * Gets the default preset.
  */
 router.get("/config/get_preset_default", checkSidMiddleware, async (_req: Request, res: Response) => {
-    const preset = await presetManager.getDefaultPreset();
+    const defaultPreset = await Preset.findByPk(0);
+    logInfo("admin/config", `Default preset: ${JSON.stringify(defaultPreset)}`);
     res.json({
         success: true,
         message: "Got the default preset",
         data: {
-            preset: preset,
+            preset: defaultPreset,
         }
     });
 })
@@ -309,35 +310,6 @@ router.post("/config/set_preset", checkSidMiddleware, async (req: Request, res: 
     }
 });
 
-/**
- * Set the current configuration in use.
- */
-router.post("/config/set_config", checkSidMiddleware, (req: Request, res: Response) => {
-    const preset = req.body['preset'];
-    logDebug("admin/preset", "Setting currentPreset to " + JSON.stringify(preset));
-    presetManager.setCurrentPreset(preset);
-
-    res.json({
-        success: true,
-        message: "Successfully set the current configuration"
-    })
-});
-
-/**
- * Get the current configuration in use.
- */
-router.get("/config/get_config", checkSidMiddleware, async (_req: Request, res: Response) => {
-    const currentPreset: Preset = await presetManager.getCurrentPreset();
-    logDebug("admin/preset", `current preset: ${JSON.stringify(currentPreset)}`);
-    res.json({
-        success: true,
-        message: "Successfully got the current configuration",
-        data: {
-            preset: currentPreset
-        }
-    })
-});
-
 router.get("/config/list_of_presets", checkSidMiddleware, async (_req: Request, res: Response) => {
     const names = await Preset.findAll({
         attributes: ["name", "id"]
@@ -399,140 +371,148 @@ router.post("/config/update_testcodes", checkSidMiddleware, async (req: Request,
 
     for (let i = 0; i < testCodes.length; i++) {
         const testCode = testCodes[i];
-        const id = testCode['id'];
-        const code = testCode['code'];
-        const presetName = testCode['presetName'];
-        const enabled = testCode['enabled'];
 
-        if (!id) {
+        if (testCode.code === undefined) {
             return res.json({
                 success: false,
-                message: `No id provided for index ${i}`
+                message: `code not provided for test code idx ${i}`
             });
         }
 
-        if (!code) {
+        if (testCode.enabled === undefined) {
             return res.json({
                 success: false,
-                message: `No code provided for index ${i}`
+                message: `id not provided for test code idx ${i}`
             });
         }
 
-        if (!presetName) {
+        if (testCode.presetId === undefined) {
             return res.json({
                 success: false,
-                message: `No presetName provided for index ${i}`
+                message: `id not provided for test code idx ${i}`
             });
         }
 
-        if (!Number.isFinite(Number(id))) {
-            return res.json({
-                success: false,
-                message: `id is not a number for index ${i}`
-            });
-        }
+        const count = await Test.count({
+            where: {
+                id: testCode.id
+            }
+        });
 
-        const test: Test | null = await Test.findByPk(id);
-        if (test === null) {
-            return res.json({
-                success: false,
-                message: `Test not found for index ${i}`
+        if (count === 0) {
+            await Test.create({
+                code: testCode.code,
+                enabled: testCode.enabled,
+                presetId: testCode.presetId,
             });
-        }
-
-        const preset = await Preset.findByPk(test.presetId);
-        if (preset) {
-            test.presetId = preset.id;
         } else {
-            return res.json({
-                success: false,
-                message: `Test returned undefined for id ${test.presetId}`
-            })
+            await Test.update({
+                code: testCode.code,
+                enabled: testCode.enabled,
+                presetId: testCode.presetId,
+            }, {
+                where: {
+                    id: testCode.id,
+                }
+            });
         }
-
-        test.code = code.toString();
-        test.enabled = enabled;
-        
-        test.save();
     }
 
+    const allTests = await Test.findAll();
     res.json({
         success: true,
-        message: "Successfully updated test codes"
-    });
-});
-
-
-router.get("/config/update_testcode", checkSidMiddleware, async (req: Request, res: Response) => {
-    const id = req.query['id'];
-    const code = req.query['code'];
-    const presetName = req.query['presetName'];
-    const enabled = req.query['enabled'];
-
-    if (!id) {
-        return res.json({
-            success: false,
-            message: "No id provided"
-        });
-    }
-
-    if (!code) {
-        return res.json({
-            success: false,
-            message: "No code provided"
-        });
-    }
-
-    if (!presetName) {
-        return res.json({
-            success: false,
-            message: "No presetName provided"
-        });
-    }
-
-    if (!enabled) {
-        return res.json({
-            success: false,
-            message: "No enabled provided"
-        });
-    }
-
-    if (!Number.isFinite(Number(id))) {
-        return res.json({
-            success: false,
-            message: "id is not a number"
-        });
-    }
-
-    const test = await Test.findByPk(Number(id));
-    if (!test) {
-        return res.json({
-            success: false,
-            message: "Test not found"
-        });
-    }
-
-    const preset = await Preset.findOne({
-        where: {
-            name: presetName.toString()
+        message: "Successfully updated test codes",
+        data: {
+            amount: allTests.length,
+            tests: testCodes,
         }
     });
-
-    if (!preset) {
-        return res.json({
-            success: false,
-            message: "Preset not found"
-        });
-    }
-
-    const enabledBoolean = enabled === "true";
-
-    test.code = code.toString();
-    test.presetId = preset.id;
-    test.enabled = enabledBoolean;
-
-    test.save();
 });
+
+router.get("/config/new_testcode", checkSidMiddleware, async (req: Request, res: Response) => {
+    const newTest = await Test.create({
+        code: "",
+        presetId: 0
+    });
+    return res.json({
+        success: true,
+        message: "Created new test successfully",
+        data: {
+            test: newTest
+        }
+    });
+});
+
+// router.get("/config/update_testcode", checkSidMiddleware, async (req: Request, res: Response) => {
+//     const id = req.query['id'];
+//     const code = req.query['code'];
+//     const presetName = req.query['presetName'];
+//     const enabled = req.query['enabled'];
+
+//     if (!id) {
+//         return res.json({
+//             success: false,
+//             message: "No id provided"
+//         });
+//     }
+
+//     if (!code) {
+//         return res.json({
+//             success: false,
+//             message: "No code provided"
+//         });
+//     }
+
+//     if (!presetName) {
+//         return res.json({
+//             success: false,
+//             message: "No presetName provided"
+//         });
+//     }
+
+//     if (!enabled) {
+//         return res.json({
+//             success: false,
+//             message: "No enabled provided"
+//         });
+//     }
+
+//     if (!Number.isFinite(Number(id))) {
+//         return res.json({
+//             success: false,
+//             message: "id is not a number"
+//         });
+//     }
+
+//     const test = await Test.findByPk(Number(id));
+//     if (!test) {
+//         return res.json({
+//             success: false,
+//             message: "Test not found"
+//         });
+//     }
+
+//     const preset = await Preset.findOne({
+//         where: {
+//             name: presetName.toString()
+//         }
+//     });
+
+//     if (!preset) {
+//         return res.json({
+//             success: false,
+//             message: "Preset not found"
+//         });
+//     }
+
+//     const enabledBoolean = enabled === "true";
+
+//     test.code = code.toString();
+//     test.presetId = preset.id;
+//     test.enabled = enabledBoolean;
+
+//     test.save();
+// });
 
 router.get("/notifications", checkSidMiddleware, (_req: Request, res: Response) => {
     const notifications = retrieveNotifications();
@@ -556,7 +536,7 @@ router.get("/manualConfig/:key", checkSidMiddleware, (req: Request, res: Respons
             data: {
                 value: manualConfigs.get(key),
             }
-        })
+        });
     } else {
         res.json({
             success: false,
@@ -610,8 +590,8 @@ router.post("/manualConfig", checkSidMiddleware, (req: Request, res: Response) =
         }
     } else if (type == 'boolean') {
         const v = value != "false";
-        console.log("STRING!", value);
-        console.log("BOOLEAN!", v);
+        // console.log("STRING!", value);
+        // console.log("BOOLEAN!", v);
         manualConfigs.set(key, v);
         return res.json({
             success: true,
