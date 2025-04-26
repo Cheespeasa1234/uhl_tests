@@ -27,7 +27,7 @@
         {@const { key, value, valueType } = propertyValue}
 
         <div class="input-group">
-            <span class="input-group-text col-sm-4">
+            <span class="input-group-text">
                 {key}
             </span>
             <input type={valueType} bind:value={changedPresetBlob[prop].value} class="form-control col-sm-4" />

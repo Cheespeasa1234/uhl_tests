@@ -164,11 +164,6 @@
 
     let testListEl: TestCodeInputs;
     let testList: Test[] | undefined = $state(undefined);
-    $effect(() => {
-        if (testList !== undefined) {
-            testListEl.setTestListValue(testList);
-        }
-    });
     
     // Get the default preset
     async function resetPreset() {
@@ -187,7 +182,7 @@
         const { success, data } = json;
         if (success) {
             testList = data.tests;
-            console.log(testList);
+            testListEl.setTestListValue(testList!);
         }
         resetTestCodesBtn.disabled = false;
     }
@@ -203,6 +198,7 @@
         const json = await getJSON("./api/grading/config/new_testcode");
         console.log(json.data.test);
         testList?.push(json.data.test);
+        testListEl.setTestListValue(testList!);
     }
 
     // Save the config to a new preset

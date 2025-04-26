@@ -1,17 +1,25 @@
 <script lang="ts">
     import { type Test } from "$lib/types";
-    import { getPresetList } from "$lib/util";
+    import { getPresetList, postJSON } from "$lib/util";
     import { showNotifToast } from "$lib/popups";
     import SelectPresetModal from "./modal/SelectPresetModal.svelte";
     
     let changedTestList: Test[] = $state([]);
+    let ids = $derived(changedTestList.map(t => t.presetId).join(","));
     let names: { [id: string ]: string} = $state({});
     $inspect(changedTestList);
-    $inspect(names);
 
     export function setTestListValue(newTests: Test[]): void{
         console.log("Setting new test list value");
         changedTestList = [...newTests];
+
+        postJSON("./api/grading/config/get_preset_names", {
+            ids: ids
+        }).then(json => {
+            if (json.success) {
+                names = json.data.names;
+            }
+        });
     }
 
     export function getTestListValue(): Test[] {
@@ -51,16 +59,17 @@
 
 <div id="config-area">
     {#each changedTestList as test, index}
-        {@const { id, code, presetId, enabled, createdAt, updatedAt } = test}
         <div class="input-group mb-3">
             <span class="input-group-text">
                 <input type="checkbox" bind:checked={changedTestList[index].enabled}>
             </span>
             <span class="input-group-text">Code</span>
             <input type="text" class="form-control" bind:value={changedTestList[index].code}>
-            <span class="input-group-text">Preset&nbsp;<small>({names[index] || "DEFAULT"})</small></span>
+            <span class="input-group-text">Preset&nbsp;<small>({names[changedTestList[index].presetId] || "DEFAULT"})</small></span>
             <span class="input-group-text">{changedTestList[index].presetId}</span>
             <button onclick={() => choose(index)} class="btn btn-outline-secondary" type="button">Choose...</button>
+            <!-- svelte-ignore a11y_consider_explicit_label -->
+            <button class="btn btn-outline-danger"><i class="fa-regular fa-trash-can"></i></button>
         </div>
     {/each}
 </div>

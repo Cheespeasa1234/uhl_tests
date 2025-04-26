@@ -443,6 +443,90 @@ router.get("/config/new_testcode", checkSidMiddleware, async (req: Request, res:
     });
 });
 
+router.post("/config/delete_testcode", checkSidMiddleware, async (req: Request, res: Response) => {
+    const id = req.body["id"];
+    if (!id) {
+        return res.json({
+            success: false,
+            message: "No id provided",
+        });
+    }
+
+    const idNum = parseFloat(id);
+    if (!Number.isInteger(idNum)) {
+        return res.json({
+            success: false,
+            message: `id ${id} is not an integer`,
+        });
+    }
+
+    const test = await Test.findByPk(idNum);
+    if (!test) {
+        return res.json({
+            success: false,
+            message: `id ${id} does not exist`,
+        });
+    };
+
+    await test.destroy();
+    res.json({
+        success: true,
+        message: "Successfully removed the test",
+    });
+})
+
+router.post("/config/get_preset_names", checkSidMiddleware, async (req: Request, res: Response) => {
+    const idsListString = req.body["ids"];
+    if (idsListString === undefined) {
+        return res.json({
+            success: false,
+            message: "No ids provided",
+        });
+    }
+
+    const idsList: string[] = idsListString.split(",");
+    const names: { [id: string]: string } = {};
+    for (const id of idsList) {
+        const idNum = parseFloat(id);
+        if (!Number.isInteger(idNum)) {
+            return res.json({
+                success: false,
+                message: `id ${id} is not an integer`,
+            });
+        }
+        const name = await Preset.findOne({
+            where: {
+                id: id
+            },
+            attributes: ["name"]
+        });
+
+        if (!name) {
+            return res.json({
+                success: false,
+                message: `id ${id} not found`
+            });
+        }
+
+        if (!name.name) {
+            return res.json({
+                success: false,
+                message: `id ${id} has no name`
+            });
+        }
+        names[id + ""] = name.name
+    }
+
+    return res.json({
+        success: true,
+        message: "Successfully fetched names",
+        data: {
+            count: names.length,
+            names: names
+        }
+    });
+});
+
 // router.get("/config/update_testcode", checkSidMiddleware, async (req: Request, res: Response) => {
 //     const id = req.query['id'];
 //     const code = req.query['code'];
