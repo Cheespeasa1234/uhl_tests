@@ -11,7 +11,8 @@ import { PresetManager } from "../lib/config.ts";
 // import { addResponse } from "../analyze_responses.ts";
 import { addNotification } from "../lib/notifications.ts";
 import { logInfo, logWarning } from "../lib/logger.ts";
-import { Test, Submission } from "../lib/db_sqlz.ts";
+import { Test, Submission, Preset, parsePresetData, PresetData, ConfigValueType } from "../lib/db_sqlz.ts";
+import { HTTP } from "../lib/http.ts";
 
 export const router = express.Router();
 
@@ -53,6 +54,86 @@ manualConfigs.set("enableStudentTesting", false);
 manualConfigs.set("enableTimeLimit", true);
 manualConfigs.set("timeLimit", 40);
 manualConfigs.set("debugMode", false);
+
+router.post("/test-info", async (req: Request, res: Response) => {
+    if (!manualConfigs.get("enableStudentTesting")) {
+        res.json({
+            success: false,
+            message: "Testing disabled."
+        });
+        addNotification({ message: `Student tried to start a test, but it was disabled`, success: true });
+        return;
+    }
+
+    const name = req.body['name'];
+    if (!name) {
+        res.json({
+            success: false,
+            message: "No name provided"
+        });
+        return;
+    }
+
+    const testCode = req.body['code'];
+    if (!testCode) {
+        res.json({
+            success: false,
+            message: "No testid provided"
+        });
+        return;
+    }
+
+    const testGroup = await Test.findOne({
+        where: {
+            code: testCode
+        }
+    })
+
+    if (!testGroup) {
+        res.json({
+            success: false,
+            message: "Invalid test code"
+        });
+        return;
+    }
+
+    if (!testGroup.enabled) {
+        logWarning(`students/test-info`, `Student used disabled test code: ${testGroup.code}. Consider changing the code to keep it secret.`);
+        res.json({
+            success: false,
+            message: "Invalid test code"
+        });
+        return;
+    }
+
+    const timeLimitMinutes = (manualConfigs.get("timeLimit") as number);
+    const preset: Preset | null = await Preset.findByPk(testGroup.presetId);
+    if (!preset) {
+        res
+            .status(HTTP.SERVER_ERROR.INTERNAL_SERVER_ERROR)
+            .json({
+                success: false,
+                message: "Preset not found"
+            });
+        return;
+    };
+    const blob: PresetData = parsePresetData(preset.blob);
+    let sum = 0
+    blob.forEach(config => {
+        if (config.valueType === ConfigValueType.NUMBER) {
+            sum += config.getNumberValue();
+        }
+    })
+
+    res.json({
+        success: true,
+        message: "Successfully retrieved test info",
+        data: {
+            timeLimit: timeLimitMinutes,
+            count: sum,
+        }
+    });
+});
 
 /**
  * IN: { name: string }
