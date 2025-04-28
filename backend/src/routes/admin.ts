@@ -151,7 +151,7 @@ router.get("/grade/:studentEmail", checkSidMiddleware, async (req: Request, res:
     }
 
     // find the test response and google form response that are most recent and that match
-    let mostRecentGoogleFormResponse = googleFormResponses[0];
+    let mostRecentGoogleFormResponse = googleFormResponses[googleFormResponses.length - 1];
     let mostRecentTimeSince = mostRecentGoogleFormResponse.timestamp.getTime();
 
     for (const response of googleFormResponses) {

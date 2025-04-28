@@ -188,6 +188,7 @@
     }
 
     async function saveTestCodes() {
+        testList = testListEl.getTestListValue();
         console.log("Test List:", testList);
         const json = await postJSON("./api/grading/config/update_testcodes", {
             testCodes: testList
@@ -195,7 +196,7 @@
     }
 
     async function newTestCode() {
-        testList = testListEl.getTestListValue()
+        testList = testListEl.getTestListValue();
         const json = await getJSON("./api/grading/config/new_testcode");
         console.log(json.data.test);
         testList?.push(json.data.test);

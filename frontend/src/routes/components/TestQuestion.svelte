@@ -1,5 +1,11 @@
 <script lang="ts">
     const { questionString, descriptor } = $props();
+
+    let area: HTMLTextAreaElement;
+
+    export function getResponse(): string {
+        return area.value;
+    }
 </script>
 
 <div class="question-container">
@@ -11,6 +17,6 @@
             {questionString}
         </pre>
     </div>
-    <textarea class="answer-textarea box"></textarea>
+    <textarea bind:this={area} class="answer-textarea box"></textarea>
     <hr>
 </div>

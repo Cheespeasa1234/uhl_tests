@@ -19,6 +19,7 @@
     let studentSelf = $state(undefined);
 
     let testQuestions: any[] = $state([]);
+    let testQuestionEls: TestQuestion[] = $state([]);
 
     function cookiePopupOpen() {
         cookiePopup.showModal();
@@ -29,10 +30,9 @@
     }
 
     function submissionPopupOpen() {
-        const answerElements = document.querySelectorAll("textarea.answer-textarea");
         const answers = [];
-        for (const answer of answerElements) {
-            answers.push(answer.nodeValue);
+        for (const question of testQuestionEls) {
+            answers.push(question.getResponse());
         }
 
         postJSON("./api/testing/submit-test", {
@@ -150,12 +150,12 @@
         {#if !testQuestions || testQuestions.length == 0}
             <em style="font-size: 1em;">Please request a quiz first.</em>
         {:else}
-            {#each testQuestions as question}
-                <TestQuestion questionString={question.questionString} descriptor={question.descriptor} />
+            {#each testQuestions as question, index}
+                <TestQuestion bind:this={testQuestionEls[index]} questionString={question.questionString} descriptor={question.descriptor} />
             {/each}
         {/if}
     </div>
-    <button onclick={submissionPopupOpen} id="submission-popup-open" disabled>Submit</button>
+    <button onclick={submissionPopupOpen} id="submission-popup-open">Submit</button>
 </fieldset>
 
 <dialog bind:this={submissionPopup} id="submission-popup">
