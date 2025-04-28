@@ -14,8 +14,7 @@
     </div>
     <div class="question-box">
         <pre class="code-box box">
-            {questionString}
-        </pre>
+{questionString}</pre>
     </div>
     <textarea bind:this={area} class="answer-textarea box"></textarea>
     <hr>

@@ -21,6 +21,9 @@
     let testQuestions: any[] = $state([]);
     let testQuestionEls: TestQuestion[] = $state([]);
 
+    let takeTestBtn: HTMLButtonElement;
+    let submitTestBtn: HTMLButtonElement;
+
     function cookiePopupOpen() {
         cookiePopup.showModal();
     }
@@ -30,6 +33,7 @@
     }
 
     function submissionPopupOpen() {
+        submitTestBtn.disabled = true;
         const answers = [];
         for (const question of testQuestionEls) {
             answers.push(question.getResponse());
@@ -45,6 +49,7 @@
             submissionAnswerCode = answerCode;
             submissionPopup.showModal();
             clearDocument();
+            submitTestBtn.disabled = false;
         });
     }
 
@@ -105,6 +110,7 @@
 
     // Get a new test and place it on the screen
     function takeTest() {
+        takeTestBtn.disabled = true
         postJSON("./api/testing/new-test", {
             "name": nameInputValue,
             "code": testCodeInputValue,
@@ -113,6 +119,7 @@
 
             if (!success) {
                 console.error("Not success: " + message);
+                takeTestBtn.disabled = true
                 return;
             }
 
@@ -120,7 +127,8 @@
             showNotifToast({ success: true, message: `Test started: ${timeStarted}<br>Time ends: ${timeToEnd}` });
             studentSelf = student;
             testQuestions = questions;
-        })
+            takeTestBtn.disabled = true
+        });
     }
 
 </script>
@@ -141,7 +149,7 @@
     <input bind:value={testCodeInputValue} id="testcode" type="text" placeholder="practice2025">
     <br>
     <i>Make sure you can sign in to this email, or your test results will be lost!</i>
-    <button onclick={takeTest} id="take-test">Submit</button>
+    <button bind:this={takeTestBtn} onclick={takeTest} id="take-test">Submit</button>
 </fieldset>
 
 <fieldset>
@@ -155,7 +163,7 @@
             {/each}
         {/if}
     </div>
-    <button onclick={submissionPopupOpen} id="submission-popup-open">Submit</button>
+    <button bind:this={submitTestBtn} onclick={submissionPopupOpen} id="submission-popup-open">Submit</button>
 </fieldset>
 
 <dialog bind:this={submissionPopup} id="submission-popup">
