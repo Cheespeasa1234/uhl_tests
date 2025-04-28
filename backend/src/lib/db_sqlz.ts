@@ -143,6 +143,7 @@ export class Submission extends Model {
     declare due: number;
     declare idCookie: string;
     declare answerCode: string;
+    declare testId: number;
     declare responseBlob: string;
     declare createdAt: Date;
     declare updatedAt: Date;

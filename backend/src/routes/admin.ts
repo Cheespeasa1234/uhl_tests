@@ -225,12 +225,30 @@ router.get("/config/get_preset_default", checkSidMiddleware, async (_req: Reques
 router.post("/config/new_preset", checkSidMiddleware, async (req: Request, res: Response) => {
     const preset: Preset = req.body['preset'];
 
-    if (!preset) {
+    if (preset === undefined) {
         return res
             .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
             .json({
-                succcess: false,
-                message: "Parameter 'preset' not provided"
+                success: false,
+                message: "preset is undefined"
+            });
+    }
+
+    if (preset.name === undefined || preset.name.length == 0) {
+        return res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "Preset.name is undefined or empty"
+            });
+    }
+
+    if (preset.name === "DEFAULT") {
+        return res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "Can not create preset with that name"
             });
     }
 
@@ -263,18 +281,154 @@ router.post("/config/new_preset", checkSidMiddleware, async (req: Request, res: 
 
 });
 
+router.post("/config/del_preset", checkSidMiddleware, async (req: Request, res: Response) => {
+    const id = req.body["id"];
+    if (id === undefined) {
+        return res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "id is undefined"
+            });
+    }
+
+    const idNum = parseFloat(id);
+    if (!Number.isInteger(idNum)) {
+        return res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "id is not an integer",
+            });
+    }
+
+    if (idNum === 0) {
+        return res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "Cannot delete default preset"
+            });
+    }
+
+    const count = await Preset.count({
+        where: {
+            id: idNum
+        }
+    });
+
+    if (count !== 1) {
+        return res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "Id not found"
+            });
+    }
+
+    await Preset.destroy({
+        where: {
+            id: idNum
+        }
+    });
+
+    return res
+        .status(HTTP.SUCCESS.OK)
+        .json({
+            success: true,
+            message: "Successfully deleted preset"
+        });
+});
+
+router.post("/config/del_testcode", checkSidMiddleware, async (req: Request, res: Response) => {
+    const id = req.body["id"];
+    if (id === undefined) {
+        return res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "id is undefined"
+            });
+    }
+
+    const idNum = parseFloat(id);
+    if (!Number.isInteger(idNum)) {
+        return res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "id is not an integer",
+            });
+    }
+
+    const count = await Test.count({
+        where: {
+            id: idNum
+        }
+    });
+
+    if (count !== 1) {
+        return res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "Id not found"
+            });
+    }
+
+    await Test.destroy({
+        where: {
+            id: idNum
+        }
+    });
+
+    return res
+        .status(HTTP.SUCCESS.OK)
+        .json({
+            success: true,
+            message: "Successfully deleted test"
+        });
+});
+
 /**
  * Set the value of a preset to a given value.
  */
 router.post("/config/set_preset", checkSidMiddleware, async (req: Request, res: Response) => {
     const preset: Preset = req.body['preset'];
 
-    if (!preset) {
+    if (preset === undefined) {
         return res
             .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
             .json({
                 success: false,
-                message: "Parameter 'preset' not provided"
+                message: "preset is undefined"
+            });
+    }
+
+    if (preset.name === undefined || preset.name.length === 0) {
+        return res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "preset.name is undefined or empty"
+            });
+    }
+
+    if (preset.blob === undefined || preset.blob.length === 0) {
+        return res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "preset.blob is undefined or empty"
+            });
+    }
+
+    if (preset.id === undefined) {
+        return res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "preset.id is undefined"
             });
     }
 

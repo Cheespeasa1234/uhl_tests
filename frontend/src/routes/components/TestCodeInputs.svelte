@@ -3,6 +3,7 @@
     import { getPresetList, postJSON } from "$lib/util";
     import { showNotifToast } from "$lib/popups";
     import SelectPresetModal from "./modal/SelectPresetModal.svelte";
+    import ConfirmModal from "./modal/ConfirmModal.svelte";
     
     let changedTestList: Test[] = $state([]);
     let ids = $derived(changedTestList.map(t => t.presetId).join(","));
@@ -22,12 +23,28 @@
         });
     }
 
+    function del(id: number, name: string): void {
+        confirmModal.show(`Are you sure you want to PERMANENTLY delete the testcode "${name}"?`, (success) => {
+            if (success) {
+                postJSON("./api/grading/config/del_testcode", {
+                    id: id
+                }).then(json => {
+                    if (json.success) {
+                        changedTestList = changedTestList.filter(test => test.id !== id)
+                    }
+                });
+            } else {
+                showNotifToast({ success, message: "Cancelled deletion." });
+            }
+        })
+    }
+
     export function getTestListValue(): Test[] {
         return changedTestList;
     }
 
     let selectPresetModal: SelectPresetModal;
-
+    let confirmModal: ConfirmModal;
 
     async function choose(testIndex: number) {
         const presetList = await getPresetList();
@@ -56,6 +73,7 @@
 </script>
 
 <SelectPresetModal bind:this={selectPresetModal} />
+<ConfirmModal bind:this={confirmModal} />
 
 <div id="config-area">
     {#each changedTestList as test, index}
@@ -69,7 +87,7 @@
             <span class="input-group-text">{changedTestList[index].presetId}</span>
             <button onclick={() => choose(index)} class="btn btn-outline-secondary" type="button">Choose...</button>
             <!-- svelte-ignore a11y_consider_explicit_label -->
-            <button class="btn btn-outline-danger"><i class="fa-regular fa-trash-can"></i></button>
+            <button onclick={() => del(changedTestList[index].id, changedTestList[index].code)} class="btn btn-outline-danger"><i class="fa-regular fa-trash-can"></i></button>
         </div>
     {/each}
 </div>

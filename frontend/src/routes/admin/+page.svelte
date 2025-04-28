@@ -195,6 +195,7 @@
     }
 
     async function newTestCode() {
+        testList = testListEl.getTestListValue()
         const json = await getJSON("./api/grading/config/new_testcode");
         console.log(json.data.test);
         testList?.push(json.data.test);
