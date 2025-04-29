@@ -42,17 +42,42 @@ If you use the codespace, **you do not need to do this**.
 
 ## Secrets & Files
 
-In `backend`, create `.env`. Create a key `SPREADSHEET_ID` and set it equal to the ID (the first part of the URL) of your google sheet. Create another key `ADMIN_PASSWORD` and set it to a passphrase for logging into the admin panel. Create another key `GOOGLE_KEY_FILENAME` and leave it blank for now. The file should look like this:
+In `backend`, create `.env`. Create a key `HCST_SPREADSHEET_ID` and set it equal to the ID (the first part of the URL) of your google sheet. Create another key `HCST_ADMIN_PASSWORD` and set it to a passphrase for logging into the admin panel. Create another key `HCST_GOOGLE_KEY_FILENAME` and leave it blank for now. Then, add the port and host variables. The file should look like this:
 
 ```
-SPREADSHEET_ID=<YOUR SPREADSHEET ID>
-ADMIN_PASSWORD=<YOUR ADMIN PASSWORD>
-GOOGLE_KEY_FILENAME=
+HCST_SPREADSHEET_ID=<YOUR SPREADSHEET ID>
+HCST_ADMIN_PASSWORD=<YOUR ADMIN PASSWORD>
+HCST_GOOGLE_KEY_FILENAME=<the filename>
+HCST_PORT=8081
+HCST_HOST=127.0.0.1
 ```
 
 In `backend`, create folders `db`, `files`, and `secrets`.
 
 With your google workspace bot account, get your authentication key. It is a JSON file. Put the JSON file in `secrets`, and take the filename, and set `GOOGLE_KEY_FILENAME` to that file's name.
+
+## Google file prerequesites
+The testing program uses a google form to take in submissions. First, make a google form with the EXACT same questions as you see below.
+
+_The questions should all be mandatory, it should force authenticated email submission, and should look like below:_
+
+![this form](image.png)
+
+In case the image doesn't work, the form should have the following questions, aside from the mandatory email inclusion:
+```
+"Answer Code" - short answer
+"How difficult was it?" - 1 through 5 -> Trivial - Impoppable
+```
+
+Get a shortlink for this form in the Share menu. Take this link, and (_this is temporary_) go to `frontend/src/routes/+page.svelte` line 171, where it says 
+
+```html
+<p>Then, submit it <a target="_blank" href="https://forms.gle/gs4vUFTovo7db84D8">here</a>.</p>
+```
+
+Replace that link with the shortlink you just got.
+
+Once this form is done and accessible to students, link it to a spreadsheet. The spreadsheet ID of this sheet is what you will have used earlier on in this tutorial.
 
 ## Execution
 
