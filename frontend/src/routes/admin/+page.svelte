@@ -4,7 +4,6 @@
     import { onMount } from "svelte";
     
     import "../admin.css"
-    import "../quiz.css"
     
     import ConfigInputs from "../components/ConfigInputs.svelte";
     import DataDisplayTable from "../components/DataDisplayTable.svelte";

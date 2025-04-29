@@ -13,7 +13,13 @@
 
     "test": {
       "command": "DEV=1 deno test --fail-fast"
+    },
+
+    "seedDb": {
+      "command": "deno run --allow-all src/lib/db_seed.ts",
+      "description": "Add the default preset to the database if it isn't there"
     }
+
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1"

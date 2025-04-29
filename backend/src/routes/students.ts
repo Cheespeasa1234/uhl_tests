@@ -8,11 +8,11 @@ import crypto from "node:crypto";
 import { Quiz, Student } from "../lang/quiz/quiz.ts";
 import { makeTest } from "../lang/quiz/codegen.ts";
 import { PresetManager } from "../lib/config.ts";
-// import { addResponse } from "../analyze_responses.ts";
 import { addNotification } from "../lib/notifications.ts";
 import { logInfo, logWarning } from "../lib/logger.ts";
-import { Test, Submission, Preset, parsePresetData, PresetData, ConfigValueType } from "../lib/db_sqlz.ts";
 import { HTTP } from "../lib/http.ts";
+import { HCST_FORM_URL } from "../lib/env.ts";
+import { Test, Submission, Preset, parsePresetData, PresetData, ConfigValueType } from "../lib/db_sqlz.ts";
 
 export const router = express.Router();
 
@@ -267,7 +267,10 @@ router.post("/submit-test", (req: Request, res: Response) => {
     activeSessions[name] = undefined;
 
     const answerCode = crypto.randomBytes(8).toString("hex");
-    res.json({ success: true, message: "Test submitted.", answerCode});
+    res.json({ success: true, message: "Test submitted.", data: {
+        formUrl: HCST_FORM_URL,
+        answerCode: answerCode,
+    }});
 
     const responseBlob = {
         answers: answers,

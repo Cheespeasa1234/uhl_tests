@@ -5,7 +5,6 @@
     import TestQuestion from "./components/TestQuestion.svelte";
 
     import "./style.css";
-    import "./quiz.css";
 
     let cookiePopup: HTMLDialogElement;
     let submissionPopup: HTMLDialogElement;
@@ -13,6 +12,7 @@
     let submissionSuccess: boolean = $state(false);
     let submissionMessage: string = $state("");
     let submissionAnswerCode: string = $state("");
+    let submissionFormUrl: string = $state("");
 
     let nameInputValue: string = $state("");
     let testCodeInputValue: string = $state("");
@@ -20,6 +20,10 @@
 
     let testQuestions: any[] = $state([]);
     let testQuestionEls: TestQuestion[] = $state([]);
+
+    let bookmarkCount: number = $derived(testQuestionEls.reduce((sum, item) => sum + (item.getBookmarked() ? 1 : 0), 0));
+    let completeCount: number = $derived(testQuestionEls.reduce((sum, item) => sum + (item.getComplete() ? 1 : 0), 0));
+    let totalCount: number = $derived(testQuestionEls.length);
 
     let takeTestBtn: HTMLButtonElement;
     let submitTestBtn: HTMLButtonElement;
@@ -43,10 +47,12 @@
             "answers": answers,
             "studentSelf": studentSelf,
         }).then(json => {
-            const { success, message, answerCode } = json;
+            const { success, message, data } = json;
+            const { answerCode, formUrl } = data;
             submissionSuccess = success;
             submissionMessage = message;
             submissionAnswerCode = answerCode;
+            submissionFormUrl = formUrl;
             submissionPopup.showModal();
             clearDocument();
             submitTestBtn.disabled = false;
@@ -119,7 +125,7 @@
 
             if (!success) {
                 console.error("Not success: " + message);
-                takeTestBtn.disabled = true
+                takeTestBtn.disabled = false
                 return;
             }
 
@@ -127,7 +133,7 @@
             showNotifToast({ success: true, message: `Test started: ${timeStarted}<br>Time ends: ${timeToEnd}` });
             studentSelf = student;
             testQuestions = questions;
-            takeTestBtn.disabled = true
+            takeTestBtn.disabled = false
         });
     }
 
@@ -137,7 +143,7 @@
     <h2>Warning</h2>
     <p>This website uses cookies to track, identify, and verify users and their responses. If you deny, you will not be permitted to access the page.</p>
     <p>To refuse, simply close this page.</p>
-    <button onclick={cookiePopupClose} id="cookie-popup-close">Accept tracking</button>
+    <button class="button" onclick={cookiePopupClose} id="cookie-popup-close">Accept tracking</button>
 </dialog>
 
 <fieldset>
@@ -159,8 +165,20 @@
             <em style="font-size: 1em;">Please request a quiz first.</em>
         {:else}
             {#each testQuestions as question, index}
-                <TestQuestion bind:this={testQuestionEls[index]} questionString={question.questionString} descriptor={question.descriptor} />
+                <div class="mb-2">
+                    <TestQuestion bind:this={testQuestionEls[index]} questionString={question.questionString} descriptor={question.descriptor} />
+                </div>
             {/each}
+            <div class="mb-2 p-4 bottom-status">
+                <div class="h3">{completeCount}/{totalCount} Completed</div>
+                <div class="h4">{bookmarkCount} Bookmarked</div>
+
+                <div class="question-overviews">
+                    {#each testQuestions as question, index}
+                        <div class="question-overview">{index + 1}</div>
+                    {/each}
+                </div>
+            </div>
         {/if}
     </div>
     <button bind:this={submitTestBtn} onclick={submissionPopupOpen} id="submission-popup-open">Submit</button>
@@ -168,7 +186,7 @@
 
 <dialog bind:this={submissionPopup} id="submission-popup">
     <p>Your responses have been submitted. Please copy your answer code.</p>
-    <p>Then, submit it <a target="_blank" href="https://forms.gle/gs4vUFTovo7db84D8">here</a>.</p>
+    <p>Then, submit it <a target="_blank" href={submissionFormUrl}>here</a>.</p>
     {#if submissionSuccess}
         <h3>Your answer code:</h3>
         <h2 id="answer-code-popup">{submissionAnswerCode}</h2>
@@ -177,3 +195,24 @@
     {/if}
     <button onclick={submissionPopupClose} id="submission-popup-close">Okay</button>
 </dialog>
+
+<style>
+    .bottom-status {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: white;
+        border: 2px solid lightgray;
+    }
+
+    .question-overviews {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .question-overview {
+        width: 100px;
+        height: 100px;
+    }
+</style>

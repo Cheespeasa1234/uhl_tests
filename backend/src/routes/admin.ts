@@ -9,7 +9,7 @@ import { GoogleResponse, getResponses, gradeStudent, getGoogleFormResponses } fr
 import { getActiveSessions, manualConfigs, presetManager } from "./students.ts";
 import { retrieveNotifications } from "../lib/notifications.ts";
 import { logDebug, logInfo, logWarning } from "../lib/logger.ts";
-import { HCST_ADMIN_PASSWORD } from "../lib/env.ts";
+import { HCST_ADMIN_PASSWORD, HCST_FORM_URL } from "../lib/env.ts";
 import { Preset, Test, Submission } from "../lib/db_sqlz.ts";
 import { HTTP } from "../lib/http.ts";
 

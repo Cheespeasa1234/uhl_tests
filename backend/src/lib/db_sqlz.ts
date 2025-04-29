@@ -203,4 +203,7 @@ Submission.init({
     sequelize: sequelize,
 });
 
-sequelize.sync();
+await sequelize.sync();
+await Preset.sync();
+await Submission.sync();
+await Test.sync();
