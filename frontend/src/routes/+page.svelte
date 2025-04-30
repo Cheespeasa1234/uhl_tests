@@ -5,9 +5,10 @@
     import TestQuestion from "./components/TestQuestion.svelte";
 
     import "./style.css";
+    import ConfirmModal from "./components/modal/ConfirmModal.svelte";
 
-    let cookiePopup: HTMLDialogElement;
-    let submissionPopup: HTMLDialogElement;
+    let submissionPopupModal: ConfirmModal;
+    let cookiePopupModal: ConfirmModal;
 
     let submissionSuccess: boolean = $state(false);
     let submissionMessage: string = $state("");
@@ -28,14 +29,6 @@
     let takeTestBtn: HTMLButtonElement;
     let submitTestBtn: HTMLButtonElement;
 
-    function cookiePopupOpen() {
-        cookiePopup.showModal();
-    }
-
-    function cookiePopupClose() {
-        cookiePopup.close();
-    }
-
     function submissionPopupOpen() {
         submitTestBtn.disabled = true;
         const answers = [];
@@ -53,18 +46,10 @@
             submissionMessage = message;
             submissionAnswerCode = answerCode;
             submissionFormUrl = formUrl;
-            submissionPopup.showModal();
+            submissionPopupModal.show(() => {});
             clearDocument();
             submitTestBtn.disabled = false;
         });
-    }
-
-    function submissionPopupClose() {
-        const res = confirm("Are you sure you copied the code? You will never be able to see it again!");
-        if (res) {
-            submissionPopup.close();
-        }
-        showNotifToast({ success: true, message: "Cancelled submission" });
     }
 
     /**
@@ -84,11 +69,14 @@
     }
 
     onMount(() => {
-
         // Get the ID cookie, if not there, ask for approval.
         const hcsid = getCookie("HCS_ID");
         if (!hcsid) {
-            cookiePopupOpen();
+            cookiePopupModal.show(success => {
+                if (!success) {
+                    window.close();
+                }
+            });
         }
 
         // Konami code detector
@@ -101,7 +89,7 @@
             }
             if (JSON.stringify(recentKeys) === JSON.stringify(konamiCode)) {
                 showNotifToast({ success: true, message: "Konami code detected!" });
-                window.location.href = "./admin";
+                window.open("./admin", "_blank")?.focus();
             }
         });
     });
@@ -121,10 +109,9 @@
             "name": nameInputValue,
             "code": testCodeInputValue,
         }).then(json => {
-            const { success, message, data } = json;
+            const { success, data } = json;
 
             if (!success) {
-                console.error("Not success: " + message);
                 takeTestBtn.disabled = false
                 return;
             }
@@ -136,83 +123,76 @@
             takeTestBtn.disabled = false
         });
     }
-
 </script>
 
-<dialog bind:this={cookiePopup} id="cookie-popup">
-    <h2>Warning</h2>
-    <p>This website uses cookies to track, identify, and verify users and their responses. If you deny, you will not be permitted to access the page.</p>
-    <p>To refuse, simply close this page.</p>
-    <button class="button" onclick={cookiePopupClose} id="cookie-popup-close">Accept tracking</button>
-</dialog>
+<svelte:head>
+    <title>Students | Uhl Tests</title>
+</svelte:head>
 
-<fieldset>
-    <legend>Request Quiz</legend>
-    <label for="name">School Email</label>
-    <input bind:value={nameInputValue} id="name" type="email" placeholder="johndoe@example.com">
-    <br>
-    <label for="testcode">Test Code</label>
-    <input bind:value={testCodeInputValue} id="testcode" type="text" placeholder="practice2025">
-    <br>
-    <i>Make sure you can sign in to this email, or your test results will be lost!</i>
-    <button bind:this={takeTestBtn} onclick={takeTest} id="take-test">Submit</button>
-</fieldset>
+<ConfirmModal bind:this={cookiePopupModal}>
+    {#snippet header()}
+        <h2>Cookies?!</h2>
+    {/snippet}
+    
+    {#snippet children()}
+        <div>Cookiees!! ACCEPT THEM!</div>
+    {/snippet}
+</ConfirmModal>
 
-<fieldset>
-    <legend>Quiz</legend>
-    <div style="margin-bottom: 10px;" id="test">
+<ConfirmModal bind:this={submissionPopupModal}>
+    {#snippet header()}
+        <h2>Submission Complete</h2>
+    {/snippet}
+    
+    {#snippet children()}
+        {#if submissionSuccess}
+            <p>Your responses have been submitted. Please copy your answer code. Then, submit it <a target="_blank" href={submissionFormUrl}>here</a>.</p>
+            <h3>Your answer code:</h3>
+            <h2 id="answer-code-popup">{submissionAnswerCode}</h2>
+        {:else}
+            <p>Something went wrong: {submissionMessage}</p>
+        {/if}
+    {/snippet}
+</ConfirmModal>
+
+<div>
+    <h2>Request Quiz</h2>
+    <div class="input-group mb-3">
+        <span class="input-group-text" id="name-lbl">School Email</span>
+        <input bind:value={nameInputValue} type="email" placeholder="NameYear@pascack.org" class="form-control" id="name" aria-describedby="name-lbl">
+    </div>
+    <div class="input-group mb-3">
+        <span class="input-group-text" id="testcode-lbl">Test Code</span>
+        <input bind:value={testCodeInputValue} type="text" placeholder="practice2025" class="form-control" id="testcode" aria-describedby="testcode-lbl">
+    </div>
+    <label for="take-test">Make sure you can sign in to this email, or your test results will be lost!</label>
+    <div>
+        <button class="btn btn-primary" bind:this={takeTestBtn} onclick={takeTest} id="take-test">Submit</button>
+    </div>
+</div>
+
+<div>
+    <h2>Quiz</h2>
+    <div id="test">
         {#if !testQuestions || testQuestions.length == 0}
-            <em style="font-size: 1em;">Please request a quiz first.</em>
+            <div>Please request a quiz first.</div>
         {:else}
             {#each testQuestions as question, index}
-                <div class="mb-2">
+                <div>
                     <TestQuestion bind:this={testQuestionEls[index]} questionString={question.questionString} descriptor={question.descriptor} />
                 </div>
             {/each}
-            <div class="mb-2 p-4 bottom-status">
-                <div class="h3">{completeCount}/{totalCount} Completed</div>
-                <div class="h4">{bookmarkCount} Bookmarked</div>
+            <div>
+                <div>{completeCount}/{totalCount} Completed</div>
+                <div>{bookmarkCount} Bookmarked</div>
 
-                <div class="question-overviews">
+                <div>
                     {#each testQuestions as question, index}
-                        <div class="question-overview">{index + 1}</div>
+                        <div>{index + 1}</div>
                     {/each}
                 </div>
             </div>
         {/if}
     </div>
-    <button bind:this={submitTestBtn} onclick={submissionPopupOpen} id="submission-popup-open">Submit</button>
-</fieldset>
-
-<dialog bind:this={submissionPopup} id="submission-popup">
-    <p>Your responses have been submitted. Please copy your answer code.</p>
-    <p>Then, submit it <a target="_blank" href={submissionFormUrl}>here</a>.</p>
-    {#if submissionSuccess}
-        <h3>Your answer code:</h3>
-        <h2 id="answer-code-popup">{submissionAnswerCode}</h2>
-    {:else}
-        <p style="color: red;">Something went wrong: {submissionMessage}</p>
-    {/if}
-    <button onclick={submissionPopupClose} id="submission-popup-close">Okay</button>
-</dialog>
-
-<style>
-    .bottom-status {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        background-color: white;
-        border: 2px solid lightgray;
-    }
-
-    .question-overviews {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .question-overview {
-        width: 100px;
-        height: 100px;
-    }
-</style>
+    <button class="btn btn-primary" bind:this={submitTestBtn} onclick={submissionPopupOpen} id="submission-popup-open">Submit</button>
+</div>

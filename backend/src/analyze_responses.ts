@@ -58,15 +58,17 @@ export class QuestionResult {
 
 export class GradeResult {
     name: string;
-    epochTime: Date;
-    due: Date;
+    timeStart: Date;
+    timeSubmitted: Date;
+    timeDue: Date;
     questions: QuestionResult[];
     numberCorrect: { correct: number, incorrect: number } | undefined;
 
-    constructor(name: string, epochTime: Date, due: Date) {
+    constructor(name: string, timeStart: Date, timeSubmitted: Date, timeDue: Date) {
         this.name = name;
-        this.epochTime = epochTime;
-        this.due = due;
+        this.timeStart = timeStart;
+        this.timeSubmitted = timeSubmitted;
+        this.timeDue = timeDue;
         this.questions = [];
     }
 
@@ -89,7 +91,7 @@ export class GradeResult {
 }
 
 export function gradeStudent(entry: Submission): GradeResult {
-    const grade = new GradeResult(entry.email, entry.getTime(), entry.getDue());
+    const grade = new GradeResult(entry.email, entry.getStart(), entry.getSubmitted(), entry.getEnd());
     const blob = entry.getBlob();
     for (let i = 0; i < blob.quiz.questions.length; i++) {
         const questionResult: QuestionResult = new QuestionResult(blob.quiz.questions[i], blob.answers[i])

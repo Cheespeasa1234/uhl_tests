@@ -1,4 +1,4 @@
-:root {
+/* :root {
     --code-block-side-size: 10px;
     --code-block-side-color: #ff6f22;
     --answer-block-side-color: #128a52;
@@ -21,7 +21,7 @@ body {
     background: linear-gradient(135deg, var(--light-color), var(--secondary-color));
     color: var(--dark-color);
     min-height: 100vh;
-    background-attachment: fixed; /*not working, apparently a bug in Chrome*/
+    background-attachment: fixed;
     background-size: cover;
     display: flex;
     flex-direction: column;
@@ -163,4 +163,4 @@ tfoot td {
     background: var(--light-color);
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
+} */

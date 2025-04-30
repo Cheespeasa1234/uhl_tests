@@ -18,23 +18,24 @@ Read further into this README to learn about the source code and the method of r
 First, make a codespace or a VSCode workspace of this repository, `Cheespeasa1234/uhl_tests`. A development container with the proper configurations are provided for your convenience.
 
 In a terminal, run the following:
-```
+```sh
 cd frontend
 npm install
 ```
 
 Then, in another terminal, run the following:
-```
+```sh
 cd backend
 deno install
+npm install
 ```
 
 The backend requires Deno. To install it on Linux, run the following:
-```
+```sh
 curl -fsSL https://deno.land/install.sh
 ```
 Ensure the content it prints is fine, then run it again:
-```
+```sh
 curl -fsSL https://deno.land/install.sh | sh
 ```
 
@@ -42,21 +43,28 @@ If you use the codespace, **you do not need to do this**.
 
 ## Secrets & Files
 
-In `backend`, create `.env`. Create a key `HCST_SPREADSHEET_ID` and set it equal to the ID (the first part of the URL) of your google sheet. Create another key `HCST_ADMIN_PASSWORD` and set it to a passphrase for logging into the admin panel. Create another key `HCST_GOOGLE_KEY_FILENAME` and leave it blank for now. Then, add the port and host variables. The file should look like this:
+In `backend`, create `.env`. 
+1. Set `HCST_ADMIN_PASSWORD` to a passphrase for logging into the admin panel.
+2. Set `HCST_PORT` to 8081, and set `HCST_HOST` to 127.0.0.1.
+3. Set `HCST_GOOGLE_KEY_FILENAME` and leave it blank for now.
+4. Set `HCST_FORM_URL` and leave it blank for now.
+5. Set `HCST_SPREADSHEET_ID` to the ID (the first part of the URL) of your google sheet.
 
-```
-HCST_SPREADSHEET_ID=<YOUR SPREADSHEET ID>
+```env
 HCST_ADMIN_PASSWORD=<YOUR ADMIN PASSWORD>
-HCST_GOOGLE_KEY_FILENAME=<the filename>
 HCST_PORT=8081
 HCST_HOST=127.0.0.1
+HCST_GOOGLE_KEY_FILENAME=
+HCST_FORM_URL=
+HCST_SPREADSHEET_ID=
 ```
 
 In `backend`, create folders `db`, `files`, and `secrets`.
 
-With your google workspace bot account, get your authentication key. It is a JSON file. Put the JSON file in `secrets`, and take the filename, and set `GOOGLE_KEY_FILENAME` to that file's name.
-
 ## Google file prerequesites
+
+For the google form / spreadsheet API, make a Google Service account. Get an email for it and give it API access to the Google Sheets API. Get the access key and download the JSON file. More information can be found [here](https://cloud.google.com/iam/docs/keys-list-get). Place that JSON file in the `secrets` folder in the backend.
+
 The testing program uses a google form to take in submissions. First, make a google form with the EXACT same questions as you see below.
 
 _The questions should all be mandatory, it should force authenticated email submission, and should look like below:_
@@ -69,40 +77,42 @@ In case the image doesn't work, the form should have the following questions, as
 "How difficult was it?" - 1 through 5 -> Trivial - Impoppable
 ```
 
-Get a shortlink for this form in the Share menu. Take this link, and (_this is temporary_) go to `frontend/src/routes/+page.svelte` line 171, where it says 
+Get a shortlink for this form in the Share menu. Take this link, and set the previously mentioned `HCST_FORM_URL` to this url. Once this form is done and accessible to students, link it to a spreadsheet using the responses tab. Take the spreadsheet ID found in the URL of this new spreadsheet, and put it as the value to `HCST_SPREADSHEET_ID`. In that spreadsheet, open the Share menu, and give access to the service account email you created.
 
-```html
-<p>Then, submit it <a target="_blank" href="https://forms.gle/gs4vUFTovo7db84D8">here</a>.</p>
+## Setting up the database
+After installation, the database would be empty. All you need to do is run the following:
+
+```sh
+cd backend
+deno task seedDb
 ```
 
-Replace that link with the shortlink you just got.
-
-Once this form is done and accessible to students, link it to a spreadsheet. The spreadsheet ID of this sheet is what you will have used earlier on in this tutorial.
+This will create the tables in the database file, and add a hard-coded default preset and default test code to the database. If, in the future, you change the columns, you can use the sequelize migrate feature, or delete the database and run the seed script again.
 
 ## Execution
 
 ### Development Environment
 To run the program, first start the backend:
-```
+```sh
 cd backend
 deno task dev
 ```
 
 Then, start the backend, in a new terminal:
-```
+```sh
 cd frontend
 npm run dev -- --open
 ```
 
 ### Production Environment
 Start the backend:
-```
+```sh
 cd backend
 deno task start
 ```
 
 Build and start the frontend:
-```
+```sh
 cd frontend
 npm run build
 npm run preview -- --port 8082

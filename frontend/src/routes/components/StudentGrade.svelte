@@ -1,19 +1,21 @@
 <script lang="ts">
-    import { type Grade } from "$lib/grade";
+    import { type Grade } from "$lib/types";
     import GradeQuestion from "./GradeQuestion.svelte";
 
     const props = $props();
     console.log("Props", props);
     const { grade }: { grade: Grade } = props;
     
-    const { name, epochTime, due, questions, numberCorrect } = grade;
+    const { name, questions, numberCorrect, timeDue, timeStart, timeSubmitted } = grade;
     const { correct, incorrect } = numberCorrect;
     
-    const dueDate = new Date(due);
-    const epoDate = new Date(epochTime);
+    const startDate = new Date(timeStart);
+    const submittedDate = new Date(timeSubmitted);
+    const dueDate = new Date(timeDue);
 
     const percentage = correct / questions.length * 100;
-    const secondsRemaining = (dueDate.getTime() - epoDate.getTime()) / 1000;
+    const secondsRemaining = (dueDate.getTime() - submittedDate.getTime()) / 1000;
+    const secondsElapsed = (submittedDate.getTime() - startDate.getTime()) / 1000;
 
     let carouselElement: HTMLDivElement;
     let carouselBs;
@@ -22,7 +24,7 @@
 <div>
     <div>
         <h4>{name}: {correct} / {questions.length} ({percentage.toFixed(2)}%)</h4>
-        <p>Submitted: {epoDate.toLocaleString()} Due: {dueDate.toLocaleString()}</p>
+        <p>Started: {startDate.toLocaleString()} Submitted: {submittedDate.toLocaleString()} Due: {dueDate.toLocaleString()}</p>
         {#if secondsRemaining > 0}
             <p>Submitted {secondsRemaining} seconds
                 <span style="color: blue">early</span>

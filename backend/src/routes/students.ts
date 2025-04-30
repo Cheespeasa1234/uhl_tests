@@ -286,17 +286,19 @@ router.post("/submit-test", (req: Request, res: Response) => {
     }
 
     // Log the answers to the user's identity
-    const epochTime = Date.now();
-    const due = (responseBlob.quiz.timeToEnd || new Date()).getTime();
+    const timeStart = responseBlob.quiz.timeStarted;
+    const timeSubmitted = new Date();
+    const due = (responseBlob.quiz.timeToEnd || new Date());
     
     const data = {
         email: name,
-        time: epochTime,
-        due: due,
         idCookie: session.student.privateKey,
         answerCode,
         responseBlob: JSON.stringify(responseBlob),
-        testId: responseBlob.quiz.testGroup.id
+        testId: responseBlob.quiz.testGroup.id,
+        timeStart: timeStart.toISOString(),
+        timeSubmitted: timeSubmitted.toISOString(),
+        timeDue: due.toISOString(),
     }
 
     Submission.create(data);

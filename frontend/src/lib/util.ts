@@ -58,7 +58,7 @@ export type API_Response = {
  * @param url The URL to fetch
  * @returns A promise for an API response
  */
-export async function getJSON(url: string): Promise<API_Response> {
+export async function getJSON(url: string, mute: boolean = false): Promise<API_Response> {
     const response = await fetch(url);
     console.groupCollapsed(`GET ${url} - ${response.status}`);
     let json: API_Response;
@@ -69,7 +69,9 @@ export async function getJSON(url: string): Promise<API_Response> {
         console.error(e);
         console.log(new Error().stack);
     }
-    showNotifToast(json);
+    if (!mute) {
+        showNotifToast(json);
+    }
     console.dir(json);
     console.trace();
     console.groupEnd();
@@ -83,7 +85,7 @@ export async function getJSON(url: string): Promise<API_Response> {
  * @param body The JSON body for the request
  * @returns A promise for an API response
  */
-export async function postJSON(url: string, body: any): Promise<API_Response> {
+export async function postJSON(url: string, body: any, mute: boolean = false): Promise<API_Response> {
     const response = await fetch(url, {
         method: "POST",
         body: JSON.stringify(body),
@@ -100,7 +102,9 @@ export async function postJSON(url: string, body: any): Promise<API_Response> {
         console.error(e);
         console.log(new Error().stack);
     }
-    showNotifToast(json);
+    if (!mute) {
+        showNotifToast(json);
+    }
     console.dir(json);
     console.trace();
     console.groupEnd();

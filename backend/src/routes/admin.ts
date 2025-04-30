@@ -105,16 +105,20 @@ router.get("/google_form", checkSidMiddleware, async (_req: Request, res: Respon
 
 router.get("/test_program", checkSidMiddleware, async (_req: Request, res: Response) => {
     logInfo("admin/test_program", "Fetching test program data");
-    const data: Submission[] = await getResponses();
-
-    return res.json({
-        success: true,
-        message: "Successfully fetched test program",
-        data: {
-            rows: data
-        }
-    });
-})
+    try {
+        const data: Submission[] = await getResponses();
+        return res.json({
+            success: true,
+            message: "Successfully fetched test program",
+            data: {
+                rows: data
+            }
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e });
+        throw e;
+    }
+});
 
 router.get("/grade/:studentEmail", checkSidMiddleware, async (req: Request, res: Response) => {
     const studentEmail = req.params['studentEmail'];
@@ -132,6 +136,10 @@ router.get("/grade/:studentEmail", checkSidMiddleware, async (req: Request, res:
     const testProgramResponses: Submission[] = (await getResponses()).filter(val => val.email === studentEmail);
     const googleFormResponses: GoogleResponse[] = gfrPromised.filter(val => val.email === studentEmail);
     
+    logDebug("admin/grade", "VALID TESTS AND GOOGLE FORMS FOR " + studentEmail);
+    logDebug("admin/grade", JSON.stringify(testProgramResponses));
+    logDebug("admin/grade", JSON.stringify(googleFormResponses));
+
     if (testProgramResponses.length === 0) {
         return res
             .status(HTTP.CLIENT_ERROR.NOT_FOUND)

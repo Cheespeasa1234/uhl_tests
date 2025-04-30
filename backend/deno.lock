@@ -17,7 +17,9 @@
     "npm:@types/nodemailer@*": "6.4.17",
     "npm:@zohocrm/nodejs-sdk-2.0@*": "6.1.0",
     "npm:body-parser@*": "1.20.3",
+    "npm:body-parser@^2.2.0": "2.2.0",
     "npm:cookie-parser@*": "1.4.7",
+    "npm:cookie-parser@^1.4.7": "1.4.7",
     "npm:crypto@*": "1.0.1",
     "npm:express@*": "4.18.2",
     "npm:express@4.18.2": "4.18.2",
@@ -2089,6 +2091,8 @@
     ],
     "packageJson": {
       "dependencies": [
+        "npm:body-parser@^2.2.0",
+        "npm:cookie-parser@^1.4.7",
         "npm:express@^5.1.0",
         "npm:morgan@^1.10.0",
         "npm:node-gyp@^11.2.0",

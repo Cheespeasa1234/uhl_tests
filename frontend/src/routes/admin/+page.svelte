@@ -23,15 +23,16 @@
 
     // The first row of a table of the student responses.
     const testProgramHeader = [
-        { key: "time", name: "Start Time" },
-        { key: "due", name: "Due Time" },
-        { key: "email", name: "Email" },
-        { key: "answerCode", name: "Answer Code" },
-        { key: "idCookie", name: "ID Cookie" },
+        { key: "name", name: "Email" },
+        { key: "test", name: "Test Code" },
+        { key: "timeStart", name: "Time Started" },
+        { key: "timeSubmitted", name: "Time Submitted" },
+        { key: "timeDue", name: "Time Due"}
     ];
 
     let passwordInputValue: string = $state("");
-    let signedIn: boolean = $state(true);
+    let signedIn: boolean = $state(false);
+    let connected: boolean = $state(false);
     let gradeStudentEmailInputValue: string = $state("");
 
     let googleFormTable: DataDisplayTable;
@@ -83,15 +84,36 @@
             }
         }, 1000 * 2);
         
-        // // Every 5000ms, check the notifications and show them.
-        // setInterval(async () => {
-        //     const json = await fetch("./api/grading/notifications")
-        //         .then(fetchToJsonMiddleware);
-        //     const notifications: API_Response[] = json.data.notifications;
-        //     notifications.forEach(notif => {
-        //         showNotifToast(notif);
-        //     });
-        // }, 5000);
+        // Every 5000ms, check the notifications and show them.
+        let notifFailures = 0;
+        const interval = setInterval(async () => {
+            if (notifFailures > 4) {
+                showNotifToast({ success: false, message: "Lost comms with API"});
+                connected = false;
+                clearInterval(interval);
+            }
+            try {
+                const response = await fetch("./api/grading/notifications")
+                const json = await response.json();
+                if (response.status === 401) {
+                    showNotifToast({ success: false, message: "Not authenticated. Refreshing" });
+                    signedIn = false;
+                    connected = false;
+                    notifFailures = Infinity;
+                } else if (response.status !== 200 && response.status !== 304) {
+                    notifFailures++;
+                } else {
+                    const notifications: API_Response[] = json.data.notifications;
+                    connected = true;
+                    notifFailures = 0;
+                    // notifications.forEach(notif => {
+                    //     showNotifToast(notif);
+                    // });
+                }
+            } catch (e) {
+                notifFailures++;
+            }
+        }, 5000);
     }
 
     // Get the global configuration values from the server
@@ -121,6 +143,7 @@
         }).then(json => {
             const { success } = json;
             signedIn = success;
+            connected = success;
             if (success) {
                 onSignIn();
             }
@@ -269,39 +292,6 @@
         loadPresetBtn.disabled = false;
     }
 
-    // Set the values of the preset component to the values the server is currently using
-    // async function undoPreset() {
-    //     undoPresetBtn.disabled = true;
-
-    //     const { success, data }: API_Response = await getJSON("./api/grading/config/get_config");
-        
-    //     try {
-    //         if (success) {
-    //             preset = data.preset;
-    //         }
-    //     } catch (e) {
-    //         console.error(e);
-    //     }
-
-    //     undoPresetBtn.disabled = false;
-    // }
-
-    // Set the config on the server to the config values in the component
-    // async function saveConfig() {
-    //     saveConfigBtn.disabled = true;
-    //     const preset: Preset | undefined = presetEl.getPresetValue();
-
-    //     if (preset === undefined) {
-    //         saveConfigBtn.disabled = false;
-    //         showNotifToast({ success: false, message: "Preset is undefined, can not save." });
-    //         return;
-    //     }
-
-    //     await postJSON("./api/grading/config/set_config", { preset: preset });
-    //     saveConfigBtn.disabled = false;
-    // }
-
-    let showSelectPresetModal: boolean = $state(false);
     let selectPresetModal: SelectPresetModal;
 
     onMount(() => {
@@ -315,6 +305,10 @@
         });
     });
 </script>
+
+<svelte:head>
+    <title>Admins | Uhl Tests</title>
+</svelte:head>
 
 <SelectPresetModal bind:this={selectPresetModal} />
 
@@ -348,6 +342,17 @@
                 <button class="nav-link" id="nav-p3-tab" data-bs-toggle="tab" data-bs-target="#nav-p3"
                     type="button" role="tab" aria-controls="nav-p3" aria-selected="false">
                     Grade Tests
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link disabled d-flex" style="position: absolute; right: 0px; align-items: center;" disabled>
+                    {#if connected}
+                        <div class="blink green"></div>
+                        <span>Connected to server</span>
+                    {:else}
+                        <div class="blink red"></div>
+                        <span>Connection lost</span>
+                    {/if}
                 </button>
             </li>
         </ul>
@@ -440,10 +445,13 @@
 
                 <div class="p-3">
                     <h4>Grade student by email</h4>
-                    <div class="input-group">
-                        <span class="input-group-text">Student Email</span>
-                        <input bind:value={gradeStudentEmailInputValue} type="text" class="form-control" id="student-to-grade" autocomplete="off">
-                        <button onclick={gradeStudent} class="btn btn-outline-primary" type="button" id="grade-student">Search</button>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="name-lbl">School Email</span>
+                        <input bind:value={gradeStudentEmailInputValue} type="email" placeholder="NameYear@pascack.org" class="form-control" id="name" aria-describedby="name-lbl" autocomplete="off">
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="testcode-lbl">Test Code</span>
+                        <input type="text" placeholder="practice2025" class="form-control" id="testcode" aria-describedby="testcode-lbl">
                     </div>
 
                     {#if graded && gradeData !== undefined}
@@ -457,3 +465,30 @@
     <!-- </div> -->
 
 </div>
+
+<style>
+    @keyframes blink {
+        0% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0;
+        }
+    }
+
+    .blink {
+        animation: blink 1s ease-in-out infinite alternate;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        margin-right: 7px;
+    }
+
+    .green {
+        background: green;
+    }
+
+    .red {
+        background: red;
+    }
+</style>

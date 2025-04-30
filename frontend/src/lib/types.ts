@@ -80,18 +80,6 @@ export type Grade = {
      * The student's email
      */
     name: string,
-
-    /**
-     * The milliseconds since 1/1/1970 when the student submitted their test.
-     * Subtract this from the due date to see how overdue (or early) the student was.
-     */
-    epochTime: number,
-
-    /**
-     * The milliseconds since 1/1/1970 when the test was due for submission.
-     * Subtract the epochTime from this to see how overdue (or early) the student was.
-     */
-    due: number,
     
     /**
      * The questions and responses the student was asked.
@@ -112,6 +100,10 @@ export type Grade = {
          */
         incorrect: number
     },
+
+    timeStart: string,
+    timeSubmitted: string,
+    timeDue: string,
 }
 
 /**

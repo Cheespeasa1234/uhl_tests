@@ -1,28 +1,10 @@
 <script lang="ts">
     const { questionString, descriptor } = $props();
 
-    const sideColor0 = "#dd6f22";
-    const sideColor1 = "#ff1a12";
-    const sideColor2 = "#125adf";
-    const sideColors = [ sideColor0, sideColor1, sideColor2 ];
-
     let side: HTMLDivElement;
 
     let bookmarked: boolean = $state(false);
     let text: string = $state("");
-    let status: number = $derived(text.length > 0 ? 2 : 0);
-    let sideStyleParams: string = $derived(`--code-block-side-color: ${sideColors[status]}dd; --code-block-side-color-tr: ${sideColors[status]}99`);
-
-    $inspect(status);
-    $inspect(sideStyleParams);
-
-    $effect(() => {
-        side.style = sideStyleParams;
-    });
-
-    export function getStatus(): number {
-        return status;
-    }
 
     export function getResponse(): string {
         return text;
@@ -36,13 +18,13 @@
         return text.length > 0;
     }
 </script>
-<div class="box p-3" style="display: flex; flex-direction: column; gap: 10px;">
-    <div class="question-container">
-        <div class="side" bind:this={side}></div>
+<div>
+    <div>
+        <div bind:this={side}></div>
         
-        <div class="title box">
-            <h2 class="m-0">Question n</h2>
-            <h3 class="h6 text-muted m-0">{descriptor}</h3>
+        <div>
+            <h2>Question n</h2>
+            <h3>{descriptor}</h3>
         </div>
 
         <button class="bookmark-btn" onclick={() => { bookmarked = !bookmarked }}>
@@ -56,29 +38,14 @@
         </button>
         
     </div>
-    <div class="box">
-        <pre class="code-box mb-0">
+    <div>
+        <pre>
 {questionString}</pre>
     </div>
     <textarea bind:value={text} class="answer-textarea"></textarea>
 </div>
 
 <style>
-    .side {
-        --code-block-side-size: 10px;
-    }
-
-    .question-container {
-        display: flex;
-        height: fit-content;
-    }
-
-    .side {
-        width: var(--code-block-side-size);
-        background: var(--code-block-side-color-tr);
-        border: 2px solid var(--code-block-side-color);
-    }
-
     .bookmark-btn {
         border: 2px solid lightgray;
         border-left: none;
@@ -98,18 +65,4 @@
         color: #1776b6;
         transform: translateY(-2.5px);
     }
-
-    .box, .answer-textarea {
-        width: 100%;
-        border: 2px solid lightgray;
-        background: white;
-        padding: 5px;
-    }
-
-    .title {
-        border-left: none;
-        border-right: none;
-        padding-left: 10px;
-    }
-
 </style>

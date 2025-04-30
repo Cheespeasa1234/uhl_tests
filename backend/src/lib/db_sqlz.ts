@@ -139,21 +139,26 @@ Test.init({
 export class Submission extends Model {
     declare id: number;
     declare email: string;
-    declare time: number;
-    declare due: number;
     declare idCookie: string;
     declare answerCode: string;
     declare testId: number;
     declare responseBlob: string;
+    declare timeStart: string;
+    declare timeSubmitted: string;
+    declare timeDue: string;
     declare createdAt: Date;
     declare updatedAt: Date;
 
-    getTime(): Date {
-        return new Date(this.time);
+    getStart(): Date {
+        return new Date(this.timeStart);
     }
 
-    getDue(): Date {
-        return new Date(this.due);
+    getSubmitted(): Date {
+        return new Date(this.timeSubmitted);
+    }
+
+    getEnd(): Date {
+        return new Date(this.timeDue);
     }
 
     getBlob(): any {
@@ -169,14 +174,6 @@ Submission.init({
     },
     email: {
         type: DataTypes.TEXT,
-        allowNull: false,
-    },
-    time: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-    },
-    due: {
-        type: DataTypes.INTEGER,
         allowNull: false,
     },
     idCookie: {
@@ -198,6 +195,18 @@ Submission.init({
         type: DataTypes.TEXT,
         allowNull: false,
     },
+    timeStart: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+    },
+    timeSubmitted: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+    },
+    timeDue: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+    }
 }, {
     timestamps: true,
     sequelize: sequelize,
