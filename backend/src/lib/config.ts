@@ -1,4 +1,4 @@
-import { Preset, ConfigKey, ConfigValue } from "./db_sqlz.ts";
+import { Preset, ConfigKey, ConfigValue } from "./db.ts";
 import { logDebug, logError, logInfo } from "./logger.ts";
 
 /**

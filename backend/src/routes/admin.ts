@@ -10,7 +10,7 @@ import { getActiveSessions, manualConfigs, presetManager } from "./students.ts";
 import { retrieveNotifications } from "../lib/notifications.ts";
 import { logDebug, logInfo, logWarning } from "../lib/logger.ts";
 import { HCST_ADMIN_PASSWORD, HCST_FORM_URL } from "../lib/env.ts";
-import { Preset, Test, Submission } from "../lib/db_sqlz.ts";
+import { Preset, Test, Submission } from "../lib/db.ts";
 import { HTTP } from "../lib/http.ts";
 
 export const router = express.Router();
@@ -33,7 +33,7 @@ const checkSidMiddleware = (req: Request, res: Response, next: NextFunction) => 
             .json({
                 success: false,
                 message: "Invalid sessionId (either it expired, or it is invalid)"
-            })
+            });
     } else {
         next();
     }
@@ -106,7 +106,14 @@ router.get("/google_form", checkSidMiddleware, async (_req: Request, res: Respon
 router.get("/test_program", checkSidMiddleware, async (_req: Request, res: Response) => {
     logInfo("admin/test_program", "Fetching test program data");
     try {
-        const data: Submission[] = await getResponses();
+        const submissions: Submission[] = await getResponses();
+        const data: any[] = [];
+        for (const submission of submissions) {
+            const sub: any = {...submission.toJSON()};
+            sub.code = await submission.getTestCode();
+            data.push(sub);
+        }
+
         return res.json({
             success: true,
             message: "Successfully fetched test program",
@@ -120,26 +127,56 @@ router.get("/test_program", checkSidMiddleware, async (_req: Request, res: Respo
     }
 });
 
-router.get("/grade/:studentEmail", checkSidMiddleware, async (req: Request, res: Response) => {
-    const studentEmail = req.params['studentEmail'];
-    if (!studentEmail) {
+router.post("/grade", checkSidMiddleware, async (req: Request, res: Response) => {
+    const studentEmail = req.body['name'];
+    const testCode = req.body['code'];
+    
+    if (studentEmail === undefined) {
         return res
             .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
             .json({
                 success: false,
-                message: "Student email not provided"
+                message: "studentEmail is undefined"
             });
     }
 
-    const gfrPromised = await getGoogleFormResponses();
+    if (testCode === undefined) {
+        return res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "code is undefined"
+            });
+    }
 
-    const testProgramResponses: Submission[] = (await getResponses()).filter(val => val.email === studentEmail);
-    const googleFormResponses: GoogleResponse[] = gfrPromised.filter(val => val.email === studentEmail);
+    // Get the ID of the test code
+    const test: Test | null = await Test.findOne({
+        where: {
+            code: testCode
+        },
+    });
+
+    if (!test) {
+        return res
+            .status(HTTP.CLIENT_ERROR.NOT_FOUND)
+            .json({
+                success: false,
+                message: `test ${testCode} not found`,
+            });
+    }
+
+    const testId = test.id;
+
+    const testProgramResponses: Submission[] = 
+        (await getResponses())
+            .filter(val => val.email === studentEmail && val.testId === testId)
+            .toSorted((a: Submission, b: Submission) => {
+                return a.getSubmitted().getTime() - b.getSubmitted().getTime();
+            });
+    const googleFormResponses: GoogleResponse[] = 
+        (await getGoogleFormResponses())
+            .filter(val => val.email === studentEmail);
     
-    logDebug("admin/grade", "VALID TESTS AND GOOGLE FORMS FOR " + studentEmail);
-    logDebug("admin/grade", JSON.stringify(testProgramResponses));
-    logDebug("admin/grade", JSON.stringify(googleFormResponses));
-
     if (testProgramResponses.length === 0) {
         return res
             .status(HTTP.CLIENT_ERROR.NOT_FOUND)
@@ -158,25 +195,15 @@ router.get("/grade/:studentEmail", checkSidMiddleware, async (req: Request, res:
             });
     }
 
-    // find the test response and google form response that are most recent and that match
-    let mostRecentGoogleFormResponse = googleFormResponses[googleFormResponses.length - 1];
-    let mostRecentTimeSince = mostRecentGoogleFormResponse.timestamp.getTime();
-
-    for (const response of googleFormResponses) {
-        if (response.timestamp.getTime() > mostRecentTimeSince) {
-            mostRecentTimeSince = response.timestamp.getTime();
-            mostRecentGoogleFormResponse = response;
-        }
-    }
-
-    /// find the test result whose answer code is the same
-    for (const result of testProgramResponses) {
-        if (result.answerCode === mostRecentGoogleFormResponse.answerCode) {
+    /// find the test result whose answer code is the same, to authenticate their email
+    const testProgramResponse: Submission = testProgramResponses[testProgramResponses.length - 1];
+    for (const googleFormResponse of googleFormResponses) {
+        if (googleFormResponse.answerCode === testProgramResponse.answerCode && googleFormResponse.email === testProgramResponse.email) {
             return res.json({
                 success: true,
                 message: "Successfully graded student",
                 data: {
-                    grade: gradeStudent(result)
+                    grade: gradeStudent(testProgramResponse)
                 }
             });
         }

@@ -1,7 +1,7 @@
 import { $, CodeEnvironment, type LineOfCode } from "./code.ts";
 import { ParsedToken } from "../typing/parsedToken.ts";
 import { Quiz, QuizQuestion } from "./quiz.ts";
-import { Test, Preset, PresetData, parsePresetData, ConfigKey } from "../../lib/db_sqlz.ts";
+import { Test, Preset, PresetData, parsePresetData, ConfigKey } from "../../lib/db.ts";
 import { logDebug, logInfo } from "../../lib/logger.ts";
 
 export function generateForLoop(
@@ -36,6 +36,40 @@ export function generateForLoop(
     if (nest) {
         nest.forEach((line) => code.nest_1!.push(line));
     }
+    return [code];
+}
+
+export function generateSumProdQuestion(
+    varname: string,
+    smaller = false,
+): LineOfCode[] {
+    // Create the top of the for loop
+    const direction = Math.random() > 0.35; // TRUE: left to right
+    const length = Math.round(Math.random() * (smaller ? 1 : 2) + 3);
+    const increment = Math.ceil(Math.random() * (smaller ? 1 : 3) + 0);
+    let initCode: LineOfCode = $("set", "$*#sum #0");
+    let code: LineOfCode;
+    if (direction) {
+        code = $(
+            "for",
+            `$*#${varname} #0 $*#${varname} LT #${
+                length * increment
+            } $*#${varname} ADD #${increment}`,
+        );
+    } else {
+        code = $(
+            "for",
+            `$*#${varname} #${
+                length * increment
+            } $*#${varname} GT #0 $*#${varname} SUB #${increment}`,
+        );
+    }
+
+    // Set the opeq
+    code.nest_1 = [
+        $("opeq", "$*#sum $*#i ADD"),
+    ];
+
     return [code];
 }
 
@@ -177,7 +211,7 @@ export async function makeTest(timeStarted: Date, timeToEnd: Date | null, testGr
         questions.push(
             new QuizQuestion(
                 generateForLoop("i", [$("print", "$*#i")]),
-                "What will the console look like after this for loop runs? (loops)",
+                "What will the console look like after this for loop runs?",
             ),
         );
     }
@@ -187,7 +221,7 @@ export async function makeTest(timeStarted: Date, timeToEnd: Date | null, testGr
         questions.push(
             new QuizQuestion(
                 generateDoubleForLoop(),
-                "What will the console look like after this for loop runs? (loops^2)",
+                "What will the console look like after this for loop runs?",
             ),
         );
     }
@@ -196,7 +230,14 @@ export async function makeTest(timeStarted: Date, timeToEnd: Date | null, testGr
     for (let i = 0; i < blob.get(ConfigKey.STRING_COUNT)!.getNumberValue(); i++) {
         questions.push(new QuizQuestion(
             generateStringQuestion(),
-            "What will the output of this code be? (strings)"
+            "What will the output of this code be?"
+        ));
+    }
+
+    for (let i = 0; i < blob.get(ConfigKey.SUM_PROD_LOOP)!.getNumberValue(); i++) {
+        questions.push(new QuizQuestion(
+            generateSumProdQuestion("i"),
+            "What will the value of sum be?"
         ));
     }
 

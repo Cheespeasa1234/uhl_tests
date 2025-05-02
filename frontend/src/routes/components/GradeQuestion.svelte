@@ -8,8 +8,7 @@
     <div class="carousel-item {number === 0 ? 'active' : ''}">
         <h5>{number + 1}. {descriptor}</h5>
         <pre class="code-format">
-            {questionString}
-        </pre>
+{questionString}</pre>
         <div class="comparison">
             <div class="response-format {correct ? 'correct' : 'incorrect'}">
                 {userAnswer}

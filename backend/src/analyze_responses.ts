@@ -1,6 +1,6 @@
 import { Quiz, QuizQuestion } from "./lang/quiz/quiz.ts";
 import { logInfo, logError } from "./lib/logger.ts";
-import { Submission } from "./lib/db_sqlz.ts";
+import { Submission, Test } from "./lib/db.ts";
 import { getValues } from "./sheets.ts";
 import { HCST_SPREADSHEET_ID } from "./lib/env.ts";
 
@@ -20,7 +20,8 @@ export class GoogleResponse {
 }
 
 export async function getResponses(): Promise<Submission[]> {
-    const responses = await Submission.findAll();
+    const responses: any[] = await Submission.findAll();
+
     logInfo("analyze_responses", "Got responses from database");
     return responses;
 }

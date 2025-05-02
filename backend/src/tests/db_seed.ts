@@ -1,1 +1,1 @@
-import { Preset } from "../lib/db_sqlz.ts";
+import { Preset } from "../lib/db.ts";

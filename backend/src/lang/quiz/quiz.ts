@@ -1,4 +1,4 @@
-import { Test } from "../../lib/db_sqlz.ts";
+import { Test } from "../../lib/db.ts";
 import { LineOfCode, CodeEnvironment } from "./code.ts";
 import { codeToJava, outputToJava } from "./codegen.ts";
 import crypto from "node:crypto";

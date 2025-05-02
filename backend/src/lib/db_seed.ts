@@ -1,4 +1,4 @@
-import { Preset, Test, Submission } from "./db_sqlz.ts";
+import { Preset, Test, Submission } from "./db.ts";
 
 const [ preset, created ] = await Preset.findOrCreate({
     where: {
@@ -7,7 +7,7 @@ const [ preset, created ] = await Preset.findOrCreate({
     defaults: {
         id: 0,
         name: "DEFAULT",
-        blob: `{"For Loop Count":{"valueType":"number","key":"For Loop Count","value":2},"Nested For Loop Count":{"valueType":"number","key":"Nested For Loop Count","value":1},"String Count":{"valueType":"number","key":"String Count","value":2}}`
+        blob: `{"Sum Prod Loop":{"valueType":"number","key":"Sum Prod Loop","value":0},"For Loop Count":{"valueType":"number","key":"For Loop Count","value":2},"Nested For Loop Count":{"valueType":"number","key":"Nested For Loop Count","value":1},"String Count":{"valueType":"number","key":"String Count","value":2}}`
     }
 });
 

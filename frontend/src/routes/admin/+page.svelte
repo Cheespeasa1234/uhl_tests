@@ -8,7 +8,6 @@
     import ConfigInputs from "../components/ConfigInputs.svelte";
     import DataDisplayTable from "../components/DataDisplayTable.svelte";
     import StudentGrade from "../components/StudentGrade.svelte";
-    import Modal from "../components/modal/Modal.svelte";
     import SelectPresetModal from "../components/modal/SelectPresetModal.svelte";
     import { showNotifToast } from "$lib/popups";
     import TestCodeInputs from "../components/TestCodeInputs.svelte";
@@ -23,8 +22,8 @@
 
     // The first row of a table of the student responses.
     const testProgramHeader = [
-        { key: "name", name: "Email" },
-        { key: "test", name: "Test Code" },
+        { key: "email", name: "Email" },
+        { key: "code", name: "Test Code" },
         { key: "timeStart", name: "Time Started" },
         { key: "timeSubmitted", name: "Time Submitted" },
         { key: "timeDue", name: "Time Due"}
@@ -34,6 +33,7 @@
     let signedIn: boolean = $state(false);
     let connected: boolean = $state(false);
     let gradeStudentEmailInputValue: string = $state("");
+    let gradeStudentTestCodeInputValue: string = $state("");
 
     let googleFormTable: DataDisplayTable;
     let testProgramTable: DataDisplayTable;
@@ -83,37 +83,6 @@
                 setManualConfig("timeLimit", timeLimitInputValue, "number");
             }
         }, 1000 * 2);
-        
-        // Every 5000ms, check the notifications and show them.
-        let notifFailures = 0;
-        const interval = setInterval(async () => {
-            if (notifFailures > 4) {
-                showNotifToast({ success: false, message: "Lost comms with API"});
-                connected = false;
-                clearInterval(interval);
-            }
-            try {
-                const response = await fetch("./api/grading/notifications")
-                const json = await response.json();
-                if (response.status === 401) {
-                    showNotifToast({ success: false, message: "Not authenticated. Refreshing" });
-                    signedIn = false;
-                    connected = false;
-                    notifFailures = Infinity;
-                } else if (response.status !== 200 && response.status !== 304) {
-                    notifFailures++;
-                } else {
-                    const notifications: API_Response[] = json.data.notifications;
-                    connected = true;
-                    notifFailures = 0;
-                    // notifications.forEach(notif => {
-                    //     showNotifToast(notif);
-                    // });
-                }
-            } catch (e) {
-                notifFailures++;
-            }
-        }, 5000);
     }
 
     // Get the global configuration values from the server
@@ -152,28 +121,26 @@
 
     // When the grade student button is pressed
     async function gradeStudent() {
-        getJSON("./api/grading/grade/" + gradeStudentEmailInputValue)
-        .then(json => {
-            const { success, data } = json;
-            console.log("Grading data", json);
-            
-            if (success) {
-                graded = true;
-                gradeData = data.grade;
-            } else {
-                graded = false;
-            }
+        const json = await postJSON("./api/grading/grade/", {
+            name: gradeStudentEmailInputValue,
+            code: gradeStudentTestCodeInputValue,
         });
+
+        const { success, data } = json;
+        
+        if (success) {
+            graded = true;
+            gradeData = data.grade;
+        } else {
+            graded = false;
+        }
     }
 
     let resetPresetBtn: HTMLButtonElement;
     let savePresetBtn: HTMLButtonElement;
     let loadPresetBtn: HTMLButtonElement;
-    let undoPresetBtn: HTMLButtonElement;
-    let saveConfigBtn: HTMLButtonElement;
 
     let resetTestCodesBtn: HTMLButtonElement;
-    let saveTestCodesBtn: HTMLButtonElement;
 
     // Set the value of the preset in the component when the preset value changes
     let presetEl: ConfigInputs;
@@ -311,168 +278,162 @@
 </svelte:head>
 
 <SelectPresetModal bind:this={selectPresetModal} />
-
-<div id="admin-signin" class="container-fluid border border-2 { signedIn ? 'd-none' : '' }">
-    <h3 class="float-none w-auto">Admin Sign In</h3>
-    <div>
-        <label for="password" class="form-label">Password</label>
-        <input bind:value={passwordInputValue} type="password" id="password" class="form-control">
-        <button onclick={loginButtonClick} id="login">Login</button>
-    </div>
-</div>
-
-<div id="adminelements" class="container-fluid h-100 { signedIn ? '' : 'd-none' }">
-    <!-- <div class="row h-100" style="height: 100vh;"> -->
-
-    <nav class="mt-2">
-        <ul class="nav nav-tabs" id="nav-tab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="nav-p1-tab" data-bs-toggle="tab" data-bs-target="#nav-p1"
-                    type="button" role="tab" aria-controls="nav-p1" aria-selected="true">
-                    Configure Test
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="nav-p2-tab" data-bs-toggle="tab" data-bs-target="#nav-p2"
-                    type="button" role="tab" aria-controls="nav-p2" aria-selected="false">
-                    View Status
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="nav-p3-tab" data-bs-toggle="tab" data-bs-target="#nav-p3"
-                    type="button" role="tab" aria-controls="nav-p3" aria-selected="false">
-                    Grade Tests
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link disabled d-flex" style="position: absolute; right: 0px; align-items: center;" disabled>
-                    {#if connected}
-                        <div class="blink green"></div>
-                        <span>Connected to server</span>
-                    {:else}
-                        <div class="blink red"></div>
-                        <span>Connection lost</span>
-                    {/if}
-                </button>
-            </li>
-        </ul>
-    </nav>
-        <div class="tab-content col border border-1 p-2" id="nav-tabContent">
-            <div style="width: fit-content" class="tab-pane fade show active" id="nav-p1" role="tabpanel"
-                aria-labelledby="nav-p1-tab">
-
-                <div class="p-3">
-                    <h3>Configure test submission</h3>
-                    <div class="form-check" data-tippy-content="If enabled, students will be able to access the student portal, take tests, and submit their results.">
-                        <input oninput={() => {
-                            enableTestingInputValueChanged = Date.now();
-                            enableTestingInputIsNew = true;
-                        }} bind:checked={enableTestingInputValue} class="form-check-input" type="checkbox" id="enable-testing">
-                        <label class="form-check-label" for="enable-testing">
-                            Enable student testing
-                        </label>
-                    </div>
-
-                    <div class="form-check" data-tippy-content="If enabled, from the time a student requests a quiz, they only have a certain amount of time provided to submit their results before it becomes invalid. Students can still submit late answers, but the grading system will notify you.">
-                        <input oninput={() => {
-                            enableTimeLimitInputValueChanged = Date.now();
-                            enableTimeLimitInputIsNew = true;
-                        }} bind:checked={enableTimeLimitInputValue} class="form-check-input" type="checkbox" id="enable-time-lim">
-                        <label class="form-check-label" for="enable-time-lim">
-                            Enable time limit
-                        </label>
-                    </div>
-
-                    <div class="input-group">
-                        <span class="input-group-text" id="basic-addon1">Time limit</span>
-                        <input oninput={() => {
-                            timeLimitInputValueChanged = Date.now();
-                            timeLimitInputIsNew = true;
-                        }} bind:value={timeLimitInputValue} type="number" id="time-lim" class="form-control" aria-label="Username"
-                            aria-describedby="basic-addon1">
-                        <span class="input-group-text" id="basic-addon1">minutes</span>
-                    </div>
-                </div>
-
-                <div class="p-3">
-                    <h3>Configure test contents</h3>
-
-                    <div class="btn-group mb-2">
-                        <button bind:this={savePresetBtn} onclick={savePreset} type="button" class="btn btn-outline-secondary" data-tippy-content="Save the below configuration values to a given preset, either new or pre-existing.">Save
-                            to preset</button>
-                        <button bind:this={loadPresetBtn} onclick={loadPreset} type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values of a given pre-existing preset.">Load
-                            from preset</button>
-                        <button bind:this={resetPresetBtn} onclick={resetPreset} type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values of the hard-coded default preset.">Load
-                            from default</button>
-                        <!-- <button bind:this={undoPresetBtn} onclick={undoPreset} type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values currently in use by the server.">Load from current</button> -->
-                    </div>
-
-                    {#if preset !== undefined}
-                        <ConfigInputs bind:this={presetEl} />
-                    {:else}
-                        <p>Loading Presets...</p>
-                    {/if}
-
-                    <!-- <div class="btn-group mb-2">
-                        <button bind:this={saveConfigBtn} onclick={saveConfig} id="save-config" type="button" class="btn btn-primary" data-tippy-content="Sets the configuration that new tests are created with to the above configuration values.">Set
-                            configuration</button>
-                    </div> -->
-                </div>
-
-                <div class="p-3">
-                    <h3>Configure Test Codes</h3>
-                    
-                    <div class="btn-group mb-2">
-                        <button onclick={saveTestCodes} type="button" class="btn btn-outline-secondary" data-tippy-content="Save the below test code values to the server.">Save changes</button>
-                        <button bind:this={resetTestCodesBtn} type="button" class="btn btn-outline-secondary" data-tippy-content="Resets changes to the test codes.">Undo changes</button>
-                    </div>
-
-                    <div class="btn-group mb-2">
-                        <button onclick={newTestCode} type="button" class="btn btn-outline-secondary" data-tippy-content="Create a brand new test code.">New test code</button>
-                    </div>
-                    
-                    <TestCodeInputs bind:this={testListEl} />
-                </div>
-
-            </div>
-            <div class="tab-pane fade" id="nav-p2" role="tabpanel" aria-labelledby="nav-p2-tab">
-
-                <DataDisplayTable row_heads={googleFormHeader} name="Google form table" url="./api/grading/google_form" bind:this={googleFormTable} />
-                <DataDisplayTable row_heads={testProgramHeader} name="Quiz submissions table" url="./api/grading/test_program" bind:this={testProgramTable} />
-
-            </div>
-            <div class="tab-pane fade" id="nav-p3" role="tabpanel" aria-labelledby="nav-p3-tab">
-
-                <div class="p-3">
-                    <h4>Grade student by email</h4>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text" id="name-lbl">School Email</span>
-                        <input bind:value={gradeStudentEmailInputValue} type="email" placeholder="NameYear@pascack.org" class="form-control" id="name" aria-describedby="name-lbl" autocomplete="off">
-                    </div>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text" id="testcode-lbl">Test Code</span>
-                        <input type="text" placeholder="practice2025" class="form-control" id="testcode" aria-describedby="testcode-lbl">
-                    </div>
-
-                    {#if graded && gradeData !== undefined}
-                        <StudentGrade grade={gradeData!}/>
-                    {/if}
-                </div>
-
-            </div>
+<div>
+    <form id="admin-signin" class="{ signedIn ? 'd-none' : '' } p-3">
+        <h2 class="float-none w-auto">Sign In</h2>
+        <div class="input-group">
+            <span class="input-group-text">Password</span>
+            <!-- <label for="password" class="form-label">Password</label> -->
+            <input bind:value={passwordInputValue} type="password" class="form-control">
         </div>
+        <button onclick={loginButtonClick} class="btn btn-primary">Login</button>
+    </form>
 
-    <!-- </div> -->
+    <div id="adminelements" class="container-fluid h-100 { signedIn ? '' : 'd-none' }">
+        <nav class="mt-2">
+            <ul class="nav nav-tabs" id="nav-tab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="nav-p1-tab" data-bs-toggle="tab" data-bs-target="#nav-p1"
+                        type="button" role="tab" aria-controls="nav-p1" aria-selected="true">
+                        Configure Test
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="nav-p2-tab" data-bs-toggle="tab" data-bs-target="#nav-p2"
+                        type="button" role="tab" aria-controls="nav-p2" aria-selected="false">
+                        View Status
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="nav-p3-tab" data-bs-toggle="tab" data-bs-target="#nav-p3"
+                        type="button" role="tab" aria-controls="nav-p3" aria-selected="false">
+                        Grade Tests
+                    </button>
+                </li>
+            </ul>
+        </nav>
+            <div class="tab-content col border border-1 p-2" id="nav-tabContent">
+                <div style="width: fit-content" class="tab-pane fade show active" id="nav-p1" role="tabpanel"
+                    aria-labelledby="nav-p1-tab">
 
+                    <form class="p-3" autocomplete="off">
+                        <h3>Configure test submission</h3>
+                        <div class="form-check" data-tippy-content="If enabled, students will be able to access the student portal, take tests, and submit their results.">
+                            <input oninput={() => {
+                                enableTestingInputValueChanged = Date.now();
+                                enableTestingInputIsNew = true;
+                            }} bind:checked={enableTestingInputValue} class="form-check-input" type="checkbox" id="enable-testing">
+                            <label class="form-check-label" for="enable-testing">
+                                Enable student testing
+                            </label>
+                        </div>
+
+                        <div class="form-check" data-tippy-content="If enabled, from the time a student requests a quiz, they only have a certain amount of time provided to submit their results before it becomes invalid. Students can still submit late answers, but the grading system will notify you.">
+                            <input oninput={() => {
+                                enableTimeLimitInputValueChanged = Date.now();
+                                enableTimeLimitInputIsNew = true;
+                            }} bind:checked={enableTimeLimitInputValue} class="form-check-input" type="checkbox" id="enable-time-lim">
+                            <label class="form-check-label" for="enable-time-lim">
+                                Enable time limit
+                            </label>
+                        </div>
+
+                        <div class="input-group">
+                            <span class="input-group-text" id="basic-addon1">Time limit</span>
+                            <input oninput={() => {
+                                timeLimitInputValueChanged = Date.now();
+                                timeLimitInputIsNew = true;
+                            }} bind:value={timeLimitInputValue} type="number" id="time-lim" class="form-control" aria-label="Username"
+                                aria-describedby="basic-addon1">
+                            <span class="input-group-text" id="basic-addon1">minutes</span>
+                        </div>
+                    </form>
+
+                    <form class="p-3" autocomplete="off">
+                        <h3>Configure test contents</h3>
+
+                        <div class="btn-group mb-2">
+                            <button bind:this={savePresetBtn} onclick={savePreset} type="button" class="btn btn-outline-secondary" data-tippy-content="Save the below configuration values to a given preset, either new or pre-existing.">Save
+                                to preset</button>
+                            <button bind:this={loadPresetBtn} onclick={loadPreset} type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values of a given pre-existing preset.">Load
+                                from preset</button>
+                            <button bind:this={resetPresetBtn} onclick={resetPreset} type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values of the hard-coded default preset.">Load
+                                from default</button>
+                            <!-- <button bind:this={undoPresetBtn} onclick={undoPreset} type="button" class="btn btn-outline-secondary" data-tippy-content="Set the below configuration values to the values currently in use by the server.">Load from current</button> -->
+                        </div>
+
+                        {#if preset !== undefined}
+                            <ConfigInputs bind:this={presetEl} />
+                        {:else}
+                            <p>Loading Presets...</p>
+                        {/if}
+
+                        <!-- <div class="btn-group mb-2">
+                            <button bind:this={saveConfigBtn} onclick={saveConfig} id="save-config" type="button" class="btn btn-primary" data-tippy-content="Sets the configuration that new tests are created with to the above configuration values.">Set
+                                configuration</button>
+                        </div> -->
+                    </form>
+
+                    <form class="p-3" autocomplete="off">
+                        <h3>Configure Test Codes</h3>
+                        
+                        <div class="btn-group mb-2">
+                            <button onclick={saveTestCodes} type="button" class="btn btn-outline-secondary" data-tippy-content="Save the below test code values to the server.">Save changes</button>
+                            <button bind:this={resetTestCodesBtn} type="button" class="btn btn-outline-secondary" data-tippy-content="Resets changes to the test codes.">Undo changes</button>
+                        </div>
+
+                        <div class="btn-group mb-2">
+                            <button onclick={newTestCode} type="button" class="btn btn-outline-secondary" data-tippy-content="Create a brand new test code.">New test code</button>
+                        </div>
+                        
+                        <TestCodeInputs bind:this={testListEl} />
+                    </form>
+
+                </div>
+                <div class="tab-pane fade" id="nav-p2" role="tabpanel" aria-labelledby="nav-p2-tab">
+
+                    <DataDisplayTable row_heads={googleFormHeader} name="Google form table" url="./api/grading/google_form" bind:this={googleFormTable} />
+                    <DataDisplayTable row_heads={testProgramHeader} name="Quiz submissions table" url="./api/grading/test_program" bind:this={testProgramTable} />
+
+                </div>
+                <div class="tab-pane fade" id="nav-p3" role="tabpanel" aria-labelledby="nav-p3-tab">
+
+                    <form class="p-3" autocomplete="off">
+                        <h4>Grade student</h4>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text" id="name-lbl">School Email</span>
+                            <input bind:value={gradeStudentEmailInputValue} type="email" placeholder="NameYear@pascack.org" class="form-control" id="name" aria-describedby="name-lbl">
+                        </div>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text" id="testcode-lbl">Test Code</span>
+                            <input bind:value={gradeStudentTestCodeInputValue} type="text" placeholder="practice2025" class="form-control" id="testcode" aria-describedby="testcode-lbl">
+                        </div>
+
+                        <div class="mb-2">
+                            {#if graded && gradeData !== undefined}
+                                <StudentGrade grade={gradeData!}/>
+                            {/if}
+                        </div>
+                        <button onclick={gradeStudent} class="btn btn-primary">Grade</button>
+                    </form>
+
+                </div>
+            </div>
+
+        <!-- </div> -->
+
+    </div>
 </div>
 
 <style>
     @keyframes blink {
         0% {
             opacity: 1;
+            transform: scale(1);
         }
         100% {
-            opacity: 0;
+            opacity: 0.4;
+            transform: scale(0.75);
         }
     }
 

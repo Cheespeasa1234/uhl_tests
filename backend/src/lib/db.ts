@@ -27,6 +27,7 @@ export enum ConfigKey {
     FOR_LOOP_COUNT = "For Loop Count",
     NESTED_FOR_LOOP_COUNT = "Nested For Loop Count",
     STRING_COUNT = "String Count",
+    SUM_PROD_LOOP = "Sum Prod Loop"
 }
 
 export enum ConfigValueType {
@@ -163,6 +164,18 @@ export class Submission extends Model {
 
     getBlob(): any {
         return JSON.parse(this.responseBlob);
+    }
+
+    async getTestCode(): Promise<string> {
+        const test = await Test.findOne({
+            where: {
+                id: this.testId
+            }
+        });
+
+        if (test)
+            return test.code;
+        else return "";
     }
 }
 

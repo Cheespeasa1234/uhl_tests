@@ -39,8 +39,7 @@
         
     </div>
     <div>
-        <pre>
-{questionString}</pre>
+        <pre>{questionString}</pre>
     </div>
     <textarea bind:value={text} class="answer-textarea"></textarea>
 </div>

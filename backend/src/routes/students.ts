@@ -12,7 +12,7 @@ import { addNotification } from "../lib/notifications.ts";
 import { logInfo, logWarning } from "../lib/logger.ts";
 import { HTTP } from "../lib/http.ts";
 import { HCST_FORM_URL } from "../lib/env.ts";
-import { Test, Submission, Preset, parsePresetData, PresetData, ConfigValueType } from "../lib/db_sqlz.ts";
+import { Test, Submission, Preset, parsePresetData, PresetData, ConfigValueType } from "../lib/db.ts";
 
 export const router = express.Router();
 
@@ -78,7 +78,7 @@ router.post("/test-info", async (req: Request, res: Response) => {
     if (!testCode) {
         res.json({
             success: false,
-            message: "No testid provided"
+            message: "No code provided"
         });
         return;
     }
@@ -125,11 +125,14 @@ router.post("/test-info", async (req: Request, res: Response) => {
         }
     })
 
+    const enableTimeLimit = manualConfigs.get("enableTimeLimit");
+
     res.json({
         success: true,
         message: "Successfully retrieved test info",
         data: {
             timeLimit: timeLimitMinutes,
+            enableTimeLimit: enableTimeLimit,
             count: sum,
         }
     });
@@ -158,6 +161,17 @@ router.post("/new-test", async (req: Request, res: Response) => {
             success: false,
             message: "No name provided"
         });
+        return;
+    }
+
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(name);
+    if (!isValidEmail) {
+        res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "Invalid email"
+            });
         return;
     }
 
