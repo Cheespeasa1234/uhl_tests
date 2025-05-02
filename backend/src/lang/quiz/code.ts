@@ -2,7 +2,7 @@ import { ParsedToken } from "../typing/parsedToken.ts";
 import { RawToken, TokenType, VariableTokenType } from "../typing/token.ts";
 import { operate as useOperator } from "../typing/operation.ts";
 import { functions } from "../typing/func.ts";
-import { logError, logInfo, logWarning } from "../../lib/logger.ts";
+import { logDebug, logError, logInfo, logWarning } from "../../lib/logger.ts";
 
 export type LineOfCode = {
     action: string;
@@ -33,12 +33,13 @@ export class CodeEnvironment {
         operand2: ParsedToken,
         operator: ParsedToken,
     ): ParsedToken {
-        if (operand1.tokenType === TokenType.VARIABLE) {
+        // if (operand1.tokenType === TokenType.VARIABLE) {
+        logDebug("code/operate", `${operand1.rawContent} ${operand2.rawContent}`);
             operand1 = this.getVariableValue(operand1);
-        }
-        if (operand2.tokenType === TokenType.VARIABLE) {
+        // }
+        // if (operand2.tokenType === TokenType.VARIABLE) {
             operand2 = this.getVariableValue(operand2);
-        }
+        // }
         return useOperator(operand1, operand2, operator);
     }
     
@@ -52,10 +53,9 @@ export class CodeEnvironment {
     }
 
     getVariableValue(variableToken: ParsedToken): ParsedToken {
-        if (
-            variableToken.tokenType === TokenType.VARIABLE &&
-            variableToken.parsedContent in this.variables
-        ) {
+        if (variableToken.tokenType === TokenType.VARIABLE) {
+            const isIn = variableToken.parsedContent in this.variables;
+            if (!isIn) throw Error(`Variable ${variableToken.rawContent} is undefined`);
             return this.variables[variableToken.parsedContent];
         }
         return variableToken;
@@ -234,6 +234,7 @@ export class CodeEnvironment {
                 } else if (line.action === "loop") {
                     this.loop(values, nest_1);
                 } else if (line.action === "opeq") {
+                    logDebug("code/exec", JSON.stringify(this.variables));
                     this.opeq(values);
                 } else if (line.action === "for") {
                     this.for(values, nest_1);

@@ -47,7 +47,8 @@ export function generateSumProdQuestion(
     const direction = Math.random() > 0.35; // TRUE: left to right
     const length = Math.round(Math.random() * (smaller ? 1 : 2) + 3);
     const increment = Math.ceil(Math.random() * (smaller ? 1 : 3) + 0);
-    let initCode: LineOfCode = $("set", "$*#sum #0");
+    const initCode: LineOfCode = $("set", "$*#sum #0");
+    const endCode: LineOfCode = $("print", "$*#sum");
     let code: LineOfCode;
     if (direction) {
         code = $(
@@ -67,10 +68,10 @@ export function generateSumProdQuestion(
 
     // Set the opeq
     code.nest_1 = [
-        $("opeq", "$*#sum $*#i ADD"),
+        $("opeq", "$*#sum ADD $*#i"),
     ];
 
-    return [code];
+    return [initCode, code, endCode];
 }
 
 export function generateDoubleForLoop(): LineOfCode[] {

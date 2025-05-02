@@ -173,10 +173,19 @@ router.post("/grade", checkSidMiddleware, async (req: Request, res: Response) =>
             .toSorted((a: Submission, b: Submission) => {
                 return a.getSubmitted().getTime() - b.getSubmitted().getTime();
             });
-    const googleFormResponses: GoogleResponse[] = 
-        (await getGoogleFormResponses())
-            .filter(val => val.email === studentEmail);
-    
+    let googleFormResponses: GoogleResponse[] = [];
+    try {
+        googleFormResponses = 
+            (await getGoogleFormResponses())
+                .filter(val => val.email === studentEmail);
+    } catch (e) {
+        return res
+            .status(HTTP.SERVER_ERROR.INTERNAL_SERVER_ERROR)
+            .json({
+                success: false,
+                message: e
+            })
+    }
     if (testProgramResponses.length === 0) {
         return res
             .status(HTTP.CLIENT_ERROR.NOT_FOUND)

@@ -180,3 +180,27 @@ The top of the grade result displays the email of the student, the amount of que
 In the box, you will see the grade of the first question. It will tell you the question number, the prompt, and the code provided to the student. Below this are two boxes. The first box is what the student typed in as their response, and the second is what the computer says is the correct answer. If the left border is red on the first box, the answer is incorrect. There is also some text below this to tell you.
 
 On the left and right are buttons to scroll through the questions. Press the right arrow button to get the next question. This cycles through, so you can press right on the last question to get to the first.
+
+## Tour
+* Administrator experience
+    * Configure Test
+        * Setting global time limit
+        * Enabling and disabling submission
+        * Creating a new preset
+        * Editing a different preset
+        * Changing the practice test code
+        * Creating a final exam
+        * Saving changes to test codes
+    * View Status
+        * Understand the google form table
+        * Understand the submission table
+    * Grading
+        * Find an email / test code we want to grade
+        * Put it in the grading interface, and grade the student
+        * Understand the grading information
+        * Understand each question
+* Student experience
+    * Being told the secret code
+    * Getting a test and confirming
+    * Answering questions
+    * Submitting answers and using google form

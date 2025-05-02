@@ -226,6 +226,29 @@ Submission.init({
 });
 
 await sequelize.sync();
-await Preset.sync();
 await Submission.sync();
 await Test.sync();
+
+await Preset.sync();
+function syncPresetBlob(blob_: any): any {
+    const values = Object.values(ConfigKey);
+    const blob = {...blob_};
+    for (const key of values) {
+        if (!blob[key]) {
+            logInfo("db/sync", "Had to expand preset");
+            blob[key] = {"valueType":"number","key":key,"value":0}
+        }
+    }
+    return blob;
+}
+
+async function updateAllPresetBlobs() {
+    const presets: Preset[] = await Preset.findAll();
+    for (const preset of presets) {
+        let blob = JSON.parse(preset.blob);
+        preset.blob = JSON.stringify(syncPresetBlob(blob));
+        await preset.save();
+    }
+}
+
+await updateAllPresetBlobs();

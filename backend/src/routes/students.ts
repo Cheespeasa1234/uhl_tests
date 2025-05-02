@@ -50,7 +50,7 @@ export function getActiveSessions(): typeof activeSessions {
 
 export const presetManager: PresetManager = new PresetManager();
 export const manualConfigs: Map<string, boolean | number> = new Map();
-manualConfigs.set("enableStudentTesting", false);
+manualConfigs.set("enableStudentTesting", true); // TODO
 manualConfigs.set("enableTimeLimit", true);
 manualConfigs.set("timeLimit", 40);
 manualConfigs.set("debugMode", false);

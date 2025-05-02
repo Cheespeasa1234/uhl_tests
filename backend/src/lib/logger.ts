@@ -9,7 +9,7 @@ const ANSI_GREEN = "\x1b[32m";
 const ANSI_GRAY = "\x1b[30m";
 
 const disabledScopes = [
-    /^code(\/.*)?$/,
+    // /^code(\/.*)?$/,
     /^db(\/.*)?$/
 ];
 
