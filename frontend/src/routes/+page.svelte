@@ -19,6 +19,7 @@
 
     let nameInputValue: string = $state("");
     let testCodeInputValue: string = $state("");
+    let agree: boolean = $state(false);
     let studentSelf = $state(undefined);
 
     let testQuestions: any[] = $state([]);
@@ -31,6 +32,8 @@
     let bookmarkCount: number = $derived(testQuestionEls.reduce((sum, item) => sum + (item.getBookmarked() ? 1 : 0), 0));
     let completeCount: number = $derived(testQuestionEls.reduce((sum, item) => sum + (item.getComplete() ? 1 : 0), 0));
     let totalCount: number = $derived(testQuestionEls.length);
+
+    let progress = $derived(completeCount / totalCount);
 
     let takeTestBtn: HTMLButtonElement;
     let submitTestBtn: HTMLButtonElement;
@@ -141,7 +144,6 @@
     // The student has submitted their answers- clear the screen
     function clearDocument() {
         testQuestions = [];
-        nameInputValue = "";
         testCodeInputValue = "";
         previewTestCount = 0;
         previewTestName = "";
@@ -232,20 +234,32 @@
     {/snippet}
 </ConfirmModal>
 
-<div class="p-3" style="margin: auto; max-width: 50%;">
+<div class="p-3 mt-3" style="margin: auto; max-width: 50%;">
     <div bind:this={page0} style="display: none">
         <h2>Request Quiz</h2>
-        <div class="input-group mb-1">
-            <span class="input-group-text" id="name-lbl">School Email</span>
-            <input bind:value={nameInputValue} type="email" placeholder="NameYear@pascack.org" class="form-control" id="name" aria-describedby="name-lbl">
-        </div>
-        <div class="input-group mb-2">
-            <span class="input-group-text" id="testcode-lbl">Test Code</span>
-            <input bind:value={testCodeInputValue} type="text" placeholder="practice2025" class="form-control" id="testcode" aria-describedby="testcode-lbl">
-        </div>
-        <label for="take-test">Make sure you can sign in to this email, or your test results will be lost!</label>
+        <form class="row g-3 mb-2">
+            <div class="col-md-6">
+                <label for="inputSe" class="form-label">School Email</label>
+                <input placeholder="NameYear@pascack.org" bind:value={nameInputValue} type="email" class="form-control" id="inputSe">
+            </div>
+            <div class="col-md-6">
+                <label for="inputTc" class="form-label">Test Code</label>
+                <input placeholder="practice2025" bind:value={testCodeInputValue} type="text" class="form-control" id="inputTc">
+            </div>
+        </form>
+        
+        <div class="col-12">
+            <div class="form-check">
+              <input bind:checked={agree} class="form-check-input" type="checkbox" id="gridCheck">
+              <label class="form-check-label" for="gridCheck">
+                I agree to the PHHS Testing Code of Conduct
+              </label>
+            </div>
+          </div>
+
+        <label class="mt-2 mb-2" for="take-test">Make sure you can sign in to this email, or your test results will be lost!</label>
         <div>
-            <button class="btn btn-primary" bind:this={takeTestBtn} onclick={previewTest} id="take-test">Submit</button>
+            <button disabled={!agree || nameInputValue === "" || testCodeInputValue === ""} class="btn btn-primary" bind:this={takeTestBtn} onclick={previewTest} id="take-test">Submit</button>
         </div>
     </div>
 
@@ -295,7 +309,9 @@
                         <TestQuestion bind:this={testQuestionEls[index]} questionString={question.questionString} descriptor={question.descriptor} />
                     </div>
                 {/each}
-                
+                <div class="progress" role="progressbar" aria-label="Basic example" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar" style="width: {progress * 100}%"></div>
+                </div>
             {/if}
         </div>
         <div class="button-group">

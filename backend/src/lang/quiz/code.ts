@@ -4,6 +4,9 @@ import { operate as useOperator } from "../typing/operation.ts";
 import { functions } from "../typing/func.ts";
 import { logDebug, logError, logInfo, logWarning } from "../../lib/logger.ts";
 
+/**
+ * Represents a single action, a line of code
+ */
 export type LineOfCode = {
     action: string;
     values: ParsedToken[];
@@ -11,15 +14,33 @@ export type LineOfCode = {
     nest_2?: LineOfCode[];
 };
 
+/**
+ * The map of stored variables
+ */
 export type VariablesMap = { [id: string]: ParsedToken };
 
 /**
  * Stores all the data of the code environment. Can run single actions.
  */
 export class CodeEnvironment {
+    /**
+     * Anything outputted during the program execution
+     */
     output: string[];
+
+    /**
+     * The state of the variables
+     */
     variables: VariablesMap;
+
+    /**
+     * The line number, for error reporting purposes
+     */
     line: number;
+
+    /**
+     * The line currently running, for error reporting purposes
+     */
     lineExecuting?: LineOfCode;
 
     constructor() {
@@ -28,6 +49,13 @@ export class CodeEnvironment {
         this.line = 0;
     }
 
+    /**
+     * Returns the result of a given operation on two operands
+     * @param operand1 First operand
+     * @param operand2 Second operand
+     * @param operator Operator
+     * @returns Result
+     */
     operate(
         operand1: ParsedToken,
         operand2: ParsedToken,
@@ -44,14 +72,31 @@ export class CodeEnvironment {
     }
     
 
+    /**
+     * Return whether or there is a variable that has been defined with the given name
+     * @param name Variable name
+     * @returns Whether or not it exists
+     */
     variableExistsByName(name: string): boolean {
         return this.variables[name] !== undefined;
     }
 
+    /**
+     * Returns the variable value with a given name in the variable map
+     * @param name Variable name
+     * @returns Variable value
+     */
     getVariableValueByName(name: string): ParsedToken {
         return this.variables[name];
     }
 
+    /**
+     * Returns the value of a variable which a variable token has referenced.
+     * If the token is not a variable, its value is returned. Otherwise, its
+     * respective value is returned.
+     * @param variableToken Variable token call
+     * @returns Variable value
+     */
     getVariableValue(variableToken: ParsedToken): ParsedToken {
         if (variableToken.tokenType === TokenType.VARIABLE) {
             const isIn = variableToken.parsedContent in this.variables;
@@ -61,10 +106,19 @@ export class CodeEnvironment {
         return variableToken;
     }
 
+    /**
+     * Sets the variable with a variable's name to a given value
+     * @param variableReferenceToken Variable token vall
+     * @param value New variable value
+     */
     setVariableValue(variableReferenceToken: ParsedToken, value: ParsedToken) {
         this.variables[variableReferenceToken.parsedContent] = value;
     }
 
+    /**
+     * Adds the compiled values of each value token to the output list
+     * @param values Values to print
+     */
     print(values: ParsedToken[]) {
         const parsedValues = values.map((v) =>
             this.getVariableValue(v).parsedContent
@@ -91,6 +145,10 @@ export class CodeEnvironment {
         }
     }
 
+    /**
+     * Sets the value of a variable to its value operated with another.
+     * @param values A list of tokens containing the variable, the operator, and the operand
+     */
     opeq(values: ParsedToken[]) {
         const [variableReference, operator, valueUnsafe, ..._] = [...values];
         const value = this.getVariableValue(valueUnsafe);
@@ -103,6 +161,12 @@ export class CodeEnvironment {
         this.setVariableValue(variableReference, res);
     }
 
+    /**
+     * Runs nested code representing an if statement, if the values as an expression return a truthy value
+     * @param values The variable to check
+     * @param nest_1 The comparator to run
+     * @param nest_2 The value to check the variable against
+     */
     if(values: ParsedToken[], nest_1?: LineOfCode[], nest_2?: LineOfCode[]) {
         const [variable, comparator, value, ..._] = [...values];
         const result = this.operate(variable, value, comparator);
@@ -117,6 +181,11 @@ export class CodeEnvironment {
         }
     }
 
+    /**
+     * Runs code repeatedly while an expression is true
+     * @param values The for expression
+     * @param nest The code to run each iteration
+     */
     loop(values: ParsedToken[], nest?: LineOfCode[]) {
         const [
             value1Unsafe,
@@ -147,6 +216,11 @@ export class CodeEnvironment {
         }
     }
 
+    /**
+     * Runs code repeatedly following a for loop expression
+     * @param values For loop expression
+     * @param nest_1 Code to run in the loop
+     */
     for(values: ParsedToken[], nest_1?: LineOfCode[]) {
         const [
             setRef,
@@ -176,6 +250,12 @@ export class CodeEnvironment {
         this.execute(macroCode);
     }
 
+    /**
+     * Replaces variable expressions to their value at that state,
+     * to more simply be executed, sort of like a JIT compilation
+     * @param code Code to compile
+     * @returns Compiled code
+     */
     compile(code: LineOfCode[]): LineOfCode[] {
         const compiled: LineOfCode[] = [];
         for (const line of code) {
@@ -216,6 +296,10 @@ export class CodeEnvironment {
         return compiled;
     }
 
+    /**
+     * Executes the given code and modifies the state of the environment
+     * @param code Code to run
+     */
     execute(code: LineOfCode[]) {
         const compiledCode = this.compile(code);
         try {
@@ -253,6 +337,15 @@ export class CodeEnvironment {
     }
 }
 
+/**
+ * Shorthand for creation of a line of code. Creates a line of code
+ * with the given action, and the unparsed values split by string
+ * @param action The action to run
+ * @param valuesUnparsed The values to give to the action, split by string
+ * @param nest_1 The nested code (loops, if true)
+ * @param nest_2 The nesteed code (else)
+ * @returns A line of code containing the action
+ */
 export function $(
     action: string,
     valuesUnparsed: string,

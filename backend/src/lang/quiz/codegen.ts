@@ -190,7 +190,7 @@ export function codeToJava(code: LineOfCode[], depth = 0): string {
             }
         } else if (line.action === "opeq") {
             ans += pref +
-                `${vals[0].toJavaString()}${vals[1].toJavaString()}=${
+                `${vals[0].toJavaString()} ${vals[1].toJavaString()}= ${
                     vals[2].toJavaString()
                 };\n`;
         }

@@ -1,6 +1,6 @@
 
 <div class="footer">
-    <p class="footer-p">Nate Levison 2025</p>
+    <p class="footer-p">&copy; Nate Levison 2025</p>
     <p class="footer-p mb-2">Licensed under CC BY-NC-SA</p>
     <p class="footer-p">
         <a class="footer-a" href="./admin" target="_blank">Teachers</a>

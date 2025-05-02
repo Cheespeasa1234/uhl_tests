@@ -1,3 +1,6 @@
+/**
+ * The type of a token
+ */
 export enum TokenType {
     VALUE = "VALUE",
     OPERATOR = "OPERATOR",
@@ -5,6 +8,9 @@ export enum TokenType {
     FUNCTION = "FUNCTION",
 }
 
+/**
+ * The data type of a value token
+ */
 export enum ValueTokenType {
     NUMBER = "NUMBER",
     STRING = "STRING",
@@ -20,27 +26,36 @@ export const identifier: Record<string, ValueTokenType> = {
     "'": ValueTokenType.STRING,
 }
 
+/**
+ * The type of operator
+ */
 export enum OperatorTokenType {
-    ADD = "ADD",
-    SUB = "SUB",
-    MUL = "MUL",
-    DIV = "DIV",
-    MOD = "MOD",
-    AND = "AND",
-    OR = "OR",
-    GT = "GT",
-    LT = "LT",
-    GTE = "GTE",
-    LTE = "LTE",
-    EQ = "EQ",
-    NEQ = "NEQ",
+    ADD = "ADD",    // Arithmetic
+    SUB = "SUB",    // Arithmetic
+    MUL = "MUL",    // Arithmetic
+    DIV = "DIV",    // Arithmetic
+    MOD = "MOD",    // Arithmetic
+    AND = "AND",    // Comparator
+    OR = "OR",      // Comparator
+    GT = "GT",      // Comparator
+    LT = "LT",      // Comparator
+    GTE = "GTE",    // Comparator
+    LTE = "LTE",    // Comparator
+    EQ = "EQ",      // Comparator
+    NEQ = "NEQ",    // Comparator
 }
 
+/**
+ * The type of a variable
+ */
 export enum VariableTokenType {
-    VALUE = "VALUE",
-    REFERENCE = "REFERENCE",
+    VALUE = "VALUE", // Can be compiled, not reactive
+    REFERENCE = "REFERENCE", // Should not be compiled, state may be modified by actions
 }
 
+/**
+ * The type of a function
+ */
 export enum FunctionTokenType {
     substring = "substring",
     charAt = "charAt",
