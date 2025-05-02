@@ -6,6 +6,7 @@
 
     import "./style.css";
     import ConfirmModal from "./components/modal/ConfirmModal.svelte";
+    import Footer from "./components/Footer.svelte";
 
     let cookiePopupModal: ConfirmModal;
     let submissionConfirmModal: ConfirmModal;
@@ -112,6 +113,7 @@
 
         // Konami code detector and page switcher (DEV)
         const enablePageSwitcher = false;
+        const enableKonami = false;
         const nums = "0123456789".split("");
         let konamiCode = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
         let recentKeys = [];
@@ -123,13 +125,15 @@
                 }
             }
 
-            recentKeys.push(event.key);
-            if (recentKeys.length > konamiCode.length) {
-                recentKeys.shift();
-            }
-            if (JSON.stringify(recentKeys) === JSON.stringify(konamiCode)) {
-                showNotifToast({ success: true, message: "Konami code detected!" });
-                window.open("./admin", "_blank")?.focus();
+            if (enableKonami) {
+                recentKeys.push(event.key);
+                if (recentKeys.length > konamiCode.length) {
+                    recentKeys.shift();
+                }
+                if (JSON.stringify(recentKeys) === JSON.stringify(konamiCode)) {
+                    showNotifToast({ success: true, message: "Konami code detected!" });
+                    window.open("./admin", "_blank")?.focus();
+                }
             }
         });
     });
@@ -309,3 +313,5 @@
         <button class="btn btn-outline-primary" bind:this={submitTestBtn} onclick={submissionPopupOpen}>Submit</button>
     </div>
 </div>
+
+<Footer />

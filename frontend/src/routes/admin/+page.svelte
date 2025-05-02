@@ -11,6 +11,7 @@
     import SelectPresetModal from "../components/modal/SelectPresetModal.svelte";
     import { showNotifToast } from "$lib/popups";
     import TestCodeInputs from "../components/TestCodeInputs.svelte";
+    import Footer from "../components/Footer.svelte";
 
     // The first row of a table of the google form.
     const googleFormHeader = [
@@ -419,37 +420,7 @@
 
                 </div>
             </div>
-
-        <!-- </div> -->
-
     </div>
 </div>
 
-<style>
-    @keyframes blink {
-        0% {
-            opacity: 1;
-            transform: scale(1);
-        }
-        100% {
-            opacity: 0.4;
-            transform: scale(0.75);
-        }
-    }
-
-    .blink {
-        animation: blink 1s ease-in-out infinite alternate;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        margin-right: 7px;
-    }
-
-    .green {
-        background: green;
-    }
-
-    .red {
-        background: red;
-    }
-</style>
+<Footer />
