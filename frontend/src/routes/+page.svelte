@@ -3,6 +3,7 @@
     import { postJSON, getJSON } from "$lib/util";
     import { onMount } from "svelte";
     import TestQuestion from "./components/TestQuestion.svelte";
+    import Timer from "./components/Timer.svelte";
 
     import "./style.css";
     import ConfirmModal from "./components/modal/ConfirmModal.svelte";
@@ -24,6 +25,7 @@
 
     let testQuestions: any[] = $state([]);
     let testQuestionEls: TestQuestion[] = $state([]);
+    let timer: Timer;
     let previewTestName: string = $state("");
     let previewTestMins: number = $state(0);
     let previewTestCount: number = $state(0);
@@ -77,6 +79,7 @@
                     if (success) {
                         submissionAnswerCode = answerCode;
                         submissionFormUrl = formUrl;
+                        localStorage.removeItem("testData");
                     }
                     submissionPopupModal.show(() => {});
                     clearDocument();
@@ -115,7 +118,7 @@
         }
 
         // Konami code detector and page switcher (DEV)
-        const enablePageSwitcher = false;
+        const enablePageSwitcher = true;
         const enableKonami = false;
         const nums = "0123456789".split("");
         let konamiCode = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
@@ -188,9 +191,11 @@
             setPage(2);
 
             const { questions, student, timeStarted, timeToEnd } = data;
+            localStorage.setItem("testData", JSON.stringify(data));
             showNotifToast({ success: true, message: `Test started: ${timeStarted}<br>Time ends: ${timeToEnd}` });
             studentSelf = student;
             testQuestions = questions;
+            timer.setTimeEnd(timeToEnd);
         });
     }
 </script>
@@ -261,6 +266,8 @@
         <div>
             <button disabled={!agree || nameInputValue === "" || testCodeInputValue === ""} class="btn btn-primary" bind:this={takeTestBtn} onclick={previewTest} id="take-test">Submit</button>
         </div>
+
+        <Footer />
     </div>
 
     <div bind:this={page1} style="display: none">
@@ -299,13 +306,19 @@
     </div>
 
     <div bind:this={page2} style="display: none">
-        <h2>Quiz</h2>
+        <div>
+            <div class="d-flex" style="gap: 2px;">
+                <div class="h3 m-0 mr-2">Quiz</div>
+                <div class="m-0"> <Timer bind:this={timer}/> </div>
+            </div>
+        </div>
         <div>
             {#if !testQuestions || testQuestions.length == 0}
                 <div>Please request a quiz first.</div>
             {:else}
                 {#each testQuestions as question, index}
                     <div>
+                        <span class="h5 mb-1 mt-3">Question {index + 1}</span>
                         <TestQuestion bind:this={testQuestionEls[index]} questionString={question.questionString} descriptor={question.descriptor} />
                     </div>
                 {/each}
@@ -329,5 +342,3 @@
         <button class="btn btn-outline-primary" bind:this={submitTestBtn} onclick={submissionPopupOpen}>Submit</button>
     </div>
 </div>
-
-<Footer />

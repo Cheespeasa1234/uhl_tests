@@ -284,7 +284,6 @@
         <h2 class="float-none w-auto">Sign In</h2>
         <div class="input-group">
             <span class="input-group-text">Password</span>
-            <!-- <label for="password" class="form-label">Password</label> -->
             <input bind:value={passwordInputValue} type="password" class="form-control">
         </div>
         <button onclick={loginButtonClick} class="btn btn-primary">Login</button>
@@ -422,5 +421,3 @@
             </div>
     </div>
 </div>
-
-<Footer />

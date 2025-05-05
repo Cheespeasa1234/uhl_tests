@@ -18,15 +18,9 @@
         return text.length > 0;
     }
 </script>
-<div>
-    <div>
-        <div bind:this={side}></div>
-        
-        <div>
-            <h2>Question n</h2>
-            <h3>{descriptor}</h3>
-        </div>
-
+<div class="card p-3">
+    <div class="d-flex mb-2" style="align-items: center">
+        <span class="h6 m-0">{descriptor}</span>
         <button class="bookmark-btn" onclick={() => { bookmarked = !bookmarked }}>
             {#if bookmarked}
                 <i class="fa-solid fa-bookmark"></i>
@@ -36,22 +30,19 @@
                 THIS WILL NEVER HAPPEN.
             {/if}
         </button>
+    </div>
         
-    </div>
-    <div>
-        <pre>{questionString}</pre>
-    </div>
-    <textarea bind:value={text} class="answer-textarea"></textarea>
+    <pre class="card p-2">{questionString}</pre>
+
+    <textarea placeholder="Your answer" bind:value={text} class="card p-1"></textarea>
 </div>
 
 <style>
     .bookmark-btn {
-        border: 2px solid lightgray;
-        border-left: none;
-        background: white;
-        font-size: 2em;
+        border: none;
+        background: none;
+        font-size: 1em;
         font-weight: 100;
-        width: 2.5em;
     }
 
     .fa-bookmark {
