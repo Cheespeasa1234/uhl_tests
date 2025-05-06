@@ -62,7 +62,6 @@
     function submissionPopupOpen() {
         submissionConfirmModal.show(success => {
             if (success) {
-                submitTestBtn.disabled = true;
                 const answers = [];
                 for (const question of testQuestionEls) {
                     answers.push(question.getResponse());
@@ -82,7 +81,6 @@
                     }
                     submissionPopupModal.show(() => {});
                     clearDocument();
-                    submitTestBtn.disabled = false;
                 });     
             }
         });

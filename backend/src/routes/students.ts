@@ -269,6 +269,10 @@ router.post("/submit-test", (req: Request, res: Response) => {
     Submission.create(data);
 
     addNotification({ message: `Test just submitted by ${name}`, success: true });
+    res.status(HTTP.SUCCESS.OK).json({
+        success: true,
+        message: "Successfully submitted test"
+    });
 });
 
 router.post("/check-auth", (req: Request, res: Response) => {
