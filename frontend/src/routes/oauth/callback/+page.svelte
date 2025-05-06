@@ -17,6 +17,11 @@
             const res = await postJSON("/api/testing/oauth-token", {
                 code
             });
+
+            if (res.success) {
+                console.log(res.data);
+                window.location.href = "/";
+            }
         }
     });
 

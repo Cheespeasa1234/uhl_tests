@@ -6,7 +6,7 @@ import cookieParser from "npm:cookie-parser";
 import crypto from "node:crypto";
 
 import { GoogleResponse, getResponses, gradeStudent, getGoogleFormResponses } from "../analyze_responses.ts";
-import { getActiveSessions, manualConfigs, presetManager } from "./students.ts";
+import { manualConfigs, presetManager } from "./students.ts";
 import { retrieveNotifications } from "../lib/notifications.ts";
 import { logDebug, logInfo, logWarning } from "../lib/logger.ts";
 import { HCST_ADMIN_PASSWORD, HCST_FORM_URL } from "../lib/env.ts";
@@ -77,17 +77,6 @@ router.post("/get_session_id", (req: Request, res: Response) => {
                 message: "pass is not equal to secret. pass: "+ pass
             });
     }
-});
-
-router.get("/sessions", checkSidMiddleware, (_req: Request, res: Response) => {
-    logInfo("admin/session", "Fetching active sessions");
-    return res.json({
-        success: true,
-        message: "Successfully fetched sessions",
-        data: {
-            sessions: getActiveSessions()
-        }
-    });
 });
 
 router.get("/google_form", checkSidMiddleware, async (_req: Request, res: Response) => {

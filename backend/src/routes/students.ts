@@ -5,7 +5,7 @@ import bodyParser from "npm:body-parser";
 import cookieParser from "npm:cookie-parser";
 import crypto from "node:crypto";
 
-import { Quiz, Student } from "../lang/quiz/quiz.ts";
+import { Quiz } from "../lang/quiz/quiz.ts";
 import { makeTest } from "../lang/quiz/codegen.ts";
 import { PresetManager } from "../lib/config.ts";
 import { addNotification } from "../lib/notifications.ts";
@@ -13,6 +13,7 @@ import { logInfo, logWarning } from "../lib/logger.ts";
 import { HTTP } from "../lib/http.ts";
 import { HCST_FORM_URL, HCST_OAUTH_CLIENT_ID, HCST_OAUTH_CLIENT_SECRET, HCST_OAUTH_REDIRECT_URI } from "../lib/env.ts";
 import { Test, Submission, Preset, parsePresetData, PresetData, ConfigValueType } from "../lib/db.ts";
+import { addSession, getSessionBySid, removeSession, Session } from "./sessions.ts";
 
 export const router = express.Router();
 
@@ -35,19 +36,6 @@ router.use((req: Request, res: Response, next: NextFunction) => {
     }
 });
 
-type Session = {
-    student: Student,
-    quiz: Quiz,
-    timeStarted: Date,
-    timeToEnd: Date | null,
-};
-
-const activeSessions: {[id:string]: (Session | undefined)} = {};
-export function getActiveSessions(): typeof activeSessions {
-    logInfo("testing/sessions", "Fetching active sessions");
-    return activeSessions;
-}
-
 export const presetManager: PresetManager = new PresetManager();
 export const manualConfigs: Map<string, boolean | number> = new Map();
 manualConfigs.set("enableStudentTesting", true); // TODO
@@ -62,15 +50,6 @@ router.post("/test-info", async (req: Request, res: Response) => {
             message: "Testing disabled."
         });
         addNotification({ message: `Student tried to start a test, but it was disabled`, success: true });
-        return;
-    }
-
-    const name = req.body['name'];
-    if (!name) {
-        res.json({
-            success: false,
-            message: "No name provided"
-        });
         return;
     }
 
@@ -155,23 +134,20 @@ router.post("/new-test", async (req: Request, res: Response) => {
         return;
     }
 
-    const name = req.body['name'];
-    if (!name) {
-        res.json({
+    const sidCookie = req.cookies["HCST_SID"];
+    if (sidCookie === undefined) {
+        res.status(HTTP.CLIENT_ERROR.UNAUTHORIZED).json({
             success: false,
-            message: "No name provided"
+            message: "No HCST_SID cookie provided",
         });
-        return;
     }
-
-    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(name);
-    if (!isValidEmail) {
-        res
-            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
-            .json({
-                success: false,
-                message: "Invalid email"
-            });
+    
+    const sess: Session | undefined = getSessionBySid(sidCookie);
+    if (sess === undefined) {
+        res.status(HTTP.CLIENT_ERROR.UNAUTHORIZED).json({
+            success: false,
+            message: "Invalid HCST_SID",
+        });
         return;
     }
 
@@ -208,7 +184,7 @@ router.post("/new-test", async (req: Request, res: Response) => {
     }
 
     const timeStarted = new Date();
-    let timeToEnd: Date | null = null;
+    let timeToEnd: Date | undefined = undefined;
     if (manualConfigs.get("enableTimeLimit")) {
         const timeLimitMillis = (manualConfigs.get("timeLimit") as number) * 60 * 1000;
         const newTime = timeStarted.getTime() + timeLimitMillis;
@@ -219,85 +195,62 @@ router.post("/new-test", async (req: Request, res: Response) => {
         timeToEnd,
         testGroup
     );
-    const student = new Student(name);
-    
-    const session: Session = { student, quiz, timeStarted, timeToEnd };
-    activeSessions[student.name] = session;
+
+    sess.data = {
+        quiz: quiz,
+        timeStarted: timeStarted,
+        timeToEnd: timeToEnd
+    }
 
     res.json({
         success: true,
         message: "Successfully created test",
         data: {
             questions: quiz.getCensoredQuestions(),
-            student,
             timeStarted,
             timeToEnd
         }
     });
 
-    addNotification({ message: `Created a new test for ${student.name}`, success: true });
+    addNotification({ message: `Created a new test for ${sess.email}`, success: true });
 });
 
 router.post("/submit-test", (req: Request, res: Response) => {
     
+    const sidCookie = req.cookies["HCST_SID"];
+    const session = getSessionBySid(sidCookie);
+
     // Check that all the form data exists
-    const { studentSelf, answers } = req.body;
-    if (!studentSelf) {
-        res.json({ success: false, message: `No studentSelf provided.` });
-        return;
-    }
+    const { answers } = req.body;
     if (!answers) {
         res.json({ success: false, message: "No answers provided" });
         return;
     }
-    const { name, privateKey }: { name: string, privateKey: string } = studentSelf;
-    if (!name) {
-        res.json({ success: false, message: "No studentSelf.name provided" });
-        return;
-    }
-    if (!privateKey) {
-        res.json({ success: false, message: "No studentSelf.privateKey provided" });
-        return;
-    }
 
     // make sure they are who they say they are
-    const session = activeSessions[name];
-    if (!session) {
+    if (session === undefined) {
         res.json({ success: false, message: `Session for ${name} not found` });
         return;
     }
-    if (privateKey !== session.student.privateKey) {
-        res.json({ success: false, message: `privateKey ${privateKey} does not match the session` });
+
+    if (session.data === undefined) {
+        res.status(HTTP.CLIENT_ERROR.BAD_REQUEST).json({ success: false, message: `Session has no quiz to submit` });
         return;
     }
 
     // make sure they sent the right amount of answers
-    if (answers.length !== session.quiz.questions.length) {
-        res.json({ success: false, message: `not enough answers sent. recieved ${answers} but requires ${session.quiz.questions.length} many` });
+    if (answers.length !== session.data.quiz.questions.length) {
+        res.json({ success: false, message: `not enough answers sent. recieved ${answers} but requires ${session.data.quiz.questions.length} many` });
         return;
     }
 
     // remove them from the sessions
-    activeSessions[name] = undefined;
-
-    const answerCode = crypto.randomBytes(8).toString("hex");
-    res.json({ success: true, message: "Test submitted.", data: {
-        formUrl: HCST_FORM_URL,
-        answerCode: answerCode,
-    }});
+    removeSession(session);
 
     const responseBlob = {
         answers: answers,
-        quiz: session.quiz,
+        quiz: session.data.quiz,
     };
-
-    // console.log(responseBlob);
-    // console.log(JSON.stringify(responseBlob));
-    // console.log(sanitizeForCSV(JSON.stringify(responseBlob)));
-
-    function sanitizeForCSV(text: string) {
-        return text.replaceAll(",", "~c").replaceAll("\"", "~q").replaceAll("\n", "");
-    }
 
     // Log the answers to the user's identity
     const timeStart = responseBlob.quiz.timeStarted;
@@ -306,8 +259,6 @@ router.post("/submit-test", (req: Request, res: Response) => {
     
     const data = {
         email: name,
-        idCookie: session.student.privateKey,
-        answerCode,
         responseBlob: JSON.stringify(responseBlob),
         testId: responseBlob.quiz.testGroup.id,
         timeStart: timeStart.toISOString(),
@@ -318,6 +269,36 @@ router.post("/submit-test", (req: Request, res: Response) => {
     Submission.create(data);
 
     addNotification({ message: `Test just submitted by ${name}`, success: true });
+});
+
+router.post("/check-auth", (req: Request, res: Response) => {
+    const sid = req.body["HCST_SID"];
+    console.log(req.body);
+    if (sid === undefined) {
+        res.json({
+            success: false,
+            message: "Not signed in", 
+        });
+        return;
+    }
+
+    const sess = getSessionBySid(sid);
+    if (sess === undefined) {
+        res.json({
+            success: false,
+            message: "No session id",
+        });
+        return;
+    }
+
+    res.json({
+        success: true,
+        message: "Signed in",
+        data: {
+            email: sess.email,
+            name: sess.name,
+        }
+    });
 });
 
 router.post("/oauth-token", async (req: Request, res: Response) => {
@@ -349,6 +330,12 @@ router.post("/oauth-token", async (req: Request, res: Response) => {
     if (!response.ok) {
         const errorResponse = await response.json();
         console.error('Error fetching access token:', errorResponse);
+        res
+            .status(HTTP.SERVER_ERROR.INTERNAL_SERVER_ERROR)
+            .json({
+                success: false,
+                message: "Could not get access token",
+            })
         throw new Error(`Error: ${errorResponse.error} - ${errorResponse.error_description}`);
     }
 
@@ -368,9 +355,29 @@ router.post("/oauth-token", async (req: Request, res: Response) => {
     if (!emailResponse.ok) {
         const errorResponse = await emailResponse.json();
         console.error('Error fetching user info:', errorResponse);
+        res
+            .status(HTTP.SERVER_ERROR.INTERNAL_SERVER_ERROR)
+            .json({
+                success: false,
+                message: "Could not fetch user profile info",
+            })
         throw new Error(`Error: ${errorResponse.error} - ${errorResponse.error_description}`);
     }
     
     const userInfo = await emailResponse.json();
     console.log(userInfo);
+
+    // Make them an account session
+    const sessionId = crypto.randomBytes(16).toString("hex");
+    res.cookie("HCST_SID", sessionId, { maxAge: 1000 * 60 * 60, secure: true, path: "/" });
+    res.json({
+        success: true,
+        message: "Signed in",
+        data: {
+            sessionId
+        }
+    }); 
+
+    const session = new Session(sessionId, userInfo.email, userInfo.name);
+    addSession(session);
 });

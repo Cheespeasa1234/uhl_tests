@@ -198,7 +198,7 @@ export function codeToJava(code: LineOfCode[], depth = 0): string {
     return ans;
 }
 
-export async function makeTest(timeStarted: Date, timeToEnd: Date | null, testGroup: Test): Promise<Quiz> {
+export async function makeTest(timeStarted: Date, timeToEnd: Date | undefined, testGroup: Test): Promise<Quiz> {
 
     const preset: Preset | null = await Preset.findByPk(testGroup.presetId);
     if (!preset) throw new Error("That preset doesn't exist");

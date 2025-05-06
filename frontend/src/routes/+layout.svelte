@@ -8,7 +8,8 @@
     import 'tippy.js/animations/scale.css';
     import Footer from "./components/Footer.svelte";
 
-    const { children } = $props();
+    const { data, children } = $props();
+    console.log("DATA:", data);
 
     let mounted: boolean = $state(false);
     onMount(() => {
@@ -28,10 +29,34 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </svelte:head>
 
-<div class="">
-    <div class="" style="display: {mounted ? "block" : "none"}">
-        {@render children()}
+<nav class="navbar navbar-expand-lg bg-body-tertiary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">Uhl Tests</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                {#if data.signedIn}
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/test">Take Test</a>
+                    </li>
+                {/if}
+                <li class="nav-item">
+                    <a class="nav-link active" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" target="_blank" href="https://github.com/Cheespeasa1234/uhl_tests">GitHub</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" target="_blank" href="https://natelevison.com">More</a>
+                </li>
+            </ul>
+        </div>
     </div>
+</nav>
+<div style="display: {mounted ? "block" : "none"}">
+    {@render children()}
 </div>
 
 <Toaster />
