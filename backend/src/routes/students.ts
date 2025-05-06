@@ -11,7 +11,7 @@ import { PresetManager } from "../lib/config.ts";
 import { addNotification } from "../lib/notifications.ts";
 import { logInfo, logWarning } from "../lib/logger.ts";
 import { HTTP } from "../lib/http.ts";
-import { HCST_FORM_URL } from "../lib/env.ts";
+import { HCST_FORM_URL, HCST_OAUTH_CLIENT_ID, HCST_OAUTH_CLIENT_SECRET, HCST_OAUTH_REDIRECT_URI } from "../lib/env.ts";
 import { Test, Submission, Preset, parsePresetData, PresetData, ConfigValueType } from "../lib/db.ts";
 
 export const router = express.Router();
@@ -318,4 +318,59 @@ router.post("/submit-test", (req: Request, res: Response) => {
     Submission.create(data);
 
     addNotification({ message: `Test just submitted by ${name}`, success: true });
+});
+
+router.post("/oauth-token", async (req: Request, res: Response) => {
+    const code = req.body["code"];
+    if (code === undefined) {
+        res.status(HTTP.CLIENT_ERROR.BAD_REQUEST).json({
+            success: false,
+            message: "No code provided",
+        })
+    }
+
+    const url = "https://oauth2.googleapis.com/token";
+    const params = new URLSearchParams({
+        grant_type: "authorization_code",
+        code,
+        client_id: HCST_OAUTH_CLIENT_ID,
+        client_secret: HCST_OAUTH_CLIENT_SECRET,
+        redirect_uri: HCST_OAUTH_REDIRECT_URI,
+    }).toString();
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params,
+    });
+
+    if (!response.ok) {
+        const errorResponse = await response.json();
+        console.error('Error fetching access token:', errorResponse);
+        throw new Error(`Error: ${errorResponse.error} - ${errorResponse.error_description}`);
+    }
+
+    const r = await response.json();
+    console.log(r);
+    const access_token = r.access_token; // used to access the Google API
+    const refresh_token = r.refresh_token; // used to refresh the access token
+    const expires_in = r.expires_in; // used to know when to refresh the access token
+
+    const emailResponse = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${access_token}`,
+        },
+    });
+    
+    if (!emailResponse.ok) {
+        const errorResponse = await emailResponse.json();
+        console.error('Error fetching user info:', errorResponse);
+        throw new Error(`Error: ${errorResponse.error} - ${errorResponse.error_description}`);
+    }
+    
+    const userInfo = await emailResponse.json();
+    console.log(userInfo);
 });
