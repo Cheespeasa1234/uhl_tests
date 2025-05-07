@@ -185,7 +185,7 @@
 </script>
 
 <svelte:head>
-    <title>Students | Uhl Tests</title>
+    <title>Testing | Uhl Tests</title>
 </svelte:head>
 
 <ConfirmModal showCancel bind:this={submissionConfirmModal}>
@@ -215,7 +215,7 @@
 
 <div class="p-3 mt-3" style="margin: auto; max-width: 50%;">
     <div bind:this={page0} style="display: none">
-        <h2>{data.session.name}, lock in.</h2>
+        <h2>{data.session ? data.session.name : "Anon"}, lock in.</h2>
         <form class="row g-3 mb-2">
             <div class="col-md-6">
                 <label for="inputTc" class="form-label">Test Code</label>

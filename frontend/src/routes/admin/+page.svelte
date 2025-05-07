@@ -13,14 +13,6 @@
     import TestCodeInputs from "../components/TestCodeInputs.svelte";
     import Footer from "../components/Footer.svelte";
 
-    // The first row of a table of the google form.
-    const googleFormHeader = [
-        { key: "timestamp", name: "Timestamp" },
-        { key: "email", name: "Email" },
-        { key: "answerCode", name: "Answer Code" },
-        { key: "rating", name: "Difficulty Rating" },
-    ];
-
     // The first row of a table of the student responses.
     const testProgramHeader = [
         { key: "email", name: "Email" },
@@ -54,7 +46,6 @@
     
     // Run when access is granted to the administrator panel, after mount
     async function onSignIn() {
-        googleFormTable.refresh();
         testProgramTable.refresh();
 
         enableTestingInputValue = Boolean(await getManualConfig("enableStudentTesting"));
@@ -392,7 +383,6 @@
                 </div>
                 <div class="tab-pane fade" id="nav-p2" role="tabpanel" aria-labelledby="nav-p2-tab">
 
-                    <DataDisplayTable row_heads={googleFormHeader} name="Google form table" url="./api/grading/google_form" bind:this={googleFormTable} />
                     <DataDisplayTable row_heads={testProgramHeader} name="Quiz submissions table" url="./api/grading/test_program" bind:this={testProgramTable} />
 
                 </div>

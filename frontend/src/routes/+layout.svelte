@@ -9,9 +9,7 @@
     import Footer from "./components/Footer.svelte";
 
     const { data, children } = $props();
-    console.log("DATA:", data);
 
-    let mounted: boolean = $state(false);
     onMount(() => {
         // Take all elements with a data attribute `data-tippy-content` and set the tooltip with tippy
         tippy("[data-tippy-content]", {
@@ -19,8 +17,6 @@
             inertia: true,
             animation: "scale",
         });
-        mounted = true;
-        toast.success("Mounted");
     });
 </script>
 
@@ -55,7 +51,7 @@
         </div>
     </div>
 </nav>
-<div style="display: {mounted ? "block" : "none"}">
+<div>
     {@render children()}
 </div>
 
