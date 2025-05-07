@@ -18,9 +18,11 @@ export class Session {
     }
 }
 
-const sessionList: Array<Session> = [];
+let sessionList: Array<Session> = [];
 
 export function addSession(s: Session) {
+    // Find and remove any duplicates
+    sessionList = sessionList.filter(session => session.sessionId !== s.sessionId && session.email !== s.email);
     sessionList.push(s);
 }
 

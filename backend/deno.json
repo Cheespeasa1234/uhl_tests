@@ -2,17 +2,17 @@
   "tasks": {
 
     "dev": {
-      "command": "DEV=1 deno run --allow-all --watch src/main.ts",
+      "command": "deno run --allow-all --watch src/main.ts",
       "description": "Run the development server"
     },
 
     "start": {
-      "command": "DEV=0 deno run --allow-all src/main.ts",
+      "command": "deno run --allow-all src/main.ts",
       "description": "Run the production server"
     },
 
     "test": {
-      "command": "DEV=1 deno test --fail-fast"
+      "command": "deno test --fail-fast"
     },
 
     "seedDb": {

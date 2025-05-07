@@ -258,7 +258,7 @@ router.post("/submit-test", (req: Request, res: Response) => {
     const due = (responseBlob.quiz.timeToEnd || new Date());
     
     const data = {
-        email: name,
+        email: session.name,
         responseBlob: JSON.stringify(responseBlob),
         testId: responseBlob.quiz.testGroup.id,
         timeStart: timeStart.toISOString(),

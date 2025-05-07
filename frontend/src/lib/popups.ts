@@ -3,7 +3,7 @@
  */
 
 import { toast } from "svelte-hot-french-toast";
-import { type API_Response } from "./util.ts";
+import { type API_Response } from "./util";
 
 /**
  * Displays the information from an API response to the screen using svelte-hot-french-toast.

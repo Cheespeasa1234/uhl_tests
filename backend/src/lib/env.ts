@@ -12,7 +12,7 @@ export const HCST_OAUTH_CLIENT_SECRET: string = getEnv("HCST_OAUTH_CLIENT_SECRET
 export const HCST_OAUTH_REDIRECT_URI: string = getEnv("HCST_OAUTH_REDIRECT_URI");
 
 export function getEnv(key: string): string {
-    const env = loadSync({ envPath: ".env" });
+    const env = loadSync({ envPath: "../.env" });
     const value = env[key];
     if (value === undefined) {
         logError("env", `Key ${key} is not set`);
