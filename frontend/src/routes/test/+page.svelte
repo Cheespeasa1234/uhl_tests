@@ -31,8 +31,18 @@
     let previewTestCount: number = $state(0);
     let previewTestLimEnabled: boolean = $state(false);
 
-    let bookmarkCount: number = $derived(testQuestionEls.reduce((sum, item) => sum + (item.getBookmarked() ? 1 : 0), 0));
-    let completeCount: number = $derived(testQuestionEls.reduce((sum, item) => sum + (item.getComplete() ? 1 : 0), 0));
+    let bookmarkCount: number = $derived(
+        testQuestionEls.reduce(
+            (sum, item) => sum + (item.getBookmarked() ? 1 : 0),
+            0,
+        ),
+    );
+    let completeCount: number = $derived(
+        testQuestionEls.reduce(
+            (sum, item) => sum + (item.getComplete() ? 1 : 0),
+            0,
+        ),
+    );
     let totalCount: number = $derived(testQuestionEls.length);
 
     let progress = $derived(completeCount / totalCount);
@@ -44,7 +54,7 @@
     let page1: HTMLDivElement;
     let page2: HTMLDivElement;
     let page3: HTMLDivElement;
-    
+
     function setPage(pageIndex: number) {
         let pages: HTMLDivElement[] = [page0, page1, page2, page3];
         if (pageIndex < 0 || pageIndex >= pages.length) return;
@@ -59,29 +69,32 @@
         } catch {}
     }
 
-    function submissionPopupOpen() {
-        submissionConfirmModal.show(success => {
-            if (success) {
-                const answers = [];
-                for (const question of testQuestionEls) {
-                    answers.push(question.getResponse());
-                }
+    async function changedAnAnswer() {
+        const answers = [];
+        for (const question of testQuestionEls) {
+            answers.push(question.getResponse());
+        }
+        await postJSON("./api/testing/sync-answers", {
+            answers: answers,
+        });
+    }
 
-                postJSON("./api/testing/submit-test", {
-                    "answers": answers,
-                }).then(json => {
-                    const { success, message, data } = json;
-                    const { answerCode, formUrl } = data;
-                    submissionSuccess = success;
-                    submissionMessage = message;
-                    if (success) {
-                        submissionAnswerCode = answerCode;
-                        submissionFormUrl = formUrl;
-                        localStorage.removeItem("testData");
-                    }
-                    submissionPopupModal.show(() => {});
-                    clearDocument();
-                });     
+    function submissionPopupOpen() {
+        submissionConfirmModal.show(async (success) => {
+            if (success) {
+                await changedAnAnswer()
+                const json = await getJSON("./api/testing/submit-test");
+                const { success, message, data } = json;
+                const { answerCode, formUrl } = data;
+                submissionSuccess = success;
+                submissionMessage = message;
+                if (success) {
+                    submissionAnswerCode = answerCode;
+                    submissionFormUrl = formUrl;
+                    localStorage.removeItem("testData");
+                }
+                submissionPopupModal.show(() => {});
+                clearDocument();
             }
         });
     }
@@ -109,7 +122,18 @@
         const enablePageSwitcher = false;
         const enableKonami = false;
         const nums = "0123456789".split("");
-        let konamiCode = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
+        let konamiCode = [
+            "ArrowUp",
+            "ArrowUp",
+            "ArrowDown",
+            "ArrowDown",
+            "ArrowLeft",
+            "ArrowRight",
+            "ArrowLeft",
+            "ArrowRight",
+            "b",
+            "a",
+        ];
         let recentKeys = [];
         document.addEventListener("keydown", (event) => {
             if (enablePageSwitcher) {
@@ -125,7 +149,10 @@
                     recentKeys.shift();
                 }
                 if (JSON.stringify(recentKeys) === JSON.stringify(konamiCode)) {
-                    showNotifToast({ success: true, message: "Konami code detected!" });
+                    showNotifToast({
+                        success: true,
+                        message: "Konami code detected!",
+                    });
                     window.open("./admin", "_blank")?.focus();
                 }
             }
@@ -165,8 +192,8 @@
     // Get a new test and place it on the screen
     function takeTest() {
         postJSON("./api/testing/new-test", {
-            "code": testCodeInputValue,
-        }).then(json => {
+            code: testCodeInputValue,
+        }).then((json) => {
             const { success, data } = json;
 
             if (!success) {
@@ -177,7 +204,10 @@
 
             const { questions, student, timeStarted, timeToEnd } = data;
             localStorage.setItem("testData", JSON.stringify(data));
-            showNotifToast({ success: true, message: `Test started: ${timeStarted}<br>Time ends: ${timeToEnd}` });
+            showNotifToast({
+                success: true,
+                message: `Test started: ${timeStarted}<br>Time ends: ${timeToEnd}`,
+            });
             testQuestions = questions;
             timer.setTimeEnd(timeToEnd);
         });
@@ -193,7 +223,10 @@
         <h2>Are you sure?</h2>
     {/snippet}
     {#snippet children()}
-        <p>Are you sure you want to submit the quiz? You will not be able to change your answers!</p>
+        <p>
+            Are you sure you want to submit the quiz? You will not be able to
+            change your answers!
+        </p>
     {/snippet}
 </ConfirmModal>
 
@@ -201,10 +234,16 @@
     {#snippet header()}
         <h2>Submission Complete</h2>
     {/snippet}
-    
+
     {#snippet children()}
         {#if submissionSuccess}
-            <p>Your responses have been submitted. Please copy your answer code. Then, submit it <a target="_blank" href={submissionFormUrl}>here</a>.</p>
+            <p>
+                Your responses have been submitted. Please copy your answer
+                code. Then, submit it <a
+                    target="_blank"
+                    href={submissionFormUrl}>here</a
+                >.
+            </p>
             <h3>Your answer code:</h3>
             <h2 id="answer-code-popup">{submissionAnswerCode}</h2>
         {:else}
@@ -219,22 +258,42 @@
         <form class="row g-3 mb-2">
             <div class="col-md-6">
                 <label for="inputTc" class="form-label">Test Code</label>
-                <input placeholder="practice2025" bind:value={testCodeInputValue} type="text" class="form-control" id="inputTc">
+                <input
+                    placeholder="practice2025"
+                    bind:value={testCodeInputValue}
+                    type="text"
+                    class="form-control"
+                    id="inputTc"
+                />
             </div>
         </form>
-        
+
         <div class="col-12">
             <div class="form-check">
-              <input bind:checked={agree} class="form-check-input" type="checkbox" id="gridCheck">
-              <label class="form-check-label" for="gridCheck">
-                I agree to the PHHS Testing Code of Conduct
-              </label>
+                <input
+                    bind:checked={agree}
+                    class="form-check-input"
+                    type="checkbox"
+                    id="gridCheck"
+                />
+                <label class="form-check-label" for="gridCheck">
+                    I agree to the PHHS Testing Code of Conduct
+                </label>
             </div>
-          </div>
+        </div>
 
-        <label class="mt-2 mb-2" for="take-test">Make sure you can sign in to this email, or your test results will be lost!</label>
+        <label class="mt-2 mb-2" for="take-test"
+            >Make sure you can sign in to this email, or your test results will
+            be lost!</label
+        >
         <div>
-            <button disabled={!agree || testCodeInputValue === ""} class="btn btn-primary" bind:this={takeTestBtn} onclick={previewTest} id="take-test">Submit</button>
+            <button
+                disabled={!agree || testCodeInputValue === ""}
+                class="btn btn-primary"
+                bind:this={takeTestBtn}
+                onclick={previewTest}
+                id="take-test">Submit</button
+            >
         </div>
     </div>
 
@@ -243,23 +302,39 @@
         <p>
             You have selected the test <b>{previewTestName}</b>.
             {#if previewTestLimEnabled}
-                You have been given <b>{previewTestMins} minutes</b> to complete this test.
+                You have been given <b>{previewTestMins} minutes</b> to complete
+                this test.
             {:else}
                 There is no time limit for this test.
             {/if}
             There will be <b>{previewTestCount} questions</b>.
         </p>
         <p>
-            When you begin, the timer will start. If you submit after the time limit, you will be marked as late and your final score may change. If you have any accommodations that apply, these can be taken into account.
+            When you begin, the timer will start. If you submit after the time
+            limit, you will be marked as late and your final score may change.
+            If you have any accommodations that apply, these can be taken into
+            account.
         </p>
         <p>
-            The questions will appear before you in order. Do not provide notes, extra commentary, or anything other than your exact answer in the answer boxes. This will cause your answer to be marked as <b>incorrect</b>. Include newlines, and ensure you do not leave any extra spaces or  tabs. <b>Capitalization matters</b>.
+            The questions will appear before you in order. Do not provide notes,
+            extra commentary, or anything other than your exact answer in the
+            answer boxes. This will cause your answer to be marked as <b
+                >incorrect</b
+            >. Include newlines, and ensure you do not leave any extra spaces or
+            tabs. <b>Capitalization matters</b>.
         </p>
         <p>
-            You can bookmark the question, and at the end of the page, you will be notified of each bookmarked question. At that point, you may go back and change your answer.
+            You can bookmark the question, and at the end of the page, you will
+            be notified of each bookmarked question. At that point, you may go
+            back and change your answer.
         </p>
         <p>
-            At the end of the page, you will be presented with icons for each question, that will tell you how many questions you've completed, and how many unresolved bookmarks you have. You can check how much time you have left, and if you have put an answer for every question, you can submit your test. At this point, your testing will conclude.
+            At the end of the page, you will be presented with icons for each
+            question, that will tell you how many questions you've completed,
+            and how many unresolved bookmarks you have. You can check how much
+            time you have left, and if you have put an answer for every
+            question, you can submit your test. At this point, your testing will
+            conclude.
         </p>
         <p>
             Select <b>Begin</b> to begin testing, and start the timer.
@@ -268,8 +343,13 @@
             Select <b>Cancel</b> to cancel, and go back to the main menu.
         </p>
         <div class="button-group">
-            <button class="btn btn-outline-secondary" onclick={takeTest}>Begin</button>
-            <button class="btn btn-outline-primary" onclick={() => clearDocument()} >Cancel</button>
+            <button class="btn btn-outline-secondary" onclick={takeTest}
+                >Begin</button
+            >
+            <button
+                class="btn btn-outline-primary"
+                onclick={() => clearDocument()}>Cancel</button
+            >
         </div>
     </div>
 
@@ -277,7 +357,7 @@
         <div>
             <div class="d-flex" style="gap: 2px;">
                 <div class="h3 m-0 mr-2">Quiz</div>
-                <div class="m-0"> <Timer bind:this={timer}/> </div>
+                <div class="m-0"><Timer bind:this={timer} /></div>
             </div>
         </div>
         <div>
@@ -287,16 +367,33 @@
                 {#each testQuestions as question, index}
                     <div>
                         <span class="h5 mb-1 mt-3">Question {index + 1}</span>
-                        <TestQuestion bind:this={testQuestionEls[index]} questionString={question.questionString} descriptor={question.descriptor} />
+                        <TestQuestion
+                            bind:this={testQuestionEls[index]}
+                            questionString={question.questionString}
+                            descriptor={question.descriptor}
+                            changedCb={changedAnAnswer}
+                        />
                     </div>
                 {/each}
-                <div class="progress" role="progressbar" aria-label="Basic example" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                    <div class="progress-bar" style="width: {progress * 100}%"></div>
+                <div
+                    class="progress"
+                    role="progressbar"
+                    aria-label="Basic example"
+                    aria-valuenow="0"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                >
+                    <div
+                        class="progress-bar"
+                        style="width: {progress * 100}%"
+                    ></div>
                 </div>
             {/if}
         </div>
         <div class="button-group">
-            <button class="btn btn-outline-primary" onclick={() => setPage(3)}>Review Answers</button>
+            <button class="btn btn-outline-primary" onclick={() => setPage(3)}
+                >Review Answers</button
+            >
         </div>
     </div>
 
@@ -306,7 +403,13 @@
             <div>{completeCount}/{totalCount} Completed</div>
             <div>{bookmarkCount} Bookmarked</div>
         </div>
-        <button class="btn btn-primary" onclick={() => setPage(2)}>Go Back</button>
-        <button class="btn btn-outline-primary" bind:this={submitTestBtn} onclick={submissionPopupOpen}>Submit</button>
+        <button class="btn btn-primary" onclick={() => setPage(2)}
+            >Go Back</button
+        >
+        <button
+            class="btn btn-outline-primary"
+            bind:this={submitTestBtn}
+            onclick={submissionPopupOpen}>Submit</button
+        >
     </div>
 </div>

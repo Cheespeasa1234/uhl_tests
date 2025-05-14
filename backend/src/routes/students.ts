@@ -10,7 +10,7 @@ import { makeTest } from "../lang/quiz/codegen.ts";
 import { PresetManager } from "../lib/config.ts";
 import { addNotification } from "../lib/notifications.ts";
 import { logInfo, logWarning } from "../lib/logger.ts";
-import { HTTP } from "../lib/http.ts";
+import { HTTP } from "../lib/util.ts";
 import { HCST_FORM_URL, HCST_OAUTH_CLIENT_ID, HCST_OAUTH_CLIENT_SECRET, HCST_OAUTH_REDIRECT_URI } from "../lib/env.ts";
 import { Test, Submission, Preset, parsePresetData, PresetData, ConfigValueType } from "../lib/db.ts";
 import { addSession, getSessionBySid, removeSession, Session } from "./sessions.ts";
@@ -140,10 +140,11 @@ router.post("/new-test", async (req: Request, res: Response) => {
             success: false,
             message: "No HCST_SID cookie provided",
         });
+        return;
     }
     
-    const sess: Session | undefined = getSessionBySid(sidCookie);
-    if (sess === undefined) {
+    const session: Session | undefined = getSessionBySid(sidCookie);
+    if (session === undefined) {
         res.status(HTTP.CLIENT_ERROR.UNAUTHORIZED).json({
             success: false,
             message: "Invalid HCST_SID",
@@ -184,7 +185,7 @@ router.post("/new-test", async (req: Request, res: Response) => {
     }
 
     const timeStarted = new Date();
-    let timeToEnd: Date | undefined = undefined;
+    let timeToEnd: Date = new Date(timeStarted.getTime() + 10000);
     if (manualConfigs.get("enableTimeLimit")) {
         const timeLimitMillis = (manualConfigs.get("timeLimit") as number) * 60 * 1000;
         const newTime = timeStarted.getTime() + timeLimitMillis;
@@ -196,7 +197,7 @@ router.post("/new-test", async (req: Request, res: Response) => {
         testGroup
     );
 
-    sess.data = {
+    session.activeQuiz = {
         quiz: quiz,
         timeStarted: timeStarted,
         timeToEnd: timeToEnd
@@ -212,61 +213,72 @@ router.post("/new-test", async (req: Request, res: Response) => {
         }
     });
 
-    addNotification({ message: `Created a new test for ${sess.email}`, success: true });
+    addNotification({ message: `Created a new test for ${session.email}`, success: true });
 });
 
-router.post("/submit-test", (req: Request, res: Response) => {
+router.post("/sync-answers", (req: Request, res: Response) => {
+
+    const sidCookie = req.cookies["HCST_SID"];
+    if (sidCookie === undefined) {
+        res.status(HTTP.CLIENT_ERROR.UNAUTHORIZED).json({
+            success: false,
+            message: "No HCST_SID cookie provided",
+        });
+        return;
+    }
+    
+    const session: Session | undefined = getSessionBySid(sidCookie);
+    if (session === undefined) {
+        res.status(HTTP.CLIENT_ERROR.UNAUTHORIZED).json({
+            success: false,
+            message: "Invalid HCST_SID",
+        });
+        return;
+    }
+
+    try {
+        session.syncQuiz(req.body["answers"]);
+    } catch (e) {
+        res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: (e as Error).message,
+            });
+        return;
+    }
+
+    res
+        .status(HTTP.SUCCESS.OK)
+        .json({
+            success: true,
+            message: "Successfully synced test"
+        });
+
+
+});
+
+router.get("/submit-test", (req: Request, res: Response) => {
     
     const sidCookie = req.cookies["HCST_SID"];
-    const session = getSessionBySid(sidCookie);
-
-    // Check that all the form data exists
-    const { answers } = req.body;
-    if (!answers) {
-        res.json({ success: false, message: "No answers provided" });
+    if (sidCookie === undefined) {
+        res.status(HTTP.CLIENT_ERROR.UNAUTHORIZED).json({
+            success: false,
+            message: "No HCST_SID cookie provided",
+        });
         return;
     }
-
-    // make sure they are who they say they are
-    if (session === undefined) {
-        res.json({ success: false, message: `Session for ${name} not found` });
-        return;
-    }
-
-    if (session.data === undefined) {
-        res.status(HTTP.CLIENT_ERROR.BAD_REQUEST).json({ success: false, message: `Session has no quiz to submit` });
-        return;
-    }
-
-    // make sure they sent the right amount of answers
-    if (answers.length !== session.data.quiz.questions.length) {
-        res.json({ success: false, message: `not enough answers sent. recieved ${answers} but requires ${session.data.quiz.questions.length} many` });
-        return;
-    }
-
-    // remove them from the sessions
-    removeSession(session);
-
-    const responseBlob = {
-        answers: answers,
-        quiz: session.data.quiz,
-    };
-
-    // Log the answers to the user's identity
-    const timeStart = responseBlob.quiz.timeStarted;
-    const timeSubmitted = new Date();
-    const due = (responseBlob.quiz.timeToEnd || new Date());
     
-    const data = {
-        email: session.email,
-        responseBlob: JSON.stringify(responseBlob),
-        testId: responseBlob.quiz.testGroup.id,
-        timeStart: timeStart.toISOString(),
-        timeSubmitted: timeSubmitted.toISOString(),
-        timeDue: due.toISOString(),
+    const session: Session | undefined = getSessionBySid(sidCookie);
+    if (session === undefined) {
+        res.status(HTTP.CLIENT_ERROR.UNAUTHORIZED).json({
+            success: false,
+            message: "Invalid HCST_SID",
+        });
+        return;
     }
 
-    Submission.create(data);
+    session.submitQuiz();
 
     addNotification({ message: `Test just submitted by ${name}`, success: true });
     res.status(HTTP.SUCCESS.OK).json({
@@ -276,21 +288,20 @@ router.post("/submit-test", (req: Request, res: Response) => {
 });
 
 router.post("/check-auth", (req: Request, res: Response) => {
-    const sid = req.body["HCST_SID"];
-    console.log(req.body);
-    if (sid === undefined) {
-        res.json({
+    const sidCookie = req.cookies["HCST_SID"];
+    if (sidCookie === undefined) {
+        res.status(HTTP.CLIENT_ERROR.UNAUTHORIZED).json({
             success: false,
-            message: "Not signed in", 
+            message: "No HCST_SID cookie provided",
         });
         return;
     }
-
-    const sess = getSessionBySid(sid);
-    if (sess === undefined) {
-        res.json({
+    
+    const session: Session | undefined = getSessionBySid(sidCookie);
+    if (session === undefined) {
+        res.status(HTTP.CLIENT_ERROR.UNAUTHORIZED).json({
             success: false,
-            message: "No session id",
+            message: "Invalid HCST_SID",
         });
         return;
     }
@@ -298,11 +309,7 @@ router.post("/check-auth", (req: Request, res: Response) => {
     res.json({
         success: true,
         message: "Signed in",
-        data: {
-            email: sess.email,
-            name: sess.name,
-            data: sess.data,
-        }
+        data: session.getPreviewData()
     });
 });
 
@@ -312,7 +319,8 @@ router.post("/oauth-token", async (req: Request, res: Response) => {
         res.status(HTTP.CLIENT_ERROR.BAD_REQUEST).json({
             success: false,
             message: "No code provided",
-        })
+        });
+        return;
     }
 
     const url = "https://oauth2.googleapis.com/token";
@@ -383,6 +391,6 @@ router.post("/oauth-token", async (req: Request, res: Response) => {
         }
     }); 
 
-    const session = new Session(sessionId, userInfo.email, userInfo.name);
+    const session = new Session(access_token, refresh_token, expires_in, sessionId, userInfo.email, userInfo.name);
     addSession(session);
 });

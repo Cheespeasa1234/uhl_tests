@@ -17,6 +17,24 @@
             inertia: true,
             animation: "scale",
         });
+
+        const lightFavicon = '/icons/PNG/light.png';
+        const darkFavicon = '/icons/PNG/dark.png';
+
+        console.log("Setting favicon!");
+        var favicon = document.querySelector("link[rel='icon']");
+ 
+        const link: HTMLLinkElement = document.querySelector("link[rel*='icon']") || document.createElement('link');
+        link.type = 'image/png';
+        link.rel = 'icon';
+        const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDarkMode) {
+            link.href = lightFavicon;
+        } else {
+            link.href = darkFavicon;
+        }
+        document.head.appendChild(link);
+
     });
 </script>
 

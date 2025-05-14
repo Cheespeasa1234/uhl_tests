@@ -5,13 +5,13 @@ import bodyParser// @ts-types="body-parser"
 import cookieParser from "npm:cookie-parser";
 import crypto from "node:crypto";
 
-import { GoogleResponse, getResponses, gradeStudent, getGoogleFormResponses } from "../analyze_responses.ts";
+import { getResponses, gradeStudent } from "../analyze_responses.ts";
 import { manualConfigs, presetManager } from "./students.ts";
 import { retrieveNotifications } from "../lib/notifications.ts";
 import { logDebug, logInfo, logWarning } from "../lib/logger.ts";
 import { HCST_ADMIN_PASSWORD, HCST_FORM_URL } from "../lib/env.ts";
 import { Preset, Test, Submission } from "../lib/db.ts";
-import { HTTP } from "../lib/http.ts";
+import { HTTP } from "../lib/util.ts";
 
 export const router = express.Router();
 router.use(bodyParser.json());
