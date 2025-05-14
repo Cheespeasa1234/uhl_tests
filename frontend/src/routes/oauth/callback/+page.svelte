@@ -26,3 +26,5 @@
     });
 
 </script>
+
+<h1>Logging you in...</h1>

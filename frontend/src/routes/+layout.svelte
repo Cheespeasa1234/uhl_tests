@@ -45,7 +45,10 @@
 
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
     <div class="container-fluid">
-        <a class="navbar-brand" href="/">Uhl Tests</a>
+        <a class="navbar-brand" href="/">
+            <img src="/icons/PNG/dark.png" alt="Uhl Tests" width="24" height="24" class="d-inline-block align-text-top">
+            <!-- Uhl Tests -->
+        </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -53,17 +56,17 @@
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 {#if data.signedIn}
                     <li class="nav-item">
-                        <a class="nav-link active" href="/test">Take Test</a>
+                        <a class="nav-link" href="/test">Take Test</a>
                     </li>
                 {/if}
                 <li class="nav-item">
-                    <a class="nav-link active" href="/">Home</a>
+                    <a class="nav-link" href="/help">Help</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" target="_blank" href="https://github.com/Cheespeasa1234/uhl_tests">GitHub</a>
+                    <a class="nav-link" target="_blank" href="https://github.com/Cheespeasa1234/uhl_tests">GitHub</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" target="_blank" href="https://natelevison.com">More</a>
+                    <a class="nav-link" target="_blank" href="https://natelevison.com">More</a>
                 </li>
             </ul>
         </div>

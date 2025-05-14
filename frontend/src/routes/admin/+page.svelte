@@ -319,7 +319,7 @@
                             </label>
                         </div>
 
-                        <div class="form-check" data-tippy-content="If enabled, from the time a student requests a quiz, they only have a certain amount of time provided to submit their results before it becomes invalid. Students can still submit late answers, but the grading system will notify you.">
+                        <!-- <div class="form-check" data-tippy-content="If enabled, from the time a student requests a quiz, they only have a certain amount of time provided to submit their results before it becomes invalid. Students can still submit late answers, but the grading system will notify you.">
                             <input oninput={() => {
                                 enableTimeLimitInputValueChanged = Date.now();
                                 enableTimeLimitInputIsNew = true;
@@ -327,7 +327,7 @@
                             <label class="form-check-label" for="enable-time-lim">
                                 Enable time limit
                             </label>
-                        </div>
+                        </div> -->
 
                         <div class="input-group">
                             <span class="input-group-text" id="basic-addon1">Time limit</span>
