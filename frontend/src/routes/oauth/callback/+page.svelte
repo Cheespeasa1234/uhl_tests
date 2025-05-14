@@ -27,4 +27,8 @@
 
 </script>
 
+<svelte:head>
+    <title>Logging you in... | Uhl Tests</title>
+</svelte:head>
+
 <h1>Logging you in...</h1>

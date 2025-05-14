@@ -46,8 +46,8 @@
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
     <div class="container-fluid">
         <a class="navbar-brand" href="/">
-            <img src="/icons/PNG/dark.png" alt="Uhl Tests" width="24" height="24" class="d-inline-block align-text-top">
-            <!-- Uhl Tests -->
+            <img src="/icons/PNG/dark.png" alt="Uhl Tests" height="24" class="d-inline-block align-text-top" style="margin-right: 5px;">
+            Uhl Tests
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>

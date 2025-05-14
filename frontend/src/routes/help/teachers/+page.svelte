@@ -8,6 +8,11 @@
     import DemoBtn from "../../components/DemoBtn.svelte";
 
 </script>
+
+<svelte:head>
+    <title>Help for Teachers | Uhl Tests</title>
+</svelte:head>
+
 <div style="margin: auto; margin-top: 20px; width: 800px;">
     <div class="row justify-content-center">
         <h2>Teacher Help</h2>

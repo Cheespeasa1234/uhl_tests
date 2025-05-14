@@ -7,3 +7,7 @@
         </div>
     </div>
 </div>
+
+<svelte:head>
+    <title>Help | Uhl Tests</title>
+</svelte:head>
