@@ -58,6 +58,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/test">Take Test</a>
                     </li>
+                    {#if data.session?.email === "natelevison@gmail.com"}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin">Admin (TEMP)</a>
+                    </li>
+                    {/if}
                 {/if}
                 <li class="nav-item">
                     <a class="nav-link" href="/help">Help</a>

@@ -68,7 +68,7 @@
 
             showNotifToast({ success, message });
             changedTestList[testIndex].presetId = parseFloat(presetData.id);
-            names[testIndex] = presetData.name;
+            names[changedTestList[testIndex].presetId] = presetData.name;
         });
     }
 
