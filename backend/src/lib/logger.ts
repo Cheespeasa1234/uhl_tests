@@ -9,7 +9,7 @@ const ANSI_GREEN = "\x1b[32m";
 const ANSI_GRAY = "\x1b[30m";
 
 const disabledScopes = [
-    // /^code(\/.*)?$/,
+    /^code(\/.*)?$/,
     /^db(\/.*)?$/
 ];
 
@@ -58,14 +58,14 @@ export function logDebug(scope: string, ...data: any[]) {
     log(LogLevel.Debug, scope, data);
 }
 
-export function logInfo(scope: string, ...data: any[]) {
-    log(LogLevel.Info, scope, data);
+export function logInfo(scope: string, message: string, ...data: any[]) {
+    log(LogLevel.Info, scope, [ message, ...data ]);
 }
 
-export function logWarning(scope: string, ...data: any[]) {
-    log(LogLevel.Warning, scope, data);
+export function logWarning(scope: string, message: string, ...data: any[]) {
+    log(LogLevel.Warning, scope, [ message, ...data ]);
 }
 
-export function logError(scope: string, ...data: any[]) {
-    log(LogLevel.Error, scope, data);
+export function logError(scope: string, message: string, ...data: any[]) {
+    log(LogLevel.Error, scope, [ message, ...data ]);
 }

@@ -204,6 +204,7 @@
 
         selectPresetModal.show(presetList, async (success, message, category, value, presetData) => {
             showNotifToast({ success, message });
+            console.log("value:", value, "presetData:", presetData);
 
             if (success) {
                 if (category === "new") {
@@ -217,8 +218,11 @@
                         preset: p,
                     });
                 } else if (category === "pre") {
+                    const p = preset;
+                    p.name = presetData!.name;
+                    p.id = Number(presetData!.id);
                     await postJSON("./api/grading/config/set_preset", {
-                        preset: preset,
+                        preset: p,
                     });
                 }
             }

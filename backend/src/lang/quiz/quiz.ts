@@ -28,6 +28,10 @@ export class QuizQuestion {
         const output = outputToJava(env.output);
         return output;
     }
+
+    equals(question: QuizQuestion): boolean {
+        return this.questionString == question.questionString;
+    }
 }
 
 export class QuizResponse extends QuizQuestion {

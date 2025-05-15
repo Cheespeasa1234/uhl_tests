@@ -2,7 +2,7 @@ import { $, CodeEnvironment, type LineOfCode } from "./code.ts";
 import { ParsedToken } from "../typing/parsedToken.ts";
 import { Quiz, QuizQuestion } from "./quiz.ts";
 import { Test, Preset, PresetData, parsePresetData, ConfigKey } from "../../lib/db.ts";
-import { logDebug, logInfo } from "../../lib/logger.ts";
+import { logDebug, logInfo, logWarning } from "../../lib/logger.ts";
 
 export function generateForLoop(
     varname: string,
@@ -209,37 +209,85 @@ export async function makeTest(timeStarted: Date, timeToEnd: Date | undefined, t
 
     // Create for loop questions
     for (let i = 0; i < blob.get(ConfigKey.FOR_LOOP_COUNT)!.getNumberValue(); i++) {
-        questions.push(
-            new QuizQuestion(
+        let question: QuizQuestion;
+        let attempts = 0;
+        do {
+            question = new QuizQuestion(
                 generateForLoop("i", [$("print", "$*#i")]),
                 "What will the console look like after this for loop runs?",
-            ),
-        );
+            );
+            attempts++;
+            if (attempts > 1) {
+                logWarning("codegen", `Avoiding duplicate: ${question} already exists`);
+            }
+            if (attempts > 5) {
+                logWarning("codegen", `Could not avoid duplicate: ${question}`);
+                break;
+            }
+        } while (questions.some(q => q.equals(question)));
+        questions.push(question);
     }
 
     // Create double loop question
     for (let i = 0; i < blob.get(ConfigKey.NESTED_FOR_LOOP_COUNT)!.getNumberValue(); i++) {
-        questions.push(
-            new QuizQuestion(
+        let question: QuizQuestion;
+        let attempts = 0;
+        do {
+            question = new QuizQuestion(
                 generateDoubleForLoop(),
                 "What will the console look like after this for loop runs?",
-            ),
-        );
+            );
+            attempts++;
+            if (attempts > 1) {
+                logWarning("codegen", `Avoiding duplicate: ${question} already exists`);
+            }
+            if (attempts > 5) {
+                logWarning("codegen", `Could not avoid duplicate: ${question}`);
+                break;
+            }
+        } while (questions.some(q => q.equals(question)));
+        questions.push(question);
     }
 
     // Create string question
     for (let i = 0; i < blob.get(ConfigKey.STRING_COUNT)!.getNumberValue(); i++) {
-        questions.push(new QuizQuestion(
-            generateStringQuestion(),
-            "What will the output of this code be?"
-        ));
+        let question: QuizQuestion;
+        let attempts = 0;
+        do {
+            question = new QuizQuestion(
+                generateStringQuestion(),
+                "What will the output of this code be?",
+            );
+            attempts++;
+            if (attempts > 1) {
+                logWarning("codegen", `Avoiding duplicate: ${question} already exists`);
+            }
+            if (attempts > 5) {
+                logWarning("codegen", `Could not avoid duplicate: ${question}`);
+                break;
+            }
+        } while (questions.some(q => q.equals(question)));
+        questions.push(question);
     }
 
     for (let i = 0; i < blob.get(ConfigKey.SUM_PROD_LOOP)!.getNumberValue(); i++) {
-        questions.push(new QuizQuestion(
-            generateSumProdQuestion("i"),
-            "What will the value of sum be?"
-        ));
+        let question: QuizQuestion;
+        let attempts = 0;
+        do {
+            question = new QuizQuestion(
+                generateSumProdQuestion("i"),
+                "What will the value of sum be?",
+            );
+            attempts++;
+            if (attempts > 1) {
+                logWarning("codegen", `Avoiding duplicate: ${question} already exists`);
+            }
+            if (attempts > 5) {
+                logWarning("codegen", `Could not avoid duplicate: ${question}`);
+                break;
+            }
+        } while (questions.some(q => q.equals(question)));
+        questions.push(question);
     }
 
     const quiz = new Quiz(questions, timeStarted, timeToEnd, testGroup);

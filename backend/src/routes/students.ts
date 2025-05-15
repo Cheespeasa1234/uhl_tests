@@ -11,7 +11,7 @@ import { PresetManager } from "../lib/config.ts";
 import { addNotification } from "../lib/notifications.ts";
 import { logInfo, logWarning } from "../lib/logger.ts";
 import { HTTP } from "../lib/util.ts";
-import { HCST_FORM_URL, HCST_OAUTH_CLIENT_ID, HCST_OAUTH_CLIENT_SECRET, HCST_OAUTH_REDIRECT_URI } from "../lib/env.ts";
+import { HCST_OAUTH_CLIENT_ID, HCST_OAUTH_CLIENT_SECRET, HCST_OAUTH_REDIRECT_URI } from "../lib/env.ts";
 import { Test, Submission, Preset, parsePresetData, PresetData, ConfigValueType } from "../lib/db.ts";
 import { addSession, getSessionBySid, removeSession, Session } from "./sessions.ts";
 

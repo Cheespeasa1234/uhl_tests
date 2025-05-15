@@ -335,6 +335,6 @@ export const HOUR = 60 * MINUTE;
 export const DAY = 24 * HOUR;
 export const WEEK = 7 * DAY;
 
-export function getSpanMs(span: { days: number, hours: number, minutes: number, seconds: number, millis: number }): number {
+export function getSpanMs(span: { days: number, hours: number, minutes: number, seconds: number, millis: number } = { days: 0, hours: 0, minutes: 0, seconds: 0, millis: 0 }): number {
     return span.days * DAY + span.hours * HOUR + span.minutes * MINUTE + span.seconds * SECOND + span.millis;
 }

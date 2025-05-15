@@ -18,6 +18,10 @@
     "seedDb": {
       "command": "deno run --allow-all src/lib/db_seed.ts",
       "description": "Add the default preset to the database if it isn't there"
+    },
+
+    "lintShort": {
+      "command": "deno lint --rules-exclude=no-unused-vars --compact"
     }
 
   },
