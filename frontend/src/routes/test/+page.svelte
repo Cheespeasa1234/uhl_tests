@@ -5,11 +5,15 @@
     import TestQuestion from "../components/TestQuestion.svelte";
     import Timer from "../components/Timer.svelte";
 
-    import "../style.css";
     import ConfirmModal from "../components/modal/ConfirmModal.svelte";
     import Footer from "../components/Footer.svelte";
 
     const { data } = $props();
+
+    const STATE_DONE = 0;
+    const STATE_DONE_BM = 1;
+    const STATE_BLANK = 2;
+    const STATE_BLANK_BM = 3;
 
     let cookiePopupModal: ConfirmModal;
     let submissionConfirmModal: ConfirmModal;
@@ -17,8 +21,6 @@
 
     let submissionSuccess: boolean = $state(false);
     let submissionMessage: string = $state("");
-    let submissionAnswerCode: string = $state("");
-    let submissionFormUrl: string = $state("");
 
     let testCodeInputValue: string = $state("");
     let agree: boolean = $state(false);
@@ -31,21 +33,14 @@
     let previewTestCount: number = $state(0);
     let previewTestLimEnabled: boolean = $state(false);
 
-    let bookmarkCount: number = $derived(
-        testQuestionEls.reduce(
-            (sum, item) => sum + (item.getBookmarked() ? 1 : 0),
-            0,
-        ),
-    );
-    let completeCount: number = $derived(
-        testQuestionEls.reduce(
-            (sum, item) => sum + (item.getComplete() ? 1 : 0),
-            0,
-        ),
-    );
-    let totalCount: number = $derived(testQuestionEls.length);
-
-    let progress = $derived(completeCount / totalCount);
+    let progress = $derived(testQuestionEls.reduce((sum, item) => sum + (item.getComplete() ? 1 : 0), 0) / testQuestionEls.length);
+    let reviewPageData: { completed: number, uncompleted: number, bookmarked: number, states: number[] } = $state(
+        {
+            completed: 6,
+            uncompleted: 1,
+            bookmarked: 2,
+            states: [ STATE_DONE, STATE_DONE, STATE_DONE_BM, STATE_DONE, STATE_DONE, STATE_BLANK_BM, STATE_DONE] 
+        });
 
     let takeTestBtn: HTMLButtonElement;
     let submitTestBtn: HTMLButtonElement;
@@ -84,17 +79,9 @@
             if (success) {
                 await changedAnAnswer()
                 const json = await getJSON("./api/testing/submit-test");
-                const { success, message, data } = json;
-                const { answerCode, formUrl } = data;
-                submissionSuccess = success;
-                submissionMessage = message;
-                if (success) {
-                    submissionAnswerCode = answerCode;
-                    submissionFormUrl = formUrl;
-                    localStorage.removeItem("testData");
-                }
-                submissionPopupModal.show(() => {});
+                const { success, message } = json;
                 clearDocument();
+                window.location.href = "/test/success";
             }
         });
     }
@@ -113,6 +100,34 @@
             if (c.indexOf(z) == 0) return c.substring(z.length, c.length);
         }
         return "";
+    }
+
+    function setReviewPageData() {
+        let completed = 0;
+        let bookmarked = 0;
+        let uncompleted = 0;
+        const states = [];
+        for (const questionEl of testQuestionEls) {
+            const bm = questionEl.getBookmarked();
+            if (bm) {
+                bookmarked++;
+            }
+            if (questionEl.getComplete()) {
+                completed++;
+                states.push(bm ? STATE_DONE_BM : STATE_DONE);
+            } else {
+                uncompleted++;
+                states.push(bm ? STATE_BLANK_BM : STATE_BLANK);
+            }
+        }
+
+        reviewPageData = {
+            completed,
+            uncompleted,
+            bookmarked,
+            states,
+        }
+
     }
 
     onMount(() => {
@@ -227,28 +242,6 @@
             Are you sure you want to submit the quiz? You will not be able to
             change your answers!
         </p>
-    {/snippet}
-</ConfirmModal>
-
-<ConfirmModal bind:this={submissionPopupModal}>
-    {#snippet header()}
-        <h2>Submission Complete</h2>
-    {/snippet}
-
-    {#snippet children()}
-        {#if submissionSuccess}
-            <p>
-                Your responses have been submitted. Please copy your answer
-                code. Then, submit it <a
-                    target="_blank"
-                    href={submissionFormUrl}>here</a
-                >.
-            </p>
-            <h3>Your answer code:</h3>
-            <h2 id="answer-code-popup">{submissionAnswerCode}</h2>
-        {:else}
-            <p>Something went wrong: {submissionMessage}</p>
-        {/if}
     {/snippet}
 </ConfirmModal>
 
@@ -391,25 +384,89 @@
             {/if}
         </div>
         <div class="button-group">
-            <button class="btn btn-outline-primary" onclick={() => setPage(3)}
+            <button class="btn btn-outline-primary" onclick={() => { setPage(3); setReviewPageData() } }
                 >Review Answers</button
             >
         </div>
     </div>
 
     <div bind:this={page3} style="display: none">
-        <h3>Review Your Answers</h3>
-        <div>
-            <div>{completeCount}/{totalCount} Completed</div>
-            <div>{bookmarkCount} Bookmarked</div>
+        <div class="d-flex justify-content-center flex-column align-items-center text-center" style="width: fit-content; margin: auto;">
+            <h3>Review Your Answers</h3>
+            <div class="mb-2">
+                <div class="text-muted">{reviewPageData.completed}/{reviewPageData.completed + reviewPageData.uncompleted} Completed</div>
+                <div class="text-muted">{reviewPageData.bookmarked} Bookmarks</div>
+            </div>
+    
+            <div class="answer-review-grid-container mb-4">
+                {#each reviewPageData.states as state, index}
+                    <div class="answer-review-grid-item state-{state}">
+                        {index + 1}
+                        {#if state === STATE_BLANK_BM || state === STATE_DONE_BM}
+                            <i class="fa-solid fa-bookmark bookmarked-indicator"></i>
+                        {/if}
+                    </div>
+                {/each}
+            </div>
+    
+            {#if reviewPageData.uncompleted != 0}
+                <i class="mb-2">You can not submit yet. You have {reviewPageData.uncompleted} incomplete questions.</i>
+            {/if}
+            <div>
+                <button class="btn btn-secondary" style="width: 100px" onclick={() => setPage(2)}>Go Back</button>
+                <button
+                    class="btn btn-outline-primary"
+                    style="width: 100px"
+                    bind:this={submitTestBtn}
+                    disabled={reviewPageData.uncompleted != 0}
+                    onclick={submissionPopupOpen}
+                >
+                    Submit
+                </button>
+            </div>
         </div>
-        <button class="btn btn-primary" onclick={() => setPage(2)}
-            >Go Back</button
-        >
-        <button
-            class="btn btn-outline-primary"
-            bind:this={submitTestBtn}
-            onclick={submissionPopupOpen}>Submit</button
-        >
     </div>
 </div>
+
+<style>
+    .answer-review-grid-container {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr); /* 4 columns */
+        gap: 12px; /* Space between cells */
+        padding: 10px;
+    }
+
+    .answer-review-grid-item {
+        width: 65px;
+        height: 65px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center; /* Left align text */
+        font-size: 1.75em;
+        position: relative;
+        border-radius: 5px;
+    }
+    
+    .state-0 {
+        background-color: hsl(0, 0%, 94%);
+        border: 1.75px solid hsl(0, 0%, 80%);
+    }
+
+    .state-1 {
+        background-color: hsl(52, 100%, 72%);
+        border: 1.75px solid hsl(52, 100%, 58%);
+    }
+    
+    .state-2, .state-3 {
+        background-color: hsl(4, 100%, 72%);
+        border: 1.75px solid hsl(4, 100%, 58%);
+    }
+
+    .bookmarked-indicator {
+        position: absolute;
+        color: hsl(0, 0%, 30%);
+        top: -6px;
+        right: -6px;
+    }
+</style>

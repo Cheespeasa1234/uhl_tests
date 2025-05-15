@@ -271,14 +271,26 @@ router.get("/submit-test", (req: Request, res: Response) => {
     
     const session: Session | undefined = getSessionBySid(sidCookie);
     if (session === undefined) {
-        res.status(HTTP.CLIENT_ERROR.UNAUTHORIZED).json({
-            success: false,
-            message: "Invalid HCST_SID",
-        });
+        res
+            .status(HTTP.CLIENT_ERROR.UNAUTHORIZED)
+            .json({
+                success: false,
+                message: "Invalid HCST_SID",
+            });
         return;
     }
 
-    session.submitQuiz();
+    try {
+        session.submitQuiz();
+    } catch (e) {
+        res
+            .status(HTTP.SERVER_ERROR.INTERNAL_SERVER_ERROR)
+            .json({
+                success: false,
+                message: (e as Error).message,
+            });
+        return;
+    }
 
     addNotification({ message: `Test just submitted by ${name}`, success: true });
     res.status(HTTP.SUCCESS.OK).json({
