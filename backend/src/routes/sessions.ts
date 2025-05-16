@@ -199,7 +199,7 @@ export function getSessionBySid(sid: string, refresh: boolean = true): Session |
  * @param s The session to remove
  */
 export function removeSession(s: Session) {
-    sessionList.filter(session => {
+    sessionList = sessionList.filter(session => {
         const safe = session.sessionId !== s.sessionId;
         if (!safe) {
             session.signOut();

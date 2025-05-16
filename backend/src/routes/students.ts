@@ -292,7 +292,7 @@ router.get("/submit-test", (req: Request, res: Response) => {
         return;
     }
 
-    addNotification({ message: `Test just submitted by ${name}`, success: true });
+    addNotification({ message: `Test just submitted by ${session.email}`, success: true });
     res.status(HTTP.SUCCESS.OK).json({
         success: true,
         message: "Successfully submitted test"
@@ -394,7 +394,7 @@ router.post("/oauth-token", async (req: Request, res: Response) => {
 
     // Make them an account session
     const sessionId = crypto.randomBytes(16).toString("hex");
-    res.cookie("HCST_SID", sessionId, { maxAge: 1000 * 60 * 60, secure: true, path: "/" });
+    res.cookie("HCST_SID", sessionId, { maxAge: 1000 * 60 * 60, secure: true, httpOnly: true, path: "/" });
     res.json({
         success: true,
         message: "Signed in",
@@ -405,4 +405,28 @@ router.post("/oauth-token", async (req: Request, res: Response) => {
 
     const session = new Session(access_token, refresh_token, expires_in, sessionId, userInfo.email, userInfo.name);
     addSession(session);
+});
+
+router.get('/logout', (req: Request, res: Response) => {
+    const sid = req.cookies["HCST_SID"];
+    const session = getSessionBySid(sid);
+
+    if (session === undefined || session.getExpired()) {
+        res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "Not signed in"
+            });
+        return;
+    }
+
+    res.clearCookie('HCST_SID', { path: '/' }); // Clear the HCST_SID cookie
+    session.signOut();
+    res
+        .status(HTTP.SUCCESS.OK)
+        .json({
+            success: true,
+            message: "Signed out",
+        });
 });

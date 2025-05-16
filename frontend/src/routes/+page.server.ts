@@ -1,12 +1,19 @@
 import type { PageServerLoad } from './$types';
-import { randomBytes } from "crypto";
+import { randomBytes } from "node:crypto";
+import dotenv from "dotenv";
+import process from "process";
+
+dotenv.config({ path: "../.env" });
 
 export const load: PageServerLoad = async ({ parent }) => {
     const p = await parent();
-    return {
+    const loaded = {
         ...p,
         state: randomBytes(16).toString("hex"),
-        redirect_uri: "https://super-cod-ppgxp4wxjq6cr595-8082.app.github.dev/oauth/callback",
-        client_id: "887407729631-09vk6uihm1mhqkaigbkn7c3fhu1ck1cs.apps.googleusercontent.com"
+        redirect_uri: process.env.HCST_OAUTH_REDIRECT_URI,
+        client_id: process.env.HCST_OAUTH_CLIENT_ID,
     };
+    console.log(loaded);
+
+    return loaded;
 };

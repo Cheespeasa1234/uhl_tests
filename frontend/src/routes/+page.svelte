@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { getJSON } from '$lib/util';
+
 	let { data } = $props();
 
     function signIn() {
@@ -16,6 +18,13 @@
         const link = `https://accounts.google.com/o/oauth2/auth?${params.toString()}`;
         window.location.assign(link);
     };
+
+    async function logout() {
+        const json = await getJSON("/api/testing/logout");
+        if (json.success) {
+            window.location.reload();
+        }
+    }
 </script>
 
 <svelte:head>
@@ -25,8 +34,8 @@
 <div class="border-1 border c p-4">
     {#if data.signedIn}
         <h1>Welcome back, {data.session ? data.session.name : "Anon"}</h1>
-        <button class="btn btn-primary">Take a test</button>
-        <button class="btn btn-secondary">Log Out</button>
+        <a href="/test"><button class="btn btn-primary">Take a test</button></a>
+        <button onclick={logout} class="btn btn-secondary">Log Out</button>
     {:else}
     <h1>Sign In</h1>
         <button class="gsi-material-button" onclick={signIn}>

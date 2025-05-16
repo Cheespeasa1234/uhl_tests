@@ -92,7 +92,6 @@
         .display-1, .display-2, .display-3,
         .display-4, .display-5, .display-6 {
             font-family: "Source Sans 3", sans-serif;
-            font-weight: bold
         }
     }
 </style>
