@@ -365,7 +365,6 @@ router.post("/oauth-token", async (req: Request, res: Response) => {
     }
 
     const r = await response.json();
-    console.log(r);
     const access_token = r.access_token; // used to access the Google API
     const refresh_token = r.refresh_token; // used to refresh the access token
     const expires_in = r.expires_in; // used to know when to refresh the access token
@@ -390,7 +389,6 @@ router.post("/oauth-token", async (req: Request, res: Response) => {
     }
     
     const userInfo = await emailResponse.json();
-    console.log(userInfo);
 
     // Make them an account session
     const sessionId = crypto.randomBytes(16).toString("hex");

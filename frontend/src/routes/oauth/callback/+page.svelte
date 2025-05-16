@@ -19,7 +19,6 @@
             });
 
             if (res.success) {
-                console.log(res.data);
                 window.location.href = "/";
             }
         }

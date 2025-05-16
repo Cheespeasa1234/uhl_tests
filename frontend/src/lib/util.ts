@@ -2,8 +2,8 @@
  * Provides and exports functions for frontend utility purposes.
  */
 
-import { showNotifToast } from "./popups.ts";
-import { type PresetListEntry } from "./types.ts";
+import { showNotifToast } from "./popups";
+import { type PresetListEntry } from "./types";
 
 /**
  * Remove all characters from a string that are not alphanumeric or hyphens.
