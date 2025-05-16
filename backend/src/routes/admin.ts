@@ -5,13 +5,13 @@ import bodyParser// @ts-types="body-parser"
 import cookieParser from "npm:cookie-parser";
 import crypto from "node:crypto";
 
-import { GoogleResponse, getResponses, gradeStudent, getGoogleFormResponses } from "../analyze_responses.ts";
-import { getActiveSessions, manualConfigs, presetManager } from "./students.ts";
+import { getResponses, gradeStudent } from "../analyze_responses.ts";
+import { manualConfigs, presetManager } from "./students.ts";
 import { retrieveNotifications } from "../lib/notifications.ts";
 import { logDebug, logInfo, logWarning } from "../lib/logger.ts";
-import { HCST_ADMIN_PASSWORD, HCST_FORM_URL } from "../lib/env.ts";
+import { HCST_ADMIN_PASSWORD } from "../lib/env.ts";
 import { Preset, Test, Submission } from "../lib/db.ts";
-import { HTTP } from "../lib/http.ts";
+import { HTTP } from "../lib/util.ts";
 
 export const router = express.Router();
 router.use(bodyParser.json());
@@ -79,30 +79,6 @@ router.post("/get_session_id", (req: Request, res: Response) => {
     }
 });
 
-router.get("/sessions", checkSidMiddleware, (_req: Request, res: Response) => {
-    logInfo("admin/session", "Fetching active sessions");
-    return res.json({
-        success: true,
-        message: "Successfully fetched sessions",
-        data: {
-            sessions: getActiveSessions()
-        }
-    });
-});
-
-router.get("/google_form", checkSidMiddleware, async (_req: Request, res: Response) => {
-    logInfo("admin/google_form", "Fetching Google form data");
-    const data: GoogleResponse[] = (await getGoogleFormResponses()).slice(1);
-    
-    return res.json({
-        success: true,
-        message: "Successfully fetched google form",
-        data: {
-            rows: data
-        }
-    });
-})
-
 router.get("/test_program", checkSidMiddleware, async (_req: Request, res: Response) => {
     logInfo("admin/test_program", "Fetching test program data");
     try {
@@ -167,25 +143,18 @@ router.post("/grade", checkSidMiddleware, async (req: Request, res: Response) =>
 
     const testId = test.id;
 
-    const testProgramResponses: Submission[] = 
-        (await getResponses())
+    const allSubmissions = await Submission.findAll({
+        where: {
+            email: studentEmail,
+            testId: testId,
+        }
+    })
+    const testProgramResponses: Submission[] = allSubmissions
             .filter(val => val.email === studentEmail && val.testId === testId)
             .toSorted((a: Submission, b: Submission) => {
                 return a.getSubmitted().getTime() - b.getSubmitted().getTime();
             });
-    let googleFormResponses: GoogleResponse[] = [];
-    try {
-        googleFormResponses = 
-            (await getGoogleFormResponses())
-                .filter(val => val.email === studentEmail);
-    } catch (e) {
-        return res
-            .status(HTTP.SERVER_ERROR.INTERNAL_SERVER_ERROR)
-            .json({
-                success: false,
-                message: e
-            })
-    }
+   
     if (testProgramResponses.length === 0) {
         return res
             .status(HTTP.CLIENT_ERROR.NOT_FOUND)
@@ -195,28 +164,15 @@ router.post("/grade", checkSidMiddleware, async (req: Request, res: Response) =>
             });
     }
 
-    if (googleFormResponses.length === 0) {
-        return res
-            .status(HTTP.CLIENT_ERROR.NOT_FOUND)
-            .json({
-                success: false,
-                message: "No google form responses found where that email exists"
-            });
-    }
-
     /// find the test result whose answer code is the same, to authenticate their email
     const testProgramResponse: Submission = testProgramResponses[testProgramResponses.length - 1];
-    for (const googleFormResponse of googleFormResponses) {
-        if (googleFormResponse.answerCode === testProgramResponse.answerCode && googleFormResponse.email === testProgramResponse.email) {
-            return res.json({
-                success: true,
-                message: "Successfully graded student",
-                data: {
-                    grade: gradeStudent(testProgramResponse)
-                }
-            });
+    return res.json({
+        success: true,
+        message: "Successfully graded student",
+        data: {
+            grade: gradeStudent(testProgramResponse)
         }
-    }
+    });
 
     return res
         .status(HTTP.CLIENT_ERROR.NOT_FOUND)

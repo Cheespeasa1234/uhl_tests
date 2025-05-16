@@ -4,43 +4,11 @@ import { Submission, Test } from "./lib/db.ts";
 import { getValues } from "./sheets.ts";
 import { HCST_SPREADSHEET_ID } from "./lib/env.ts";
 
-export class GoogleResponse {
-    timestamp: Date;
-    email: string;
-    answerCode: string;
-    rating: number;
-
-    // deno-lint-ignore no-explicit-any
-    constructor(entry: any) {
-        this.timestamp = new Date(entry[0]);
-        this.email = entry[1];
-        this.answerCode = entry[2];
-        this.rating = Number(entry[3]);
-    }
-}
-
 export async function getResponses(): Promise<Submission[]> {
     const responses: any[] = await Submission.findAll();
 
     logInfo("analyze_responses", "Got responses from database");
     return responses;
-}
-
-/**
- * Opens the google form sheet and gets the results from it
- */
-export async function getGoogleFormResponses(): Promise<GoogleResponse[]> {
-    const data = await getGoogleFormRaw();
-    const responses = data.map((line) => new GoogleResponse(line));
-    logInfo("analyze_responses", "Got responses from Google Form");
-    return responses;
-}
-
-// deno-lint-ignore no-explicit-any
-export async function getGoogleFormRaw(): Promise<any[][]> {
-    const response = await getValues(HCST_SPREADSHEET_ID, "Form Responses 1");
-    const values = response.data.values || [];
-    return values;
 }
 
 export class QuestionResult {
@@ -100,13 +68,4 @@ export function gradeStudent(entry: Submission): GradeResult {
     }
     logInfo("analyze_responses", "Graded student");
     return grade;
-}
-
-export function gradeStudentOnlyIfVerified(entry: Submission, googleEntry: GoogleResponse): GradeResult | undefined {
-    if (entry.answerCode !== googleEntry.answerCode) {
-        logError("analyze_responses", `answerCode in entry ${entry.answerCode} does not match answerCode in googleEntry ${googleEntry.answerCode}`);
-        return undefined;
-    }
-    logInfo("analyze_responses", "Graded (verified)");
-    return gradeStudent(entry);
 }

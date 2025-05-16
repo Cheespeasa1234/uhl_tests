@@ -1,344 +1,172 @@
 <script lang="ts">
-    import { showNotifToast } from "$lib/popups";
-    import { postJSON, getJSON } from "$lib/util";
-    import { onMount } from "svelte";
-    import TestQuestion from "./components/TestQuestion.svelte";
-    import Timer from "./components/Timer.svelte";
+    import { getJSON } from '$lib/util';
 
-    import "./style.css";
-    import ConfirmModal from "./components/modal/ConfirmModal.svelte";
-    import Footer from "./components/Footer.svelte";
+	let { data } = $props();
 
-    let cookiePopupModal: ConfirmModal;
-    let submissionConfirmModal: ConfirmModal;
-    let submissionPopupModal: ConfirmModal;
-
-    let submissionSuccess: boolean = $state(false);
-    let submissionMessage: string = $state("");
-    let submissionAnswerCode: string = $state("");
-    let submissionFormUrl: string = $state("");
-
-    let nameInputValue: string = $state("");
-    let testCodeInputValue: string = $state("");
-    let agree: boolean = $state(false);
-    let studentSelf = $state(undefined);
-
-    let testQuestions: any[] = $state([]);
-    let testQuestionEls: TestQuestion[] = $state([]);
-    let timer: Timer;
-    let previewTestName: string = $state("");
-    let previewTestMins: number = $state(0);
-    let previewTestCount: number = $state(0);
-    let previewTestLimEnabled: boolean = $state(false);
-
-    let bookmarkCount: number = $derived(testQuestionEls.reduce((sum, item) => sum + (item.getBookmarked() ? 1 : 0), 0));
-    let completeCount: number = $derived(testQuestionEls.reduce((sum, item) => sum + (item.getComplete() ? 1 : 0), 0));
-    let totalCount: number = $derived(testQuestionEls.length);
-
-    let progress = $derived(completeCount / totalCount);
-
-    let takeTestBtn: HTMLButtonElement;
-    let submitTestBtn: HTMLButtonElement;
-
-    let page0: HTMLDivElement;
-    let page1: HTMLDivElement;
-    let page2: HTMLDivElement;
-    let page3: HTMLDivElement;
-    
-    function setPage(pageIndex: number) {
-        let pages: HTMLDivElement[] = [page0, page1, page2, page3];
-        if (pageIndex < 0 || pageIndex >= pages.length) return;
-        try {
-            for (let i = 0; i < pages.length; i++) {
-                if (i === pageIndex) {
-                    pages[i].style.display = "block";
-                } else {
-                    pages[i].style.display = "none";
-                }
-            }
-        } catch {}
-    }
-
-    function submissionPopupOpen() {
-        submissionConfirmModal.show(success => {
-            if (success) {
-                submitTestBtn.disabled = true;
-                const answers = [];
-                for (const question of testQuestionEls) {
-                    answers.push(question.getResponse());
-                }
-
-                postJSON("./api/testing/submit-test", {
-                    "answers": answers,
-                    "studentSelf": studentSelf,
-                }).then(json => {
-                    const { success, message, data } = json;
-                    const { answerCode, formUrl } = data;
-                    submissionSuccess = success;
-                    submissionMessage = message;
-                    if (success) {
-                        submissionAnswerCode = answerCode;
-                        submissionFormUrl = formUrl;
-                        localStorage.removeItem("testData");
-                    }
-                    submissionPopupModal.show(() => {});
-                    clearDocument();
-                    submitTestBtn.disabled = false;
-                });     
-            }
+    function signIn() {
+        localStorage.setItem("latestCSRFToken", data.state);
+            
+        // redirect the user to Google
+        const params = new URLSearchParams({
+            scope: "email profile", // Specify the scope
+            response_type: "code", // Set the response type
+            access_type: "offline", // Request offline access
+            state: data.state, // Include the state parameter
+            redirect_uri: data.redirect_uri, // Include the redirect URI
+            client_id: data.client_id // Include the client ID
         });
-    }
+        const link = `https://accounts.google.com/o/oauth2/auth?${params.toString()}`;
+        window.location.assign(link);
+    };
 
-    /**
-     * Gets a cookie's value from the browser. Returns an empty string if none found.
-     * @param name The key of the cookie
-     * @returns The cookie's content, or an empty string if none found.
-     */
-    function getCookie(name: string): string {
-        const z = name + "=";
-        const w = decodeURIComponent(document.cookie).split(";");
-        for (let i = 0; i < w.length; i++) {
-            let c = w[i];
-            while (c.charAt(0) == " ") c = c.substring(1);
-            if (c.indexOf(z) == 0) return c.substring(z.length, c.length);
+    async function logout() {
+        const json = await getJSON("/api/testing/logout");
+        if (json.success) {
+            window.location.reload();
         }
-        return "";
-    }
-
-    onMount(() => {
-        setPage(0);
-        // Get the ID cookie, if not there, ask for approval.
-        const hcsid = getCookie("HCS_ID");
-        if (!hcsid) {
-            cookiePopupModal.show(success => {
-                if (!success) {
-                    window.close();
-                }
-            });
-        }
-
-        // Konami code detector and page switcher (DEV)
-        const enablePageSwitcher = true;
-        const enableKonami = false;
-        const nums = "0123456789".split("");
-        let konamiCode = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
-        let recentKeys = [];
-        document.addEventListener("keydown", (event) => {
-            if (enablePageSwitcher) {
-                if (nums.indexOf(event.key) !== -1) {
-                    const num = parseInt(event.key);
-                    setPage(num);
-                }
-            }
-
-            if (enableKonami) {
-                recentKeys.push(event.key);
-                if (recentKeys.length > konamiCode.length) {
-                    recentKeys.shift();
-                }
-                if (JSON.stringify(recentKeys) === JSON.stringify(konamiCode)) {
-                    showNotifToast({ success: true, message: "Konami code detected!" });
-                    window.open("./admin", "_blank")?.focus();
-                }
-            }
-        });
-    });
-
-    // The student has submitted their answers- clear the screen
-    function clearDocument() {
-        testQuestions = [];
-        testCodeInputValue = "";
-        previewTestCount = 0;
-        previewTestName = "";
-        previewTestMins = 0;
-        setPage(0);
-        studentSelf = undefined;
-    }
-
-    async function previewTest() {
-        const json = await postJSON("./api/testing/test-info", {
-            name: nameInputValue,
-            code: testCodeInputValue,
-        });
-
-        const { success, data } = json;
-        if (!success) {
-            setPage(0);
-            return;
-        }
-
-        const { timeLimit, enableTimeLimit, count } = data;
-        previewTestMins = timeLimit;
-        previewTestLimEnabled = enableTimeLimit;
-        previewTestCount = count;
-        previewTestName = testCodeInputValue;
-
-        setPage(1);
-    }
-
-    // Get a new test and place it on the screen
-    function takeTest() {
-        postJSON("./api/testing/new-test", {
-            "name": nameInputValue,
-            "code": testCodeInputValue,
-        }).then(json => {
-            const { success, data } = json;
-
-            if (!success) {
-                return;
-            }
-
-            setPage(2);
-
-            const { questions, student, timeStarted, timeToEnd } = data;
-            localStorage.setItem("testData", JSON.stringify(data));
-            showNotifToast({ success: true, message: `Test started: ${timeStarted}<br>Time ends: ${timeToEnd}` });
-            studentSelf = student;
-            testQuestions = questions;
-            timer.setTimeEnd(timeToEnd);
-        });
     }
 </script>
 
 <svelte:head>
-    <title>Students | Uhl Tests</title>
+    <title>Home | Uhl Tests</title>
 </svelte:head>
 
-<ConfirmModal bind:this={cookiePopupModal}>
-    {#snippet header()}
-        <h2>Cookies?!</h2>
-    {/snippet}
-    
-    {#snippet children()}
-        <div>Cookiees!! ACCEPT THEM!</div>
-    {/snippet}
-</ConfirmModal>
-
-<ConfirmModal showCancel bind:this={submissionConfirmModal}>
-    {#snippet header()}
-        <h2>Are you sure?</h2>
-    {/snippet}
-    {#snippet children()}
-        <p>Are you sure you want to submit the quiz? You will not be able to change your answers!</p>
-    {/snippet}
-</ConfirmModal>
-
-<ConfirmModal bind:this={submissionPopupModal}>
-    {#snippet header()}
-        <h2>Submission Complete</h2>
-    {/snippet}
-    
-    {#snippet children()}
-        {#if submissionSuccess}
-            <p>Your responses have been submitted. Please copy your answer code. Then, submit it <a target="_blank" href={submissionFormUrl}>here</a>.</p>
-            <h3>Your answer code:</h3>
-            <h2 id="answer-code-popup">{submissionAnswerCode}</h2>
-        {:else}
-            <p>Something went wrong: {submissionMessage}</p>
-        {/if}
-    {/snippet}
-</ConfirmModal>
-
-<div class="p-3 mt-3" style="margin: auto; max-width: 50%;">
-    <div bind:this={page0} style="display: none">
-        <h2>Request Quiz</h2>
-        <form class="row g-3 mb-2">
-            <div class="col-md-6">
-                <label for="inputSe" class="form-label">School Email</label>
-                <input placeholder="NameYear@pascack.org" bind:value={nameInputValue} type="email" class="form-control" id="inputSe">
-            </div>
-            <div class="col-md-6">
-                <label for="inputTc" class="form-label">Test Code</label>
-                <input placeholder="practice2025" bind:value={testCodeInputValue} type="text" class="form-control" id="inputTc">
-            </div>
-        </form>
-        
-        <div class="col-12">
-            <div class="form-check">
-              <input bind:checked={agree} class="form-check-input" type="checkbox" id="gridCheck">
-              <label class="form-check-label" for="gridCheck">
-                I agree to the PHHS Testing Code of Conduct
-              </label>
-            </div>
-          </div>
-
-        <label class="mt-2 mb-2" for="take-test">Make sure you can sign in to this email, or your test results will be lost!</label>
-        <div>
-            <button disabled={!agree || nameInputValue === "" || testCodeInputValue === ""} class="btn btn-primary" bind:this={takeTestBtn} onclick={previewTest} id="take-test">Submit</button>
-        </div>
-
-        <Footer />
-    </div>
-
-    <div bind:this={page1} style="display: none">
-        <h2>Wait! Before you start...</h2>
-        <p>
-            You have selected the test <b>{previewTestName}</b>.
-            {#if previewTestLimEnabled}
-                You have been given <b>{previewTestMins} minutes</b> to complete this test.
-            {:else}
-                There is no time limit for this test.
-            {/if}
-            There will be <b>{previewTestCount} questions</b>.
-        </p>
-        <p>
-            When you begin, the timer will start. If you submit after the time limit, you will be marked as late and your final score may change. If you have any accommodations that apply, these can be taken into account.
-        </p>
-        <p>
-            The questions will appear before you in order. Do not provide notes, extra commentary, or anything other than your exact answer in the answer boxes. This will cause your answer to be marked as <b>incorrect</b>. Include newlines, and ensure you do not leave any extra spaces or  tabs. <b>Capitalization matters</b>.
-        </p>
-        <p>
-            You can bookmark the question, and at the end of the page, you will be notified of each bookmarked question. At that point, you may go back and change your answer.
-        </p>
-        <p>
-            At the end of the page, you will be presented with icons for each question, that will tell you how many questions you've completed, and how many unresolved bookmarks you have. You can check how much time you have left, and if you have put an answer for every question, you can submit your test. At this point, your testing will conclude.
-        </p>
-        <p>
-            Select <b>Begin</b> to begin testing, and start the timer.
-        </p>
-        <p>
-            Select <b>Cancel</b> to cancel, and go back to the main menu.
-        </p>
-        <div class="button-group">
-            <button class="btn btn-outline-secondary" onclick={takeTest}>Begin</button>
-            <button class="btn btn-outline-primary" onclick={() => clearDocument()} >Cancel</button>
-        </div>
-    </div>
-
-    <div bind:this={page2} style="display: none">
-        <div>
-            <div class="d-flex" style="gap: 2px;">
-                <div class="h3 m-0 mr-2">Quiz</div>
-                <div class="m-0"> <Timer bind:this={timer}/> </div>
-            </div>
-        </div>
-        <div>
-            {#if !testQuestions || testQuestions.length == 0}
-                <div>Please request a quiz first.</div>
-            {:else}
-                {#each testQuestions as question, index}
-                    <div>
-                        <span class="h5 mb-1 mt-3">Question {index + 1}</span>
-                        <TestQuestion bind:this={testQuestionEls[index]} questionString={question.questionString} descriptor={question.descriptor} />
-                    </div>
-                {/each}
-                <div class="progress" role="progressbar" aria-label="Basic example" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                    <div class="progress-bar" style="width: {progress * 100}%"></div>
+<div class="border-1 border c p-4">
+    {#if data.signedIn}
+        <h1>Welcome back, {data.session ? data.session.name : "Anon"}</h1>
+        <a href="/test"><button class="btn btn-primary">Take a test</button></a>
+        <button onclick={logout} class="btn btn-secondary">Log Out</button>
+    {:else}
+    <h1>Sign In</h1>
+        <button class="gsi-material-button" onclick={signIn}>
+            <div class="gsi-material-button-state"></div>
+                <div class="gsi-material-button-content-wrapper">
+                    <div class="gsi-material-button-icon">
+                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" xmlns:xlink="http://www.w3.org/1999/xlink" style="display: block;">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                        <path fill="none" d="M0 0h48v48H0z"></path>
+                    </svg>
                 </div>
-            {/if}
-        </div>
-        <div class="button-group">
-            <button class="btn btn-outline-primary" onclick={() => setPage(3)}>Review Answers</button>
-        </div>
-    </div>
-
-    <div bind:this={page3} style="display: none">
-        <h3>Review Your Answers</h3>
-        <div>
-            <div>{completeCount}/{totalCount} Completed</div>
-            <div>{bookmarkCount} Bookmarked</div>
-        </div>
-        <button class="btn btn-primary" onclick={() => setPage(2)}>Go Back</button>
-        <button class="btn btn-outline-primary" bind:this={submitTestBtn} onclick={submissionPopupOpen}>Submit</button>
-    </div>
+                <span class="gsi-material-button-contents">Sign in with Google</span>
+                <span style="display: none;">Sign in with Google</span>
+            </div>
+        </button>    
+    {/if}
 </div>
+
+<style>
+    .c {
+        margin: auto;
+        text-align: center;
+        width: fit-content;
+        padding: 10px;
+        margin-top: 2em;
+        border-radius: 5px;
+    }
+    .gsi-material-button {
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        -webkit-appearance: none;
+        background-color: WHITE;
+        background-image: none;
+        border: 1px solid #747775;
+        -webkit-border-radius: 4px;
+        border-radius: 4px;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        color: #1f1f1f;
+        cursor: pointer;
+        font-family: 'Roboto', arial, sans-serif;
+        font-size: 14px;
+        height: 40px;
+        letter-spacing: 0.25px;
+        outline: none;
+        overflow: hidden;
+        padding: 0 12px;
+        position: relative;
+        text-align: center;
+        -webkit-transition: background-color .218s, border-color .218s, box-shadow .218s;
+        transition: background-color .218s, border-color .218s, box-shadow .218s;
+        vertical-align: middle;
+        white-space: nowrap;
+        width: auto;
+        max-width: fit-content;
+        min-width: min-content;
+    }
+
+    .gsi-material-button .gsi-material-button-icon {
+        height: 20px;
+        margin-right: 12px;
+        min-width: 20px;
+        width: 20px;
+    }
+
+    .gsi-material-button .gsi-material-button-content-wrapper {
+        -webkit-align-items: center;
+        align-items: center;
+        display: flex;
+        -webkit-flex-direction: row;
+        flex-direction: row;
+        -webkit-flex-wrap: nowrap;
+        flex-wrap: nowrap;
+        height: 100%;
+        justify-content: space-between;
+        position: relative;
+        width: 100%;
+    }
+
+    .gsi-material-button .gsi-material-button-contents {
+        -webkit-flex-grow: 1;
+        flex-grow: 1;
+        font-family: 'Roboto', arial, sans-serif;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: top;
+    }
+
+    .gsi-material-button .gsi-material-button-state {
+        -webkit-transition: opacity .218s;
+        transition: opacity .218s;
+        bottom: 0;
+        left: 0;
+        opacity: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+    }
+
+    .gsi-material-button:disabled {
+        cursor: default;
+        background-color: #ffffff61;
+        border-color: #1f1f1f1f;
+    }
+
+    .gsi-material-button:disabled .gsi-material-button-contents {
+        opacity: 38%;
+    }
+
+    .gsi-material-button:disabled .gsi-material-button-icon {
+        opacity: 38%;
+    }
+
+    .gsi-material-button:not(:disabled):active .gsi-material-button-state, 
+    .gsi-material-button:not(:disabled):focus .gsi-material-button-state {
+        background-color: #303030;
+        opacity: 12%;
+    }
+
+    .gsi-material-button:not(:disabled):hover {
+        -webkit-box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .30), 0 1px 3px 1px rgba(60, 64, 67, .15);
+        box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .30), 0 1px 3px 1px rgba(60, 64, 67, .15);
+    }
+
+    .gsi-material-button:not(:disabled):hover .gsi-material-button-state {
+        background-color: #303030;
+        opacity: 8%;
+    }
+</style>

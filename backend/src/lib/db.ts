@@ -140,8 +140,6 @@ Test.init({
 export class Submission extends Model {
     declare id: number;
     declare email: string;
-    declare idCookie: string;
-    declare answerCode: string;
     declare testId: number;
     declare responseBlob: string;
     declare timeStart: string;
@@ -186,14 +184,6 @@ Submission.init({
         autoIncrement: true,
     },
     email: {
-        type: DataTypes.TEXT,
-        allowNull: false,
-    },
-    idCookie: {
-        type: DataTypes.TEXT,
-        allowNull: false,
-    },
-    answerCode: {
         type: DataTypes.TEXT,
         allowNull: false,
     },

@@ -8,6 +8,7 @@
     let changedTestList: Test[] = $state([]);
     let ids = $derived(changedTestList.map(t => t.presetId).join(","));
     let names: { [id: string ]: string} = $state({});
+    let delName = $state("");
     $inspect(changedTestList);
 
     export function setTestListValue(newTests: Test[]): void{
@@ -24,7 +25,8 @@
     }
 
     function del(id: number, name: string): void {
-        confirmModal.show(`Are you sure you want to PERMANENTLY delete the testcode "${name}"?`, (success) => {
+        delName = name;
+        confirmModal.show(success => {
             if (success) {
                 postJSON("./api/grading/config/del_testcode", {
                     id: id
@@ -66,14 +68,22 @@
 
             showNotifToast({ success, message });
             changedTestList[testIndex].presetId = parseFloat(presetData.id);
-            names[testIndex] = presetData.name;
+            names[changedTestList[testIndex].presetId] = presetData.name;
         });
     }
 
 </script>
 
 <SelectPresetModal bind:this={selectPresetModal} />
-<ConfirmModal bind:this={confirmModal} />
+
+<ConfirmModal showCancel bind:this={confirmModal}>
+    {#snippet header()}
+        <h2>Are you sure?</h2>
+    {/snippet}
+    {#snippet children()}
+        <p>Are you sure you want to PERMANENTLY delete the testcode {delName}?</p>
+    {/snippet}
+</ConfirmModal>
 
 <div id="config-area">
     {#each changedTestList as test, index}

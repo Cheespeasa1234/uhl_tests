@@ -3,16 +3,6 @@ import { LineOfCode, CodeEnvironment } from "./code.ts";
 import { codeToJava, outputToJava } from "./codegen.ts";
 import crypto from "node:crypto";
 
-export class Student {
-    name: string;
-    privateKey: string;
-
-    constructor(name: string) {
-        this.name = name;
-        this.privateKey = crypto.randomBytes(16).toString("hex");
-    }
-}
-
 export type QuizQuestionCensored = {
     questionString: string;
     descriptor: string;
@@ -39,12 +29,8 @@ export class QuizQuestion {
         return output;
     }
 
-    getAnswerCode(student: Student): string {
-        return crypto
-            .createHash("sha256")
-            .update(student.privateKey + this.getAnswer())
-            .digest("hex")
-            .substring(0, 4);
+    equals(question: QuizQuestion): boolean {
+        return this.questionString == question.questionString;
     }
 }
 
@@ -65,9 +51,9 @@ export class Quiz {
     questions: QuizQuestion[];
     testGroup: Test;
     timeStarted: Date;
-    timeToEnd: Date | null;
+    timeToEnd: Date | undefined;
 
-    constructor(questions: QuizQuestion[], timeStarted: Date, timeToEnd: Date | null, testGroup: Test) {
+    constructor(questions: QuizQuestion[], timeStarted: Date, timeToEnd: Date | undefined, testGroup: Test) {
         this.questions = questions;
         this.timeStarted = timeStarted;
         this.timeToEnd = timeToEnd;
@@ -88,13 +74,5 @@ export class Quiz {
         return this.questions.map(question => {
             return { questionString: question.questionString, descriptor: question.descriptor }
         })
-    }
-
-    getSolutionKey(student: Student): string {
-        let solutionKey = student.name;
-        for (const question of this.questions) {
-            solutionKey += "-" + question.getAnswerCode(student);
-        }
-        return solutionKey;
     }
 }

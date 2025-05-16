@@ -1,5 +1,5 @@
 <script lang="ts">
-    const { questionString, descriptor } = $props();
+    const { questionString, descriptor, changedCb }: { questionString: string, descriptor: string, changedCb: () => void } = $props();
 
     let side: HTMLDivElement;
 
@@ -34,7 +34,7 @@
         
     <pre class="card p-2">{questionString}</pre>
 
-    <textarea placeholder="Your answer" bind:value={text} class="card p-1"></textarea>
+    <textarea placeholder="Your answer" bind:value={text} class="card p-1" onchange={changedCb}></textarea>
 </div>
 
 <style>

@@ -328,3 +328,13 @@ export namespace HTTP {
         export const NETWORK_AUTHENTICATION_REQUIRED = 511;
     }
 }
+
+export const SECOND = 1000;
+export const MINUTE = 60 * SECOND;
+export const HOUR = 60 * MINUTE;
+export const DAY = 24 * HOUR;
+export const WEEK = 7 * DAY;
+
+export function getSpanMs({days = 0, hours = 0, minutes = 0, seconds = 0, millis = 0}): number {
+    return days * DAY + hours * HOUR + minutes * MINUTE + seconds * SECOND + millis;
+}

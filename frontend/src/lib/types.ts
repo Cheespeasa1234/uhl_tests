@@ -165,3 +165,11 @@ export type Test = {
      */
     updatedAt: string,
 }
+
+export type EventLocals = {
+    signedIn: boolean,
+    session?: {
+        name: string,
+        email: string,
+    }
+}
