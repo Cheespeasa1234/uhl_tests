@@ -18,6 +18,8 @@
                 code
             });
 
+            console.log(res);
+
             if (res.success) {
                 window.location.href = "/";
             }

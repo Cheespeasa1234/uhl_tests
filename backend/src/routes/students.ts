@@ -326,6 +326,7 @@ router.post("/check-auth", (req: Request, res: Response) => {
 });
 
 router.post("/oauth-token", async (req: Request, res: Response) => {
+    console.log(req.body);
     const code = req.body["code"];
     if (code === undefined) {
         res.status(HTTP.CLIENT_ERROR.BAD_REQUEST).json({
@@ -361,7 +362,7 @@ router.post("/oauth-token", async (req: Request, res: Response) => {
                 success: false,
                 message: "Could not get access token",
             })
-        throw new Error(`Error: ${errorResponse.error} - ${errorResponse.error_description}`);
+        throw new Error(`${errorResponse.error} - ${errorResponse.error_description}`);
     }
 
     const r = await response.json();

@@ -1,8 +1,8 @@
 import type { PageServerLoad } from './$types';
 import { randomBytes } from "node:crypto";
+
 import dotenv from "dotenv";
 import process from "process";
-
 dotenv.config({ path: "../.env" });
 
 export const load: PageServerLoad = async ({ parent }) => {

@@ -5,6 +5,7 @@ import { router as gradingRouter } from "./routes/admin.ts";
 import { router as testingRouter } from "./routes/students.ts";
 import { logDebug, logInfo } from "./lib/logger.ts";
 import { HCST_PORT, HCST_HOST } from "./lib/env.ts";
+import { HTTP } from "./lib/util.ts";
 
 const PORT = HCST_PORT;
 const HOST = HCST_HOST;
@@ -23,13 +24,13 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     next();
 });
 
-app.use((req: Request, res: Response, next: NextFunction) => {
-    if (timeoutID) {
-        clearTimeout(timeoutID);
-    }
-    timeoutID = setTimeout(timeoutExit, timeoutLengthMs);
-    next();
-});
+// app.use((req: Request, res: Response, next: NextFunction) => {
+//     if (timeoutID) {
+//         clearTimeout(timeoutID);
+//     }
+//     timeoutID = setTimeout(timeoutExit, timeoutLengthMs);
+//     next();
+// });
 
 app.use("/api/grading", gradingRouter);
 app.use("/api/testing", testingRouter);

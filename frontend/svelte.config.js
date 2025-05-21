@@ -14,7 +14,6 @@ const config = {
 
 			out: 'build',
 			precompress: false,
-			envPrefix: 'FRONTEND_',
 		}),
 	},
 	debug: true,
