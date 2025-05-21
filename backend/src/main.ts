@@ -15,8 +15,8 @@ function timeoutExit() {
     logInfo("main/timeout", "No requests have come in for 10 minutes. Exiting.");
     Deno.exit();
 }
-const timeoutLengthMs = 1000 * 60 * 10;
-let timeoutID: number | undefined = setTimeout(timeoutExit, timeoutLengthMs);
+// const timeoutLengthMs = 1000 * 60 * 10;
+// let timeoutID: number | undefined = setTimeout(timeoutExit, timeoutLengthMs);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
     const statusCode = res.statusCode;
