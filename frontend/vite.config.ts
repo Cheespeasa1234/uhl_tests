@@ -8,6 +8,10 @@ export default defineConfig(({ command, mode }) => {
 			sveltekit(),
 		],
 		server: {
+			allowedHosts: [
+				"localhost",
+				"hcst.natelevison.com"
+			],
 			strictPort: true,
 			port: 8082,
 			host: "0.0.0.0",
