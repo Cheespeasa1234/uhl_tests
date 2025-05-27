@@ -62,7 +62,9 @@ export type API_Response = {
  */
 export async function getJSON(url: string, mute: boolean = false): Promise<API_Response> {
     if (url.startsWith("/api")) url = PUBLIC_API + url;
-    const response = await fetch(url);
+    const response = await fetch(url, {
+        credentials: "include",
+    });
     console.groupCollapsed(`GET ${url} - ${response.status}`);
     let json: API_Response;
     try {
@@ -95,7 +97,8 @@ export async function postJSON(url: string, body: any, mute: boolean = false): P
         body: JSON.stringify(body),
         headers: {
             "Content-Type": "application/json"
-        }
+        },
+        credentials: "include",
     });
     console.groupCollapsed(`POST ${url} - ${response.status}`);
     let json: API_Response;

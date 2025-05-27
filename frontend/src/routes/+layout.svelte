@@ -70,7 +70,7 @@
                     <a class="nav-link" href="/help">Help</a>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link" onclick={() => getJSON("/api/ping")}>Ping</button>
+                    <button class="nav-link" onclick={() => getJSON("/api/testing/ping")}>Ping</button>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" target="_blank" href="https://github.com/Cheespeasa1234/uhl_tests">GitHub</a>

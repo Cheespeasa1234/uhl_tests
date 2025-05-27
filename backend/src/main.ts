@@ -13,8 +13,9 @@ const HOST = HCST_HOST;
 const app = express();
 
 app.use(cors({
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
     credentials: true,
-    allowedHeaders: [ "content-type" ],
+    origin: true,
 }));
 
 app.use((req: Request, res: Response, next: NextFunction) => {

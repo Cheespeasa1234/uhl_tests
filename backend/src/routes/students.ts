@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from "npm:express";
+import express, { Request, Response, NextFunction, CookieOptions } from "npm:express";
 // @deno-types="npm:@types/body-parser"
 import bodyParser from "npm:body-parser";
 // @deno-types="npm:@types/cookie-parser"
@@ -15,6 +15,8 @@ import { COOKIE_DOMAIN, HCST_OAUTH_CLIENT_ID, HCST_OAUTH_CLIENT_SECRET, HCST_OAU
 import { Test, Submission, Preset, parsePresetData, PresetData, ConfigValueType } from "../lib/db.ts";
 import { addSession, getSessionBySid, removeSession, Session } from "./sessions.ts";
 
+const trackerCookieOpts: CookieOptions = { path: "/", domain: "app.github.dev", httpOnly: true, secure: true, sameSite: "none" }
+
 export const router = express.Router();
 
 // Parse request body & cookies
@@ -30,11 +32,15 @@ router.use((req: Request, res: Response, next: NextFunction) => {
         next();
     } else {
         const id = crypto.randomBytes(32).toString("hex");
-        res.cookie("HCS_ID", id, { maxAge: 1000 * 60 * 60 });
+        res.cookie("HCS_ID", id, trackerCookieOpts);
         addNotification({ message: "Started tracking new user", success: true });
         next();
     }
 });
+
+router.get("/ping", (req, res) => {
+    res.json("pong");
+})
 
 export const presetManager: PresetManager = new PresetManager();
 export const manualConfigs: Map<string, boolean | number> = new Map();
@@ -300,6 +306,7 @@ router.get("/submit-test", (req: Request, res: Response) => {
 });
 
 router.get("/check-auth", (req: Request, res: Response) => {
+    console.log(JSON.stringify(req.cookies));
     const sidCookie = req.cookies["HCST_SID"];
     if (sidCookie === undefined) {
         res.status(HTTP.CLIENT_ERROR.UNAUTHORIZED).json({
@@ -393,7 +400,7 @@ router.post("/oauth-token", async (req: Request, res: Response) => {
 
     // Make them an account session
     const sessionId = crypto.randomBytes(16).toString("hex");
-    res.cookie("HCST_SID", sessionId, { maxAge: 1000 * 60 * 60 });
+    res.cookie("HCST_SID", sessionId, trackerCookieOpts);
     res.json({
         success: true,
         message: "Signed in",

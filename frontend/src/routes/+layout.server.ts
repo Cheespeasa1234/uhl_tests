@@ -2,6 +2,8 @@ import type { LayoutServerLoad } from './$types';
 import { randomBytes } from "node:crypto";
 import { redirect } from '@sveltejs/kit';
 
+import { PUBLIC_API } from '$env/static/public';
+
 import dotenv from "dotenv";
 import process from "process";
 dotenv.config({ path: "../.env" });
@@ -17,9 +19,11 @@ function urlNeedsAuth(url: string): boolean {
     return false;
 }
 
-export const load: LayoutServerLoad = async ({ url, fetch }) => {
-    if (urlNeedsAuth(url.pathname)) {
-        const res = await fetch("/api/testing/check-auth");
+export const load: LayoutServerLoad = async ({ fetch }) => {
+    // if (urlNeedsAuth(url.pathname)) {
+        const res = await fetch(`${PUBLIC_API}/api/testing/check-auth`, {
+            credentials: "include",
+        });
         const json = await res.json();
         console.log("Got json:", json);
         const loaded = {
@@ -30,11 +34,11 @@ export const load: LayoutServerLoad = async ({ url, fetch }) => {
             client_id: process.env.HCST_OAUTH_CLIENT_ID,
         };
         return loaded;
-    } else {
-        return {
-            state: randomBytes(16).toString("hex"),
-            redirect_uri: process.env.HCST_OAUTH_REDIRECT_URI,
-            client_id: process.env.HCST_OAUTH_CLIENT_ID,
-        };
-    }
+    // } else {
+    //     return {
+    //         state: randomBytes(16).toString("hex"),
+    //         redirect_uri: process.env.HCST_OAUTH_REDIRECT_URI,
+    //         client_id: process.env.HCST_OAUTH_CLIENT_ID,
+    //     };
+    // }
 };
