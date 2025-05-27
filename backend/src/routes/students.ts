@@ -11,7 +11,7 @@ import { PresetManager } from "../lib/config.ts";
 import { addNotification } from "../lib/notifications.ts";
 import { logInfo, logWarning } from "../lib/logger.ts";
 import { HTTP } from "../lib/util.ts";
-import { HCST_OAUTH_CLIENT_ID, HCST_OAUTH_CLIENT_SECRET, HCST_OAUTH_REDIRECT_URI } from "../lib/env.ts";
+import { COOKIE_DOMAIN, HCST_OAUTH_CLIENT_ID, HCST_OAUTH_CLIENT_SECRET, HCST_OAUTH_REDIRECT_URI } from "../lib/env.ts";
 import { Test, Submission, Preset, parsePresetData, PresetData, ConfigValueType } from "../lib/db.ts";
 import { addSession, getSessionBySid, removeSession, Session } from "./sessions.ts";
 
@@ -30,7 +30,7 @@ router.use((req: Request, res: Response, next: NextFunction) => {
         next();
     } else {
         const id = crypto.randomBytes(32).toString("hex");
-        res.cookie("HCS_ID", id, { maxAge: 1000 * 60 * 60, secure: true, path: "/" });
+        res.cookie("HCS_ID", id, { maxAge: 1000 * 60 * 60, secure: true, path: "/", domain: COOKIE_DOMAIN });
         addNotification({ message: "Started tracking new user", success: true });
         next();
     }
@@ -393,7 +393,7 @@ router.post("/oauth-token", async (req: Request, res: Response) => {
 
     // Make them an account session
     const sessionId = crypto.randomBytes(16).toString("hex");
-    res.cookie("HCST_SID", sessionId, { maxAge: 1000 * 60 * 60, secure: true, httpOnly: true, path: "/" });
+    res.cookie("HCST_SID", sessionId, { maxAge: 1000 * 60 * 60, secure: true, httpOnly: true, path: "/", domain: COOKIE_DOMAIN });
     res.json({
         success: true,
         message: "Signed in",

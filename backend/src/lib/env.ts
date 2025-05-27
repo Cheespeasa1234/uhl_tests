@@ -10,6 +10,7 @@ export const HCST_HOST: string = getEnv("HCST_HOST");
 export const HCST_OAUTH_CLIENT_ID: string = getEnv("HCST_OAUTH_CLIENT_ID");
 export const HCST_OAUTH_CLIENT_SECRET: string = getEnv("HCST_OAUTH_CLIENT_SECRET");
 export const HCST_OAUTH_REDIRECT_URI: string = getEnv("HCST_OAUTH_REDIRECT_URI");
+export const COOKIE_DOMAIN: string = getEnv("COOKIE_DOMAIN");
 
 export function getEnv(key: string): string {
     const env = loadSync({ envPath: "../.env" });
