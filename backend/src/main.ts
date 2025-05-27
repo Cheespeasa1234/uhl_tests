@@ -12,7 +12,10 @@ const PORT = HCST_PORT;
 const HOST = HCST_HOST;
 const app = express();
 
-app.use(cors());
+app.use(cors({
+    credentials: true,
+    allowedHeaders: [ "content-type" ],
+}));
 
 app.use((req: Request, res: Response, next: NextFunction) => {
     logInfo("main/req", `${req.ip}: ${req.method} - ${res.statusCode} ${req.url}`);
