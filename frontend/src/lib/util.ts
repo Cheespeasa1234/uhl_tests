@@ -5,6 +5,8 @@
 import { showNotifToast } from "./popups";
 import { type PresetListEntry } from "./types";
 
+import { PUBLIC_API } from "$env/static/public";
+
 /**
  * Remove all characters from a string that are not alphanumeric or hyphens.
  * Used for making sure preset names are valid. This is all frontend, though,
@@ -59,6 +61,7 @@ export type API_Response = {
  * @returns A promise for an API response
  */
 export async function getJSON(url: string, mute: boolean = false): Promise<API_Response> {
+    if (url.startsWith("/api")) url = PUBLIC_API + url;
     const response = await fetch(url);
     console.groupCollapsed(`GET ${url} - ${response.status}`);
     let json: API_Response;
@@ -86,6 +89,7 @@ export async function getJSON(url: string, mute: boolean = false): Promise<API_R
  * @returns A promise for an API response
  */
 export async function postJSON(url: string, body: any, mute: boolean = false): Promise<API_Response> {
+    if (url.startsWith("/api")) url = PUBLIC_API + url;
     const response = await fetch(url, {
         method: "POST",
         body: JSON.stringify(body),
