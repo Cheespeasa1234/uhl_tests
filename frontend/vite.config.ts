@@ -15,11 +15,11 @@ export default defineConfig(({ command, mode }) => {
 			strictPort: true,
 			port: 8082,
 			host: "0.0.0.0",
-			proxy: {
-				"/api": {
-					target: "http://localhost:8081",
-				}
-			}
+			// proxy: {
+			// 	"/api": {
+			// 		target: "http://localhost:8081",
+			// 	}
+			// }
 		},
 	}
 });

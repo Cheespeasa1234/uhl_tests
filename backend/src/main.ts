@@ -35,6 +35,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use("/api/grading", gradingRouter);
 app.use("/api/testing", testingRouter);
 
+app.get("/api/ping", (req, res) => {
+    res.json("pong");
+})
+
 app.listen(Number(PORT), HOST, () => {
     logInfo("main", `Listening on port ${PORT}`);
 });

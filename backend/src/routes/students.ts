@@ -299,7 +299,7 @@ router.get("/submit-test", (req: Request, res: Response) => {
     });
 });
 
-router.post("/check-auth", (req: Request, res: Response) => {
+router.get("/check-auth", (req: Request, res: Response) => {
     const sidCookie = req.cookies["HCST_SID"];
     if (sidCookie === undefined) {
         res.status(HTTP.CLIENT_ERROR.UNAUTHORIZED).json({
@@ -357,10 +357,10 @@ router.post("/oauth-token", async (req: Request, res: Response) => {
         const errorResponse = await response.json();
         console.error('Error fetching access token:', errorResponse);
         res
-            .status(HTTP.SERVER_ERROR.INTERNAL_SERVER_ERROR)
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
             .json({
                 success: false,
-                message: "Could not get access token",
+                message: errorResponse
             })
         throw new Error(`${errorResponse.error} - ${errorResponse.error_description}`);
     }
@@ -393,7 +393,7 @@ router.post("/oauth-token", async (req: Request, res: Response) => {
 
     // Make them an account session
     const sessionId = crypto.randomBytes(16).toString("hex");
-    res.cookie("HCST_SID", sessionId, { maxAge: 1000 * 60 * 60, secure: true, httpOnly: true, path: "/" });
+    // res.cookie("HCST_SID", sessionId, { maxAge: 1000 * 60 * 60, secure: true, httpOnly: true, path: "/" });
     res.json({
         success: true,
         message: "Signed in",

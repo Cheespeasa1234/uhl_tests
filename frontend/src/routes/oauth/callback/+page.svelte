@@ -14,8 +14,10 @@
             localStorage.removeItem("latestCSRFToken");
         } else {
             // send the code to the backend
+            console.log("code:", code);
             const res = await postJSON("/api/testing/oauth-token", {
-                code
+                code: code,
+                hello: "world",
             });
 
             console.log(res);

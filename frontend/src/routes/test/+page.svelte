@@ -7,8 +7,10 @@
 
     import ConfirmModal from "../components/modal/ConfirmModal.svelte";
     import Footer from "../components/Footer.svelte";
+    import type { EventLocals } from "$lib/types";
 
     const { data } = $props();
+    let sessionData: EventLocals = $state({ signedIn: false });
 
     const STATE_DONE = 0;
     const STATE_DONE_BM = 1;
@@ -84,22 +86,6 @@
                 window.location.href = "/test/success";
             }
         });
-    }
-
-    /**
-     * Gets a cookie's value from the browser. Returns an empty string if none found.
-     * @param name The key of the cookie
-     * @returns The cookie's content, or an empty string if none found.
-     */
-    function getCookie(name: string): string {
-        const z = name + "=";
-        const w = decodeURIComponent(document.cookie).split(";");
-        for (let i = 0; i < w.length; i++) {
-            let c = w[i];
-            while (c.charAt(0) == " ") c = c.substring(1);
-            if (c.indexOf(z) == 0) return c.substring(z.length, c.length);
-        }
-        return "";
     }
 
     function setReviewPageData() {

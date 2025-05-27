@@ -1,13 +1,12 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { Toaster, toast } from "svelte-hot-french-toast";
+    import { Toaster } from "svelte-hot-french-toast";
 
     // Tooltips
     import tippy from 'tippy.js';
     import 'tippy.js/dist/tippy.css';
     import 'tippy.js/animations/scale.css';
-    import Footer from "./components/Footer.svelte";
-
+    
     const { data, children } = $props();
 
     onMount(() => {

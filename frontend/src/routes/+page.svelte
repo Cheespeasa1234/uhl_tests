@@ -1,5 +1,8 @@
 <script lang="ts">
+    import { invalidateAll } from '$app/navigation';
+    import type { EventLocals } from '$lib/types.js';
     import { getJSON } from '$lib/util';
+    import { onMount } from 'svelte';
 
 	let { data } = $props();
 
@@ -14,7 +17,7 @@
             state: data.state, // Include the state parameter
             redirect_uri: data.redirect_uri, // Include the redirect URI
             client_id: data.client_id // Include the client ID
-        });
+        } as any);
         const link = `https://accounts.google.com/o/oauth2/auth?${params.toString()}`;
         window.location.assign(link);
     };
@@ -32,12 +35,12 @@
 </svelte:head>
 
 <div class="border-1 border c p-4">
-    {#if data.signedIn}
-        <h1>Welcome back, {data.session ? data.session.name : "Anon"}</h1>
+    {#if data.signedIn && data.session !== undefined}
+        <h1>Welcome back, {data.session.name}</h1>
         <a href="/test"><button class="btn btn-primary">Take a test</button></a>
         <button onclick={logout} class="btn btn-secondary">Log Out</button>
     {:else}
-    <h1>Sign In</h1>
+        <h1>Sign In</h1>
         <button class="gsi-material-button" onclick={signIn}>
             <div class="gsi-material-button-state"></div>
                 <div class="gsi-material-button-content-wrapper">
