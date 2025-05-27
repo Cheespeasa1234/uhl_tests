@@ -6,6 +6,7 @@
     import tippy from 'tippy.js';
     import 'tippy.js/dist/tippy.css';
     import 'tippy.js/animations/scale.css';
+    import { getJSON } from "$lib/util";
     
     const { data, children } = $props();
 
@@ -67,6 +68,9 @@
                 {/if}
                 <li class="nav-item">
                     <a class="nav-link" href="/help">Help</a>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" onclick={() => getJSON("/api/ping")}>Ping</button>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" target="_blank" href="https://github.com/Cheespeasa1234/uhl_tests">GitHub</a>

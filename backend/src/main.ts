@@ -15,7 +15,6 @@ const app = express();
 app.use(cors());
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-    const statusCode = res.statusCode;
     logInfo("main/req", `${req.ip}: ${req.method} - ${res.statusCode} ${req.url}`);
     next();
 });
