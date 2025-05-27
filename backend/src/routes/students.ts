@@ -393,7 +393,7 @@ router.post("/oauth-token", async (req: Request, res: Response) => {
 
     // Make them an account session
     const sessionId = crypto.randomBytes(16).toString("hex");
-    // res.cookie("HCST_SID", sessionId, { maxAge: 1000 * 60 * 60, secure: true, httpOnly: true, path: "/" });
+    res.cookie("HCST_SID", sessionId, { maxAge: 1000 * 60 * 60, secure: true, httpOnly: true, path: "/" });
     res.json({
         success: true,
         message: "Signed in",
