@@ -119,7 +119,7 @@ export async function postJSON(url: string, body: any, mute: boolean = false): P
 }
 
 export async function getPresetList(): Promise<PresetListEntry[] | undefined> {
-    const response = await getJSON("./api/grading/config/list_of_presets")
+    const response = await getJSON("/api/grading/config/list_of_presets")
 
     if (response.success) {
         return response.data.presets;

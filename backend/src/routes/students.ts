@@ -15,7 +15,7 @@ import { COOKIE_DOMAIN, HCST_OAUTH_CLIENT_ID, HCST_OAUTH_CLIENT_SECRET, HCST_OAU
 import { Test, Submission, Preset, parsePresetData, PresetData, ConfigValueType } from "../lib/db.ts";
 import { addSession, getSessionBySid, removeSession, Session } from "./sessions.ts";
 
-const trackerCookieOpts: CookieOptions = { path: "/", domain: "app.github.dev", httpOnly: true, secure: true, sameSite: "none" }
+const trackerCookieOpts: CookieOptions = { path: "/", domain: COOKIE_DOMAIN, httpOnly: true, secure: true, sameSite: "none" }
 
 export const router = express.Router();
 

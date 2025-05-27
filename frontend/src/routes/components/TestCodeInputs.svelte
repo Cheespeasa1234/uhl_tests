@@ -15,7 +15,7 @@
         console.log("Setting new test list value");
         changedTestList = [...newTests];
 
-        postJSON("./api/grading/config/get_preset_names", {
+        postJSON("/api/grading/config/get_preset_names", {
             ids: ids
         }).then(json => {
             if (json.success) {
@@ -28,7 +28,7 @@
         delName = name;
         confirmModal.show(success => {
             if (success) {
-                postJSON("./api/grading/config/del_testcode", {
+                postJSON("/api/grading/config/del_testcode", {
                     id: id
                 }).then(json => {
                     if (json.success) {

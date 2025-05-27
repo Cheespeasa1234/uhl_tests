@@ -80,7 +80,7 @@
     // Get the global configuration values from the server
     async function getManualConfig(key: string) {
         const sanitizedKey = sanitize(key);
-        const response = await getJSON("./api/grading/manualConfig/" + sanitizedKey)
+        const response = await getJSON("/api/grading/manualConfig/" + sanitizedKey)
 
         return response.data.value;
     }
@@ -90,7 +90,7 @@
         const sanitizedKey = sanitize(key);
         const sanitizedValue = sanitize(String(value));
         const sanitizedType = sanitize(type);
-        const response = await postJSON("./api/grading/manualConfig/", {
+        const response = await postJSON("/api/grading/manualConfig/", {
             key: sanitizedKey,
             value: sanitizedValue,
             type: sanitizedType,
@@ -99,7 +99,7 @@
 
     // When the LOGIN button is pressed
     function loginButtonClick() {
-        postJSON("./api/grading/get_session_id", {
+        postJSON("/api/grading/get_session_id", {
             pass: passwordInputValue,
         }).then(json => {
             const { success } = json;
@@ -113,7 +113,7 @@
 
     // When the grade student button is pressed
     async function gradeStudent() {
-        const json = await postJSON("./api/grading/grade/", {
+        const json = await postJSON("/api/grading/grade/", {
             name: gradeStudentEmailInputValue,
             code: gradeStudentTestCodeInputValue,
         });
@@ -149,7 +149,7 @@
     // Get the default preset
     async function resetPreset() {
         resetPresetBtn.disabled = true;
-        const json = await getJSON("./api/grading/config/get_preset_default");
+        const json = await getJSON("/api/grading/config/get_preset_default");
         const { success, data } = json;
         if (success) {
             preset = data.preset;
@@ -159,7 +159,7 @@
 
     async function resetTestCodes() {
         resetTestCodesBtn.disabled = true;
-        const json = await getJSON("./api/grading/config/testcodes");
+        const json = await getJSON("/api/grading/config/testcodes");
         const { success, data } = json;
         if (success) {
             testList = data.tests;
@@ -171,14 +171,14 @@
     async function saveTestCodes() {
         testList = testListEl.getTestListValue();
         console.log("Test List:", testList);
-        const json = await postJSON("./api/grading/config/update_testcodes", {
+        const json = await postJSON("/api/grading/config/update_testcodes", {
             testCodes: testList
         });
     }
 
     async function newTestCode() {
         testList = testListEl.getTestListValue();
-        const json = await getJSON("./api/grading/config/new_testcode");
+        const json = await getJSON("/api/grading/config/new_testcode");
         console.log(json.data.test);
         testList?.push(json.data.test);
         testListEl.setTestListValue(testList!);
@@ -214,14 +214,14 @@
                     }
                     const p = preset;
                     p.name = presetData.name;
-                    await postJSON("./api/grading/config/new_preset", {
+                    await postJSON("/api/grading/config/new_preset", {
                         preset: p,
                     });
                 } else if (category === "pre") {
                     const p = preset;
                     p.name = presetData!.name;
                     p.id = Number(presetData!.id);
-                    await postJSON("./api/grading/config/set_preset", {
+                    await postJSON("/api/grading/config/set_preset", {
                         preset: p,
                     });
                 }
@@ -243,7 +243,7 @@
                 if (category != "pre") {
                     showNotifToast({ success: false, message: `Can only load from a pre-existing preset- attempted to load from a ${category} preset.`})
                 } else {
-                    const json = await getJSON(`./api/grading/config/get_preset/${value}`);
+                    const json = await getJSON(`/api/grading/config/get_preset/${value}`);
 
                     if (json.success) {
                         preset = json.data.preset;
@@ -258,7 +258,7 @@
     let selectPresetModal: SelectPresetModal;
 
     onMount(() => {
-        getJSON("./api/grading/am_i_signed_in")
+        getJSON("/api/grading/am_i_signed_in")
         .then(json => {
             const { success } = json;
             signedIn = success;
@@ -387,7 +387,7 @@
                 </div>
                 <div class="tab-pane fade" id="nav-p2" role="tabpanel" aria-labelledby="nav-p2-tab">
 
-                    <DataDisplayTable row_heads={testProgramHeader} name="Quiz submissions table" url="./api/grading/test_program" bind:this={testProgramTable} />
+                    <DataDisplayTable row_heads={testProgramHeader} name="Quiz submissions table" url="/api/grading/test_program" bind:this={testProgramTable} />
 
                 </div>
                 <div class="tab-pane fade" id="nav-p3" role="tabpanel" aria-labelledby="nav-p3-tab">

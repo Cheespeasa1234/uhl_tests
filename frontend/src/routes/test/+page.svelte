@@ -71,7 +71,7 @@
         for (const question of testQuestionEls) {
             answers.push(question.getResponse());
         }
-        await postJSON("./api/testing/sync-answers", {
+        await postJSON("/api/testing/sync-answers", {
             answers: answers,
         });
     }
@@ -80,7 +80,7 @@
         submissionConfirmModal.show(async (success) => {
             if (success) {
                 await changedAnAnswer()
-                const json = await getJSON("./api/testing/submit-test");
+                const json = await getJSON("/api/testing/submit-test");
                 const { success, message } = json;
                 clearDocument();
                 window.location.href = "/test/success";
@@ -171,7 +171,7 @@
     }
 
     async function previewTest() {
-        const json = await postJSON("./api/testing/test-info", {
+        const json = await postJSON("/api/testing/test-info", {
             code: testCodeInputValue,
         });
 
@@ -192,7 +192,7 @@
 
     // Get a new test and place it on the screen
     function takeTest() {
-        postJSON("./api/testing/new-test", {
+        postJSON("/api/testing/new-test", {
             code: testCodeInputValue,
         }).then((json) => {
             const { success, data } = json;
