@@ -1,11 +1,9 @@
-import { Quiz, QuizQuestion } from "./lang/quiz/quiz.ts";
-import { logInfo, logError } from "./lib/logger.ts";
-import { Submission, Test } from "./lib/db.ts";
-import { getValues } from "./sheets.ts";
-import { HCST_SPREADSHEET_ID } from "./lib/env.ts";
+import { QuizQuestion } from "./lang/quiz/quiz.ts";
+import { logInfo } from "./lib/logger.ts";
+import { Submission } from "./lib/db.ts";
 
 export async function getResponses(): Promise<Submission[]> {
-    const responses: any[] = await Submission.findAll();
+    const responses: Submission[] = await Submission.findAll();
 
     logInfo("analyze_responses", "Got responses from database");
     return responses;

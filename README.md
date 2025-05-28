@@ -1,5 +1,3 @@
-# __these instructions are outdated. working on it, sorry__
-
 # About
 ## Overview
 This repo contains the frontend and the backend of the Honors Computer Science testing program (I'm not in that class- this program is for those students). It, simply put, produces randomly generated tests of Java code, solves them itself, and grades students on their answers. It does this with its own custom bytecode-adjacent code interpreter, and an in-depth and secure API which administers tests and tracks students. It also features an administrator panel, with management and supervision features.
@@ -12,113 +10,187 @@ The primary goals of this program are:
 4. provide a secure and useful admin interface
 
 ## Collaboration
-Read further into this README to learn about the source code and the method of running it. Use the Projects tab to manage issues and track stuff like that. The Uhl Testing program was created by Nate Levison, but Victor Urumov is also a significant collaborator.
+Read further into this README to learn about the source code and the method of running it. Use the Projects tab to manage issues and track stuff like that. The Uhl Testing program was created by Nate Levison.
 
-# Installation & Development
+# Installation
 
-## Setup
-First, make a codespace or a VSCode workspace of this repository, `Cheespeasa1234/uhl_tests`. A development container with the proper configurations are provided for your convenience.
+## Initialize repository
 
-In a terminal, run the following:
+If you want to use Git, run the following:
+```sh
+git clone https://github.com/Cheespeasa1234/uhl_tests
+```
+
+If you want to use the codespace, make a codespace or a VSCode workspace of this repository, `Cheespeasa1234/uhl_tests`. A development container with the proper configurations are provided for your convenience.
+
+If you use the codespace, allow it to build, which might take a few minutes. When the setup is complete, continue.
+
+## Setup tools
+
+To install packages, in a terminal, run the following:
 ```sh
 cd frontend
 npm install
-```
 
-Then, in another terminal, run the following:
-```sh
-cd backend
+cd ../backend
 deno install
+deno install npm:sequelize
+deno install --allow-scripts=npm:sqlite3@5.1.7
 npm install
 ```
 
-The backend requires Deno. To install it on Linux, run the following:
-```sh
-curl -fsSL https://deno.land/install.sh
-```
-Ensure the content it prints is fine, then run it again:
-```sh
-curl -fsSL https://deno.land/install.sh | sh
-```
+This should install all the packages. After the packages and postinstall scripts have run, now you need to set up the files.
 
-If you use the codespace, **you do not need to do this**.
-
-## Secrets & Files
-
-In `backend`, create `.env`. 
-1. Set `HCST_ADMIN_PASSWORD` to a passphrase for logging into the admin panel.
-2. Set `HCST_PORT` to 8081, and set `HCST_HOST` to 127.0.0.1.
-3. Set `HCST_GOOGLE_KEY_FILENAME` and leave it blank for now.
-4. Set `HCST_FORM_URL` and leave it blank for now.
-5. Set `HCST_SPREADSHEET_ID` to the ID (the first part of the URL) of your google sheet.
+## Environment files
+There are two .env files you need to create. Create the following two files: `./.env` and `./frontend/.env`. In the first, add the following text:
 
 ```env
-HCST_ADMIN_PASSWORD=<YOUR ADMIN PASSWORD>
-HCST_PORT=8081
-HCST_HOST=127.0.0.1
-HCST_GOOGLE_KEY_FILENAME=
-HCST_FORM_URL=
-HCST_SPREADSHEET_ID=
+HCST_ADMIN_PASSWORD=
+HCST_PORT=
+HCST_HOST=
+HCST_OAUTH_CLIENT_ID=
+HCST_OAUTH_CLIENT_SECRET=
+HCST_OAUTH_REDIRECT_URI=
+COOKIE_DOMAIN=
 ```
 
-In `backend`, create folders `db`, `files`, and `secrets`.
-
-## Google file prerequesites
-
-For the google form / spreadsheet API, make a Google Service account. Get an email for it and give it API access to the Google Sheets API. Get the access key and download the JSON file. More information can be found [here](https://cloud.google.com/iam/docs/keys-list-get). Place that JSON file in the `secrets` folder in the backend.
-
-The testing program uses a google form to take in submissions. First, make a google form with the EXACT same questions as you see below.
-
-_The questions should all be mandatory, it should force authenticated email submission, and should look like below:_
-
-![this form](image.png)
-
-In case the image doesn't work, the form should have the following questions, aside from the mandatory email inclusion:
-```
-"Answer Code" - short answer
-"How difficult was it?" - 1 through 5 -> Trivial - Impoppable
+In the second, add the following text:
+```env
+HOST=
+PORT=
+PUBLIC_API=
 ```
 
-Get a shortlink for this form in the Share menu. Take this link, and set the previously mentioned `HCST_FORM_URL` to this url. Once this form is done and accessible to students, link it to a spreadsheet using the responses tab. Take the spreadsheet ID found in the URL of this new spreadsheet, and put it as the value to `HCST_SPREADSHEET_ID`. In that spreadsheet, open the Share menu, and give access to the service account email you created.
+First, set `HCST_ADMIN_PASSWORD` to a plaintext password you want to use to log into the admin panel. Then set `HCST_PORT` and `HCST_HOST` to the port and host to run it on. I recommend using `8081` and `0.0.0.0`.
 
-## Setting up the database
-After installation, the database would be empty. All you need to do is run the following:
+Second, set `HOST` and `PORT` to something similar, but for the frontend. I recommend using `8082` and `127.0.0.1`.
+
+_Note there is no specific reason I chose 0.0.0.0 and 127.0.0.1 for each respectively, I just haven't tested using different hosts and I don't want to risk it._
+
+
+Then you need to decide what domain you will be running the programs on. Say the frontend will be accessible on `hcst.example.com` and the backend will be on `api.example.com`. Set `COOKIE_DOMAIN` to `example.com`, and `PUBLIC_API` to `https://api.example.com`. If you are using codespace port forwarding, use the public URLs it provides, and in the port forwarding menu, set the backend's visibility to public.
+
+If you are using codespaces, finding out the two important URLs is easy. In the address bar, your codespace will be, say, `codespace-name-here-gibberish.github.dev`. Take the first part- `codespace-name-here-gibberish`, and for the frontend, the URL will be `https://codespace-name-here-gibberish-8082.app.github.dev`, and for the backend, the URL will be `https://codespace-name-here-gibberish-8081.app.github.dev`. You can later check the Ports tab to confirm, after following this guide further.
+
+## Google OAuth
+The next step is getting Google's OAuth set up. Navigate to `console.cloud.google.com`. If you have set up a cloud account, you won't need to set up. But accept the terms and continue if not.
+
+Click `APIs & Services` and click `Create project`. Name the project something, it doesn't really matter. Select an organization if you want, and then create.
+
+Click `OAuth Consent Screen` and `Get started`. Type in an app name, a support email. Go to the next section, select external. Go to the next section, and enter an email. Go to the next section and agree to the policy. Then press `Continue`.
+
+Click `Create OAuth Client` and select the application type as Web application. Name it something. For Authorized JavaScript origins, click `Add URI` and add the public URI of the frontend. For the example given, you would use `https://hcst.example.com`. Then go to Authorized redirect URIs and add a new one. For the example given, you would use `https://hcst.example.com/oauth/callback`. Make sure the `/oauth/callback` part is in there. Click `Create`.
+
+In the menu which lists your OAuth Clients, click on the blue link for the application you just set up. On the side, find the Client ID, and the Client secret. Go back to the first env file- `./.env`- and set the `HCST_OAUTH_CLIENT_ID` and `HCST_OAUTH_CLIENT_SECRET` properties accordingly. Also set `HCST_OAUTH_REDIRECT_URI` to the URI you put as a redirect URI above.
+
+Now, back to the google console. On the sidebar, select Audience and navigate there. Scroll down to Test Users and click `Add users`. Add your email address and Save. This should be it for the google stuff.
+
+## Other files
+Go to the terminal in the project, and run the following:
 
 ```sh
 cd backend
+mkdir files
 deno task seedDb
 ```
 
-This will create the tables in the database file, and add a hard-coded default preset and default test code to the database. If, in the future, you change the columns, you can use the sequelize migrate feature, or delete the database and run the seed script again.
+Now, the server is set up and you can start enabling things.
 
-## Execution
-
-### Development Environment
-To run the program, first start the backend:
+# Development
+To run the server in development, you need two terminals. In the first, run this:
 ```sh
 cd backend
 deno task dev
 ```
 
-Then, start the backend, in a new terminal:
+If you are using codespaces, go to `Ports` near the console. It should have a 2 icon. On the first row, which in our examples has a port as `8081`, right click, hover over `Port visibility`, and set it to `Public`.
+
+In the second, run this:
 ```sh
 cd frontend
 npm run dev -- --open
 ```
 
-### Production Environment
-Start the backend:
+Now, your browser will open a new tab which has the frontend. If you get a 500 error, ensure the APIs port is public and accessible, and that the environment variable defining it is correct. Check the Ports tab to confirm.
+
+# Production
+In production, the two commands that need to run are as follows:
 ```sh
-cd backend
+# ./backend
 deno task start
-```
 
-Build and start the frontend:
-```sh
-cd frontend
+# ./frontend
 npm run build
-npm run preview -- --port 8082
+node --env-file=.env build
 ```
 
-# How to use
-Once you have the program up and running, you will be able to navigate to the Help page and read an article about the user experience.
+You can use services or something like that to run these in the background. Here are the services I use:
+```ini
+[Unit]
+Description=Uhl Testing Frontend Service
+
+[Service]
+Type=exec
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node --env-file=.env build
+Restart=no
+WorkingDirectory=/www/uhl_tests/frontend
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```ini
+[Unit]
+Description=Uhl Testing Backend Service
+
+[Service]
+Type=exec
+ExecStart=/root/.deno/bin/deno task start
+WorkingDirectory=/www/uhl_tests/backend
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Here is the nginx config I use:
+```nginx
+# backend
+server {
+    listen 80;
+    server_name hcst_api.example.com;
+    error_log /var/log/nginx/hcst_api.example.com.error.log;
+
+    location / {
+        add_header 'Cross-Origin-Opener-Policy' 'same-origin-allow-popups' always;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection upgrade;
+        proxy_set_header Accept-Encoding gzip;
+
+        proxy_pass http://127.0.0.1:8081;
+        proxy_redirect off;
+    }
+}
+
+# frontend
+server {
+    listen 80;
+    server_name hcst.example.com;
+    error_log /var/log/nginx/hcst.example.com.error.log;
+
+    location / {
+        add_header 'Access-Control-Allow-Origin' 'same-origin' always;
+        add_header 'Cross-Origin-Opener-Policy' 'same-origin-allow-popups' always;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection upgrade;
+        proxy_set_header Accept-Encoding gzip;
+
+        proxy_pass http://127.0.0.1:8082;
+        proxy_redirect off;
+    }
+}
+```
+
+So that is how to get the project running as a service and all.

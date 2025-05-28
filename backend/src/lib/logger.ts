@@ -24,8 +24,19 @@ function removeAnsi(str: string) {
         .replace("\x1b[32m", "");
 }
 
-const enableFileLog = false;
-const name = `files/log.txt`;
+function formatDate(date: Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}--${hours}-${minutes}-${seconds}`;
+    return formattedDate;
+}
+
+const enableFileLog = true;
+const name = `files/log--${formatDate(new Date())}.txt`;
 Deno.createSync(name);
 Deno.writeTextFile(name, "");
 
