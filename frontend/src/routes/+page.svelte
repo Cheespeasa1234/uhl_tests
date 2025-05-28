@@ -25,6 +25,7 @@
     async function logout() {
         const json = await getJSON("/api/testing/logout");
         if (json.success) {
+            invalidateAll();
             window.location.reload();
         }
     }
@@ -38,7 +39,7 @@
     {#if data.signedIn && data.session !== undefined}
         <h1>Welcome back, {data.session.name}</h1>
         <a href="/test"><button class="btn btn-primary">Take a test</button></a>
-        <button onclick={logout} class="btn btn-secondary">Log Out</button>
+        <!-- <button onclick={logout} class="btn btn-secondary">Log Out</button> -->
     {:else}
         <h1>Sign In</h1>
         <button class="gsi-material-button" onclick={signIn}>

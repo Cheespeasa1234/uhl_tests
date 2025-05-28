@@ -9,7 +9,7 @@ import { Quiz } from "../lang/quiz/quiz.ts";
 import { makeTest } from "../lang/quiz/codegen.ts";
 import { PresetManager } from "../lib/config.ts";
 import { addNotification } from "../lib/notifications.ts";
-import { logInfo, logWarning } from "../lib/logger.ts";
+import { logDebug, logInfo, logWarning } from "../lib/logger.ts";
 import { HTTP } from "../lib/util.ts";
 import { COOKIE_DOMAIN, HCST_OAUTH_CLIENT_ID, HCST_OAUTH_CLIENT_SECRET, HCST_OAUTH_REDIRECT_URI } from "../lib/env.ts";
 import { Test, Submission, Preset, parsePresetData, PresetData, ConfigValueType } from "../lib/db.ts";
@@ -413,22 +413,35 @@ router.post("/oauth-token", async (req: Request, res: Response) => {
     addSession(session);
 });
 
+// TODO: FIX TS
 router.get('/logout', (req: Request, res: Response) => {
     const sid = req.cookies["HCST_SID"];
+    logDebug("students", `sid: ${sid}`);
+
     const session = getSessionBySid(sid);
 
-    if (session === undefined || session.getExpired()) {
+    if (session === undefined) {
         res
             .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
             .json({
                 success: false,
-                message: "Not signed in"
+                message: "Session does not exist"
             });
         return;
     }
 
-    res.clearCookie('HCST_SID', { path: '/' }); // Clear the HCST_SID cookie
-    session.signOut();
+    if (session.getExpired()) {
+        res
+            .status(HTTP.CLIENT_ERROR.BAD_REQUEST)
+            .json({
+                success: false,
+                message: "Session expired"
+            });
+        return;
+    }
+
+    res.cookie("HCST_SID", ".; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;");
+    removeSession(session);
     res
         .status(HTTP.SUCCESS.OK)
         .json({

@@ -204,6 +204,8 @@ export function removeSession(s: Session) {
         if (!safe) {
             session.signOut();
             logInfo("sessions", `Removing session ${session.email}`);
+        } else {
+            logInfo("sessions", `Skipped removal of session ${session.email}`);
         }
         return safe;
     });
