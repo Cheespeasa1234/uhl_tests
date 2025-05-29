@@ -1,6 +1,6 @@
 import { $, CodeEnvironment, type LineOfCode } from "./code.ts";
 import { ParsedToken } from "../typing/parsedToken.ts";
-import { Quiz, QuizQuestion } from "./quiz.ts";
+import { Quiz, QuizQuestion } from "../../lib/quiz.ts";
 import { Test, Preset, PresetData, parsePresetData, ConfigKey } from "../../lib/db.ts";
 import { logDebug, logInfo, logWarning } from "../../lib/logger.ts";
 

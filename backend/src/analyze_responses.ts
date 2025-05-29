@@ -1,4 +1,4 @@
-import { QuizQuestion } from "./lang/quiz/quiz.ts";
+import { QuizQuestion } from "./lib/quiz.ts";
 import { logInfo } from "./lib/logger.ts";
 import { Submission } from "./lib/db.ts";
 

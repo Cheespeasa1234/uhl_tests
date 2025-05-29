@@ -5,8 +5,7 @@ import bodyParser from "npm:body-parser";
 import cookieParser from "npm:cookie-parser";
 import crypto from "node:crypto";
 
-import { Quiz } from "../lang/quiz/quiz.ts";
-import { makeTest } from "../lang/quiz/codegen.ts";
+import { Quiz, makeTest } from "../lib/quiz.ts";
 import { PresetManager } from "../lib/config.ts";
 import { addNotification } from "../lib/notifications.ts";
 import { logDebug, logInfo, logWarning } from "../lib/logger.ts";
