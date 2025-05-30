@@ -1,5 +1,5 @@
 import { Test, Preset, PresetData, parsePresetData, ConfigKey } from "./db.ts";
-import { logDebug, logInfo, logWarning } from "./logger.ts";
+import { logDebug, logWarning } from "./logger.ts";
 
 function probability(prob: number): boolean {
     return Math.random() < prob;

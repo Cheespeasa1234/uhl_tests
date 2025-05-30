@@ -1,5 +1,5 @@
 import { Preset, ConfigKey, ConfigValue } from "./db.ts";
-import { logDebug, logError, logInfo } from "./logger.ts";
+import { logDebug, logError } from "./logger.ts";
 
 /**
  * Stores a full copy of all presets, and manages the editing of presets.
